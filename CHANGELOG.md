@@ -5,6 +5,18 @@ All notable changes to Sentinel will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.3] - 2024-01-16
+
+### Changed
+- **Breaking**: Moved `opentelemetry-exporter-zipkin` from core dependencies to optional `monitoring` dependencies to avoid protobuf version conflicts
+- Users who need Zipkin tracing should now install with: `pip install agent-sentinel[monitoring]`
+
+## [0.1.2] - 2024-01-16
+
+### Fixed
+- **Critical**: Fixed dependency resolution error with `zipkin>=1.0.0` by replacing with correct `opentelemetry-exporter-zipkin>=1.7.0`
+- Resolved pip installation failure due to non-existent zipkin package version
+
 ## [Unreleased]
 
 ### Added

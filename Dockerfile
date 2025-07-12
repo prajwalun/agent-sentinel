@@ -39,7 +39,7 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean
 
 # Create non-root user
-RUN groupadd -r sentinel && useradd -r -g sentinel sentinel
+RUN groupadd -r agent-sentinel && useradd -r -g agent-sentinel agent-sentinel
 
 # Copy virtual environment from builder
 COPY --from=builder /opt/venv /opt/venv
@@ -54,10 +54,10 @@ COPY LICENSE ./
 
 # Create necessary directories
 RUN mkdir -p /app/logs /app/config /app/data \
-    && chown -R sentinel:sentinel /app
+    && chown -R agent-sentinel:agent-sentinel /app
 
 # Switch to non-root user
-USER sentinel
+USER agent-sentinel
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \

@@ -2,10 +2,10 @@
 
 **Enterprise-grade security monitoring SDK for AI agents**
 
-> **Note:** The project is called **Agent Sentinel** for branding and documentation, but the Python package, CLI, and all code usage are under the name `sentinel`.
+> **Note:** For Python imports, use `agent_sentinel` (underscore). For installation, CLI, and Docker, use `agent-sentinel` (hyphen).
 
-[![PyPI version](https://badge.fury.io/py/sentinel.svg)](https://badge.fury.io/py/sentinel)
-[![Python versions](https://img.shields.io/pypi/pyversions/sentinel.svg)](https://pypi.org/project/sentinel/)
+[![PyPI version](https://badge.fury.io/py/agent-sentinel.svg)](https://badge.fury.io/py/agent-sentinel)
+[![Python versions](https://img.shields.io/pypi/pyversions/agent-sentinel.svg)](https://pypi.org/project/agent-sentinel/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![CI/CD](https://github.com/sentinel/sentinel/workflows/CI%2FCD%20Pipeline/badge.svg)](https://github.com/sentinel/sentinel/actions)
 [![Security](https://img.shields.io/badge/security-bandit-yellow.svg)](https://github.com/PyCQA/bandit)
@@ -17,7 +17,7 @@ Agent Sentinel provides comprehensive security monitoring, threat detection, and
 
 **📝 Naming Convention:**
 - **Project/Brand Name:** Agent Sentinel
-- **Python Package, CLI, and Imports:** `sentinel`
+- **Python Package, CLI, and Imports:** `agent-sentinel`
 
 ---
 
@@ -57,19 +57,19 @@ Agent Sentinel provides comprehensive security monitoring, threat detection, and
 
 ```bash
 # Install from PyPI
-pip install sentinel
+pip install agent-sentinel
 
 # Install with all dependencies
-pip install sentinel[monitoring,security]
+pip install agent-sentinel[monitoring,security]
 
 # Install for development
-pip install sentinel[dev,test,docs]
+pip install agent-sentinel[dev,test,docs]
 ```
 
 ### Basic Usage
 
 ```python
-from sentinel import sentinel, monitor
+from agent_sentinel import sentinel, monitor
 
 # Monitor an entire agent class
 @sentinel
@@ -91,7 +91,7 @@ response = agent.handle_inquiry("Hello, I need help with my order")
 ### Advanced Usage
 
 ```python
-from sentinel import AgentSentinel, secure_communication, secure_mcp_tool
+from agent_sentinel import AgentSentinel, secure_communication, secure_mcp_tool
 
 # Initialize with configuration
 sentinel = AgentSentinel(config_path="config.yaml")
@@ -161,20 +161,20 @@ sentinel:
 
 ```bash
 # Build production image
-docker build --target production -t sentinel/sentinel:latest .
+docker build --target production -t agentsentinel/agent-sentinel:latest .
 
 # Run with configuration
-docker run -p 8000:8000 -v $(pwd)/config.yaml:/app/config.yaml sentinel/sentinel:latest
+docker run -p 8000:8000 -v $(pwd)/config.yaml:/app/config.yaml agentsentinel/agent-sentinel:latest
 ```
 
 ### Development Image
 
 ```bash
 # Build development image
-docker build --target development -t sentinel/sentinel:dev .
+docker build --target development -t agentsentinel/agent-sentinel:dev .
 
 # Run with hot reload
-docker run -p 8000:8000 -v $(pwd):/app sentinel/sentinel:dev
+docker run -p 8000:8000 -v $(pwd):/app agentsentinel/agent-sentinel:dev
 ```
 
 ## 🛠️ CLI Tools
@@ -183,22 +183,22 @@ Sentinel provides comprehensive command-line tools:
 
 ```bash
 # Initialize configuration
-sentinel init --output config.yaml
+agent-sentinel init --output config.yaml
 
 # Validate configuration
-sentinel validate --config config.yaml --strict
+agent-sentinel validate --config config.yaml --strict
 
 # Start monitoring
-sentinel monitor --config config.yaml --daemon
+agent-sentinel monitor --config config.yaml --daemon
 
 # Show statistics
-sentinel stats --format json
+agent-sentinel stats --format json
 
 # Run security checks
-sentinel security-check --output report.json
+agent-sentinel security-check --output report.json
 
 # Show version
-sentinel version
+agent-sentinel version
 ```
 
 ## 📚 API Reference
