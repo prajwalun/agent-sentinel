@@ -347,13 +347,13 @@ Run the comprehensive test suite:
 
 ```bash
 # Install test dependencies
-pip install sentinel[test]
+pip install agent-sentinel[test]
 
 # Run all tests
 pytest
 
 # Run with coverage
-pytest --cov=sentinel --cov-report=html
+pytest --cov=agent_sentinel --cov-report=html
 
 # Run specific test categories
 pytest tests/unit/

@@ -9,7 +9,7 @@ and agent-to-agent communications.
 from typing import TYPE_CHECKING
 
 # Version information
-__version__ = "0.1.0"
+__version__ = "0.1.4"
 __author__ = "AgentSentinel Team"
 __email__ = "team@agentsentinel.dev"
 __license__ = "MIT"
