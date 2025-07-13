@@ -13,7 +13,7 @@ from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 from langchain_core.language_models import BaseChatModel
 from langchain_core.output_parsers import BaseOutputParser
 
-from ..models.config import LLMConfig
+from models.config import LLMConfig
 
 logger = logging.getLogger(__name__)
 
@@ -66,46 +66,12 @@ class LLMService:
         self._initialize_llms()
         
     def _initialize_llms(self):
-        """Initialize LLMs with fallback support."""
-        if self.config.provider == "auto":
-            # Try to initialize both providers
-            self.primary_llm = self._try_initialize_openai()
-            self.fallback_llm = self._try_initialize_google()
-            
-            if not self.primary_llm and not self.fallback_llm:
-                raise RuntimeError("Failed to initialize any LLM provider")
-            
-            if not self.primary_llm:
-                logger.warning("⚠️  OpenAI not available, using Google as primary")
-                self.primary_llm = self.fallback_llm
-                self.fallback_llm = None
-            
-        elif self.config.provider == "openai":
-            self.primary_llm = self._try_initialize_openai()
-            self.fallback_llm = self._try_initialize_google()  # Fallback
-            
-            if not self.primary_llm:
-                if self.fallback_llm:
-                    logger.warning("⚠️  OpenAI failed, falling back to Google")
-                    self.primary_llm = self.fallback_llm
-                    self.fallback_llm = None
-                else:
-                    raise RuntimeError("Failed to initialize OpenAI LLM and no fallback available")
+        """Initialize OpenAI LLM only."""
+        self.primary_llm = self._try_initialize_openai()
+        self.fallback_llm = None
         
-        elif self.config.provider == "google":
-            self.primary_llm = self._try_initialize_google()
-            self.fallback_llm = self._try_initialize_openai()  # Fallback
-            
-            if not self.primary_llm:
-                if self.fallback_llm:
-                    logger.warning("⚠️  Google failed, falling back to OpenAI")
-                    self.primary_llm = self.fallback_llm
-                    self.fallback_llm = None
-                else:
-                    raise RuntimeError("Failed to initialize Google LLM and no fallback available")
-        
-        else:
-            raise ValueError(f"Unsupported LLM provider: {self.config.provider}")
+        if not self.primary_llm:
+            raise RuntimeError("Failed to initialize OpenAI LLM - check OPENAI_API_KEY environment variable")
     
     def _try_initialize_openai(self) -> Optional[BaseChatModel]:
         """Try to initialize OpenAI LLM."""
@@ -146,43 +112,7 @@ class LLMService:
             logger.warning(f"⚠️  OpenAI initialization failed: {e}")
             return None
     
-    def _try_initialize_google(self) -> Optional[BaseChatModel]:
-        """Try to initialize Google LLM."""
-        try:
-            from langchain_google_genai import ChatGoogleGenerativeAI
-            
-            api_key = os.getenv("GOOGLE_API_KEY")
-            if not api_key:
-                logger.warning("⚠️  GOOGLE_API_KEY not found in environment")
-                return None
-            
-            # Use Google model names for Google provider
-            model_name = self.config.model
-            # If the model is an OpenAI model, map to Google equivalent
-            if "gpt" in model_name.lower():
-                model_name = "gemini-1.5-flash"
-            elif self.config.provider == "openai":
-                # Map to appropriate Google model
-                model_name = "gemini-1.5-flash"
-            
-            llm = ChatGoogleGenerativeAI(
-                model=model_name,
-                temperature=self.config.temperature,
-                google_api_key=api_key,
-                timeout=self.config.timeout,
-                max_retries=self.config.max_retries
-            )
-            
-            # Test the connection
-            test_messages = [SystemMessage(content="Test")]
-            llm.invoke(test_messages)
-            
-            logger.info(f"✅ Initialized Google Gemini LLM with model: {model_name}")
-            return llm
-            
-        except Exception as e:
-            logger.warning(f"⚠️  Google Gemini initialization failed: {e}")
-            return None
+
     
     def invoke(
         self, 

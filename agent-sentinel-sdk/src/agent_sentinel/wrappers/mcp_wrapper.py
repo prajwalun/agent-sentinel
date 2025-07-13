@@ -16,6 +16,7 @@ from dataclasses import dataclass, field
 
 from ..core.constants import ThreatType, SeverityLevel
 from ..core.types import SecurityEvent
+from ..core.event_registry import get_global_registry
 from ..logging.structured_logger import SecurityLogger
 from ..security.validators import InputValidator, ValidationResult
 from .agent_wrapper import AgentWrapper
@@ -112,6 +113,9 @@ class MCPWrapper:
             self.input_validator = InputValidator(strict_mode=strict_validation)
         else:
             self.input_validator = None
+        
+        # Connect to global event registry
+        self.global_registry = get_global_registry()
         
         # Active MCP sessions
         self.active_sessions: Dict[str, MCPSession] = {}
@@ -486,6 +490,9 @@ class MCPWrapper:
                         extra=event.context
                     )
                     
+                    # Register with global registry (CRITICAL FIX!)
+                    self.global_registry.register_event(event)
+                    
                     self.stats['security_events'] += 1
                     raise Exception(f"Malicious input detected: {validation.violations}")
         
@@ -522,6 +529,9 @@ class MCPWrapper:
                 event_id=event.event_id,
                 extra=event.context
             )
+            
+            # Register with global registry (CRITICAL FIX!)
+            self.global_registry.register_event(event)
             
             self.stats['security_events'] += 1
 

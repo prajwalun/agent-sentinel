@@ -11,6 +11,11 @@ This repository contains two main components:
 ### 📦 [Agent Sentinel SDK](./agent-sentinel-sdk/)
 The core Python SDK that provides security monitoring and threat detection for AI agents.
 
+**Latest in v0.2.0 - CRITICAL BUG FIXES:**
+- 🔧 **FIXED**: Event aggregation bug - decorators now properly share events with main AgentSentinel instance
+- 🔧 **FIXED**: Agent ID mismatch - `get_events()` now automatically finds events from all decorators
+- ✅ **PRODUCTION READY**: All decorators working correctly with comprehensive event collection
+
 **Features:**
 - **3-line integration** with `@monitor` and `@monitor_mcp()` decorators
 - **Real-time threat detection** (SQL injection, XSS, code injection, etc.)

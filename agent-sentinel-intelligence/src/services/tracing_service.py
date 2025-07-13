@@ -9,7 +9,7 @@ import logging
 from typing import Optional, Dict, Any, ContextManager
 from contextlib import contextmanager
 
-from ..models.config import TracingConfig
+from models.config import TracingConfig
 
 logger = logging.getLogger(__name__)
 

@@ -1,0 +1,51 @@
+{
+    "name": "Math Agent",
+    "description": "Performs basic mathematical operations including addition, subtraction, multiplication, and division",
+    "url": "http://localhost:10101/",
+    "provider": "BlueGuard Security",
+    "version": "1.0.0",
+    "documentationUrl": "https://github.com/a2aproject/a2a-samples",
+    "capabilities": {
+        "streaming": "True",
+        "pushNotifications": "False",
+        "stateTransitionHistory": "False"
+    },
+    "authentication": {
+        "credentials": null,
+        "schemes": [
+            "public"
+        ]
+    },
+    "defaultInputModes": [
+        "text",
+        "text/plain"
+    ],
+    "defaultOutputModes": [
+        "text",
+        "text/plain"
+    ],
+    "skills": [
+        {
+            "id": "mathematical_operations",
+            "name": "Mathematical Operations",
+            "description": "Performs basic arithmetic operations on numbers",
+            "tags": [
+                "math",
+                "arithmetic",
+                "calculation",
+                "addition",
+                "subtraction",
+                "multiplication",
+                "division"
+            ],
+            "examples": [
+                "Add 5 and 3",
+                "Multiply 6 by 7",
+                "Divide 20 by 4",
+                "Subtract 10 from 15"
+            ],
+            "inputModes": null,
+            "outputModes": null
+        }
+    ]
+} 

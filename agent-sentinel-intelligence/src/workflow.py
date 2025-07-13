@@ -17,16 +17,16 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from langgraph.graph import StateGraph, START, END
 # Command import removed - using simpler approach
 
-from .models.state import AgentState
-from .models.config import IntelligenceConfig
-from .services.llm_service import LLMService
-from .services.tracing_service import TracingService
-from .services.research_service import ResearchService
-from .agents.supervisor import SupervisorAgent
-from .agents.analyzer import SecurityAnalyzerAgent
-from .agents.researcher import WebResearcherAgent
-from .agents.reporter import ReportGeneratorAgent
-from .agents.validator import ValidatorAgent
+from models.state import AgentState
+from models.config import IntelligenceConfig
+from services.llm_service import LLMService
+from services.tracing_service import TracingService
+from services.research_service import ResearchService
+from agents.supervisor import SupervisorAgent
+from agents.analyzer import SecurityAnalyzerAgent
+from agents.researcher import WebResearcherAgent
+from agents.reporter import ReportGeneratorAgent
+from agents.validator import ValidatorAgent
 
 logger = logging.getLogger(__name__)
 
@@ -34,11 +34,12 @@ logger = logging.getLogger(__name__)
 class SecurityAnalysisWorkflow:
     """Enterprise workflow for security analysis using multi-agent system."""
     
-    def __init__(self, config: IntelligenceConfig):
+    def __init__(self, config: IntelligenceConfig, max_iterations: int = 3):
         self.config = config
         self.llm_service = LLMService(config.llm)
         self.tracing_service = TracingService(config.tracing)
         self.research_service = ResearchService(config.research)
+        self.max_iterations = max_iterations
         
         # Initialize agents
         self.supervisor_agent = SupervisorAgent(self.llm_service, self.tracing_service)
@@ -193,6 +194,7 @@ class SecurityAnalysisWorkflow:
                 "Analyze the provided security report comprehensively. Identify all threats, "
                 "assess their severity, research additional context when needed, and generate "
                 "a detailed, actionable security intelligence report."
+                "\n\nIMPORTANT: Limit the total number of agent iterations to 3 (or 2 if the report is not critical). Do not loop or repeat steps unnecessarily. Prioritize speed and concise analysis."
             )
         
         # Prepare initial state
@@ -209,6 +211,7 @@ class SecurityAnalysisWorkflow:
         results = []
         final_report = ""
         error_occurred = False
+        iteration_count = 0
         
         try:
             if self.tracing_service.is_enabled():
@@ -221,6 +224,9 @@ class SecurityAnalysisWorkflow:
                             logger.warning(f"Failed to log workflow start: {e}")
                     
                     for event in self.app.stream(inputs):
+                        if iteration_count >= self.max_iterations:
+                            logger.info(f"Max agent iterations ({self.max_iterations}) reached. Stopping workflow.")
+                            break
                         for key, value in event.items():
                             if value is None:
                                 continue
@@ -259,9 +265,13 @@ class SecurityAnalysisWorkflow:
                                             pass  # Trace logging handled by weave.op decorator
                                         except Exception as e:
                                             logger.warning(f"Failed to log report generation: {e}")
+                        iteration_count += 1
             else:
                 # Execute without tracing
                 for event in self.app.stream(inputs):
+                    if iteration_count >= self.max_iterations:
+                        logger.info(f"Max agent iterations ({self.max_iterations}) reached. Stopping workflow.")
+                        break
                     for key, value in event.items():
                         if value is None:
                             continue
@@ -288,6 +298,7 @@ class SecurityAnalysisWorkflow:
                             
                             if agent_name == "REPORTER":
                                 final_report = content
+                        iteration_count += 1
             
             self.end_time = datetime.now()
             logger.info("Enterprise Security Analysis Workflow completed successfully")
@@ -317,8 +328,114 @@ class SecurityAnalysisWorkflow:
                 "execution_time": (self.end_time - self.start_time).total_seconds() if self.start_time else 0,
                 "start_time": self.start_time.isoformat() if self.start_time else None,
                 "end_time": self.end_time.isoformat() if self.end_time else None
+                        }
+
+    def run_analysis(self, report_content: str, analysis_type: str = "comprehensive") -> Dict[str, Any]:
+        """
+        Run analysis on a security report (API-friendly method).
+        
+        Args:
+            report_content: The security report content to analyze
+            analysis_type: Type of analysis to perform
+            
+        Returns:
+            Dictionary containing analysis results
+        """
+        try:
+            logger.info(f"Running {analysis_type} analysis on security report")
+            
+            # Prepare report data
+            report_data = {
+                "content": report_content,
+                "analysis_type": analysis_type,
+                "timestamp": datetime.now().isoformat()
             }
-    
+            
+            # Create analysis prompt
+            prompt = f"""
+            Please analyze the following security report and provide comprehensive intelligence insights:
+            
+            Analysis Type: {analysis_type}
+            Report Content:
+            {report_content}
+            
+            Please provide a detailed analysis including threat assessment, risk evaluation, 
+            and actionable recommendations.
+            """
+            
+            # Execute the workflow
+            result = self.execute(initial_prompt=prompt, report_data=report_data)
+            
+            # Transform result for API compatibility
+            if result.get("success"):
+                return {
+                    "enhanced_analysis": result.get("final_report", ""),
+                    "threat_intelligence": result.get("final_report", ""),
+                    "recommendations": self._extract_recommendations_from_report(result.get("final_report", "")),
+                    "workflow_execution_time": result.get("execution_time", 0),
+                    "status": "success"
+                }
+            else:
+                return {
+                    "enhanced_analysis": "",
+                    "threat_intelligence": "",
+                    "recommendations": [],
+                    "workflow_execution_time": result.get("execution_time", 0),
+                    "status": "error",
+                    "error": result.get("error", "Unknown error")
+                }
+            
+        except Exception as e:
+            logger.error(f"Analysis failed: {e}")
+            return {
+                "enhanced_analysis": "",
+                "threat_intelligence": "",
+                "recommendations": [],
+                "workflow_execution_time": 0,
+                "status": "error",
+                "error": str(e)
+            }
+
+    def _extract_recommendations_from_report(self, report_content: str) -> List[str]:
+        """Extract recommendations from the final report."""
+        recommendations = []
+        
+        if not report_content:
+            return recommendations
+        
+        # Look for recommendations section
+        lines = report_content.split('\n')
+        in_recommendations = False
+        
+        for line in lines:
+            if "## Recommendations" in line or "### Recommendations" in line:
+                in_recommendations = True
+                continue
+            elif in_recommendations and line.strip().startswith(('##', '###')):
+                break
+            elif in_recommendations and line.strip().startswith(('1.', '2.', '3.', '4.', '5.', '-', '*')):
+                # Extract recommendation text
+                rec_text = line.strip()
+                if rec_text.startswith(('1.', '2.', '3.', '4.', '5.')):
+                    rec_text = rec_text[2:].strip()
+                elif rec_text.startswith(('-', '*')):
+                    rec_text = rec_text[1:].strip()
+                
+                if rec_text:
+                    recommendations.append(rec_text)
+        
+        # If no recommendations found, provide defaults
+        if not recommendations:
+            recommendations = [
+                "Implement comprehensive security monitoring",
+                "Conduct regular security assessments",
+                "Enhance incident response procedures",
+                "Provide security awareness training",
+                "Review and update security policies"
+            ]
+        
+        return recommendations[:10]  # Limit to 10 recommendations
+
     def _prepare_initial_content(self, prompt: str, report_data: Optional[Dict[str, Any]] = None) -> str:
         """Prepare initial content for analysis."""
         if report_data:

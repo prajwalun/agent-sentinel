@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "agent-sentinel"
-version = "0.1.8"
-description = "Enterprise Security Monitoring SDK for AI Agents - Secure any AI agent in just 3 lines of code with real-time threat detection, behavioral analysis, and unified reporting that combines logs and insights into a single comprehensive file"
+version = "0.4.0"
+description = "Enterprise Security Monitoring SDK for AI Agents - Secure any AI agent in just 3 lines of code with real-time threat detection, behavioral analysis, and separate logging and threat reporting for comprehensive security monitoring"
 readme = "README.md"
 license = {text = "MIT"}
 authors = [
@@ -20,7 +20,7 @@ keywords = [
     "langchain", "autogen", "crewai", "real-time", "analytics", "simple", "easy"
 ]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "Intended Audience :: System Administrators",
     "Intended Audience :: Information Technology",

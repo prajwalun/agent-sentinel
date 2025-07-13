@@ -1,100 +1,108 @@
 "use client"
-import { TrendingUp, TrendingDown, Minus } from "lucide-react"
 
-interface StatusCardProps {
-  title: string
-  value: string | number
-  trend?: {
-    direction: "up" | "down" | "stable"
-    value: string
-    period: string
-  }
-  status?: "clean" | "warning" | "critical"
-}
-
-function StatusCard({ title, value, trend, status = "clean" }: StatusCardProps) {
-  const getStatusColor = () => {
-    switch (status) {
-      case "clean":
-        return "text-green-400"
-      case "warning":
-        return "text-orange-400"
-      case "critical":
-        return "text-red-400"
-      default:
-        return "text-white"
-    }
-  }
-
-  const getTrendIcon = () => {
-    if (!trend) return null
-    switch (trend.direction) {
-      case "up":
-        return <TrendingUp className="h-4 w-4" />
-      case "down":
-        return <TrendingDown className="h-4 w-4" />
-      case "stable":
-        return <Minus className="h-4 w-4" />
-    }
-  }
-
-  const getTrendColor = () => {
-    if (!trend) return ""
-    switch (trend.direction) {
-      case "up":
-        return status === "critical" ? "text-red-400" : "text-green-400"
-      case "down":
-        return status === "critical" ? "text-green-400" : "text-red-400"
-      case "stable":
-        return "text-gray-400"
-    }
-  }
-
-  return (
-    <div className="card-dark rounded-lg p-6">
-      <h3 className="text-gray-400 text-sm font-medium mb-2">{title}</h3>
-      <div className="flex items-center justify-between">
-        <span className={`text-3xl font-bold ${getStatusColor()}`}>{value}</span>
-        {trend && (
-          <div className={`flex items-center space-x-1 text-sm ${getTrendColor()}`}>
-            {getTrendIcon()}
-            <span>{trend.value}</span>
-            <span className="text-gray-500">{trend.period}</span>
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Activity, Shield, Users, AlertTriangle, Clock, TrendingUp } from "lucide-react"
+import { useEffect, useState } from "react"
+import { apiService, DashboardStats } from "@/lib/api"
 
 export function StatusCards() {
-  // Mock data - no database needed
+  const [stats, setStats] = useState<DashboardStats | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const data = await apiService.getDashboardStats()
+        setStats(data)
+      } catch (error) {
+        console.error('Error fetching dashboard stats:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchStats()
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {[...Array(4)].map((_, i) => (
+          <Card key={i}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Loading...</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-8 bg-gray-200 animate-pulse rounded"></div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    )
+  }
+
+  if (!stats) {
+    return <div>Error loading dashboard statistics</div>
+  }
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-      <StatusCard
-        title="Total Agents"
-        value={12}
-        trend={{ direction: "up", value: "+2", period: "today" }}
-        status="clean"
-      />
-      <StatusCard
-        title="Active Agents"
-        value={8}
-        trend={{ direction: "up", value: "+1", period: "today" }}
-        status="clean"
-      />
-      <StatusCard
-        title="Threats Detected"
-        value={3}
-        trend={{ direction: "up", value: "+1", period: "today" }}
-        status="critical"
-      />
-      <StatusCard
-        title="Performance Score"
-        value="95.2%"
-        trend={{ direction: "up", value: "+2.1%", period: "today" }}
-        status="clean"
-      />
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">
+            Total Agents
+          </CardTitle>
+          <Users className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{stats.total_agents}</div>
+          <p className="text-xs text-muted-foreground">
+            {stats.active_agents} active
+          </p>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">
+            Security Threats
+          </CardTitle>
+          <Shield className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{stats.total_threats}</div>
+          <p className="text-xs text-muted-foreground">
+            {stats.critical_threats} critical
+          </p>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">
+            Avg Response Time
+          </CardTitle>
+          <Clock className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{stats.avg_response_time}ms</div>
+          <p className="text-xs text-muted-foreground">
+            {stats.success_rate}% success rate
+          </p>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">
+            System Health
+          </CardTitle>
+          <Activity className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{stats.success_rate}%</div>
+          <p className="text-xs text-muted-foreground">
+            Overall performance
+          </p>
+        </CardContent>
+      </Card>
     </div>
   )
 }

@@ -11,6 +11,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass, field
+import requests
 
 from .types import SecurityEvent
 from .constants import ThreatType, SeverityLevel
@@ -318,3 +319,30 @@ class UnifiedReportGenerator:
     def get_report_path(self) -> Path:
         """Get the path where the report was saved"""
         return self.report_file 
+
+    def send_report_for_llm_analysis(self, backend_url: str, api_key: str, report_content: str, agent_id: str = None, analysis_type: str = "comprehensive") -> dict:
+        """
+        Send report/logs to the Agent Sentinel Intelligence backend for LLM analysis.
+        Args:
+            backend_url: Base URL of the backend API (e.g., http://localhost:8001)
+            api_key: Agent Sentinel API key (as_xxx...)
+            report_content: Raw log or report content (string)
+            agent_id: Optional agent identifier
+            analysis_type: Type of analysis (default: comprehensive)
+        Returns:
+            dict: Enhanced report from backend
+        """
+        url = backend_url.rstrip("/") + "/analyze"
+        headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json"
+        }
+        payload = {
+            "report_content": report_content,
+            "analysis_type": analysis_type
+        }
+        if agent_id:
+            payload["agent_id"] = agent_id
+        response = requests.post(url, headers=headers, json=payload)
+        response.raise_for_status()
+        return response.json() 

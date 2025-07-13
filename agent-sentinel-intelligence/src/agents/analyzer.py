@@ -12,10 +12,10 @@ from typing import Dict, List, Any, Optional
 from datetime import datetime
 from langchain_core.messages import HumanMessage
 # Command import removed - using simpler approach
-from ..models.state import AgentState
+from models.state import AgentState
 
-from ..services.llm_service import LLMService
-from ..services.tracing_service import TracingService
+from services.llm_service import LLMService
+from services.tracing_service import TracingService
 
 logger = logging.getLogger(__name__)
 

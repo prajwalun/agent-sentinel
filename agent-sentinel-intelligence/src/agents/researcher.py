@@ -7,11 +7,11 @@ Performs web research and threat intelligence gathering using Exa.ai.
 import logging
 from typing import Dict, Any
 from langchain_core.messages import HumanMessage
-from ..models.state import AgentState
+from models.state import AgentState
 
-from ..services.llm_service import LLMService
-from ..services.tracing_service import TracingService
-from ..services.research_service import ResearchService
+from services.llm_service import LLMService
+from services.tracing_service import TracingService
+from services.research_service import ResearchService
 
 logger = logging.getLogger(__name__)
 

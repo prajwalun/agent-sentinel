@@ -15,6 +15,21 @@ Sentinel = AgentSentinel
 # Nice aliases for better UX
 monitor_mcp = secure_mcp_method
 
+# Create a default global instance for decorator compatibility
+# This allows users to retrieve events from decorators without agent ID matching issues
+default_sentinel = AgentSentinel(agent_id="default")
+
+def get_all_events(*args, **kwargs):
+    """
+    Convenience function to get all security events from any agent.
+    
+    This is useful when using decorators that create their own agent IDs.
+    
+    Returns:
+        List of all security events from all agents
+    """
+    return default_sentinel.get_events(include_all_agents=True, *args, **kwargs)
+
 # Main exports
 __all__ = [
     "AgentSentinel",
@@ -22,7 +37,9 @@ __all__ = [
     "sentinel",
     "monitor", 
     "monitor_mcp",  # Nice alias for MCP monitoring
+    "get_all_events",  # Convenience function for getting all events
+    "default_sentinel",  # Global instance for decorator compatibility
 ]
 
 # Version
-__version__ = "0.1.6" 
+__version__ = "0.4.0" 

@@ -21,6 +21,7 @@ from .constants import ThreatType, SeverityLevel
 from .exceptions import AgentSentinelError, ConfigurationError, SecurityError
 from .types import SecurityEvent
 from .report_generator import UnifiedReportGenerator
+from .event_registry import get_global_registry
 from ..infrastructure.monitoring.weave_service import WeaveService
 from ..infrastructure.monitoring.circuit_breaker import CircuitBreaker
 from ..enterprise.threat_intelligence import ThreatIntelligenceEngine
@@ -92,9 +93,12 @@ class AgentSentinel:
         self.start_time = datetime.now(timezone.utc)
         
         # Event storage and processing
-        self.events: List[SecurityEvent] = []
+        self.events: List[SecurityEvent] = []  # Local storage for backward compatibility
         self.event_lock = threading.Lock()
         self.event_handlers: List[Callable[[SecurityEvent], None]] = []
+        
+        # Connect to global event registry
+        self.global_registry = get_global_registry()
         
         # Session tracking
         self.active_sessions: Dict[str, Dict[str, Any]] = {}
@@ -239,6 +243,8 @@ class AgentSentinel:
             handler: Function that takes a SecurityEvent and processes it
         """
         self.event_handlers.append(handler)
+        # Also add to global registry so it handles events from decorators
+        self.global_registry.add_event_handler(handler)
         self.logger.debug(f"Added event handler: {handler.__name__}")
     
     def record_event(self, event: SecurityEvent) -> None:
@@ -253,8 +259,11 @@ class AgentSentinel:
             return
         
         with self.event_lock:
-            # Add to event storage
+            # Add to local event storage (for backward compatibility)
             self.events.append(event)
+            
+            # Add to global registry (this is the main fix!)
+            self.global_registry.register_event(event)
             
             # Update metrics
             self.metrics["total_events"] += 1
@@ -729,36 +738,57 @@ class AgentSentinel:
         threat_type: Optional[ThreatType] = None,
         severity: Optional[SeverityLevel] = None,
         limit: Optional[int] = None,
+        include_all_agents: bool = False,
     ) -> List[SecurityEvent]:
         """
         Get security events with optional filtering.
+        
+        This method retrieves events from the global registry. By default, it gets
+        events for this specific agent, but can optionally get events from all agents.
         
         Args:
             threat_type: Filter by threat type
             severity: Filter by severity
             limit: Maximum number of events to return
+            include_all_agents: If True, get events from all agents (useful when decorators use different agent IDs)
             
         Returns:
-            List of matching security events
+            List of matching security events from monitoring components
         """
-        with self.event_lock:
-            events = self.events.copy()
-        
-        # Apply filters
-        if threat_type:
-            events = [e for e in events if e.threat_type == threat_type]
-        
-        if severity:
-            events = [e for e in events if e.severity == severity]
-        
-        # Sort by timestamp (newest first)
-        events.sort(key=lambda e: e.timestamp, reverse=True)
-        
-        # Apply limit
-        if limit:
-            events = events[:limit]
-        
-        return events
+        if include_all_agents:
+            # Get events from all agents (useful for decorator compatibility)
+            return self.global_registry.get_events(
+                agent_id=None,  # None means all agents
+                threat_type=threat_type,
+                severity=severity,
+                limit=limit
+            )
+        else:
+            # Get events from this specific agent
+            events = self.global_registry.get_events(
+                agent_id=self.agent_id,
+                threat_type=threat_type,
+                severity=severity,
+                limit=limit
+            )
+            
+            # FALLBACK: If no events found for this agent, try getting from all agents
+            # This helps with the decorator agent ID mismatch issue
+            if len(events) == 0:
+                all_events = self.global_registry.get_events(
+                    agent_id=None,
+                    threat_type=threat_type,
+                    severity=severity,
+                    limit=limit
+                )
+                if len(all_events) > 0:
+                    self.logger.warning(
+                        f"No events found for agent '{self.agent_id}', but found {len(all_events)} events from other agents. "
+                        f"Consider using include_all_agents=True or ensuring decorator agent IDs match."
+                    )
+                return all_events
+            
+            return events
     
     def get_metrics(self) -> Dict[str, Any]:
         """

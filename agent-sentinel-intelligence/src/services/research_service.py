@@ -9,7 +9,7 @@ import logging
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
 
-from ..models.config import ResearchConfig
+from models.config import ResearchConfig
 
 logger = logging.getLogger(__name__)
 

@@ -5,6 +5,30 @@ All notable changes to Sentinel will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2025-07-13
+
+### Fixed
+- **CRITICAL**: Fixed event aggregation bug where AgentWrapper instances created by decorators (@monitor, @sentinel) were not sharing events with the main AgentSentinel instance
+- **CRITICAL**: Fixed agent ID mismatch issue where get_events() couldn't retrieve events from decorators due to different agent ID generation patterns
+- **CRITICAL**: Events from @monitor and @sentinel decorators are now properly collected and retrievable via AgentSentinel.get_events()
+
+### Added
+- **Global Event Registry**: New centralized event collection system that ensures all security events are aggregated across all AgentWrapper instances
+- **Automatic Event Fallback**: AgentSentinel.get_events() now automatically searches all agents if no events found for specific agent ID
+- **Multiple Event Retrieval Methods**: Three ways to retrieve events - automatic fallback, explicit include_all_agents=True flag, or get_all_events() convenience function
+- **Enhanced User Experience**: Decorators now work correctly with expected user workflow out of the box
+
+### Enhanced
+- **Production Readiness**: All decorators (@monitor, @sentinel, @monitor_mcp) now work correctly with proper event aggregation
+- **Thread Safety**: Global event registry is thread-safe for concurrent operations
+- **Memory Management**: Proper cleanup of events to prevent memory leaks
+- **Error Handling**: Improved error handling in event collection and retrieval
+
+### Changed
+- **Breaking**: Updated event collection architecture to use centralized registry instead of isolated instances
+- **Backward Compatible**: Existing code continues to work with improved functionality
+- **API Enhancement**: get_events() now has automatic fallback behavior for better user experience
+
 ## [0.1.8] - 2025-07-13
 
 ### Added

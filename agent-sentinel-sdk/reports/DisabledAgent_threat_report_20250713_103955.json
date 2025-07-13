@@ -1,0 +1,44 @@
+{
+  "agent_id": "DisabledAgent",
+  "report_id": "threat_report_DisabledAgent_20250713_103955",
+  "generated_at": "2025-07-13 17:39:55.298479+00:00",
+  "time_range": {
+    "start": "2025-07-13 17:39:55.298470+00:00",
+    "end": "2025-07-13 17:39:55.298470+00:00"
+  },
+  "threat_summary": {
+    "total_threats": 0,
+    "threat_level": "LOW",
+    "most_common_threat": null,
+    "highest_severity": null,
+    "time_distribution": {}
+  },
+  "security_events": [],
+  "risk_assessment": {
+    "overall_risk_score": 0.0,
+    "risk_level": "LOW",
+    "risk_factors": [],
+    "trend_analysis": "STABLE"
+  },
+  "threat_analysis": {
+    "threat_patterns": {},
+    "attack_vectors": {},
+    "vulnerability_analysis": {},
+    "threat_intelligence": {}
+  },
+  "recommendations": [
+    "No threats detected. Continue monitoring for potential security issues."
+  ],
+  "compliance_check": {
+    "overall_compliance": "COMPLIANT",
+    "standards": {
+      "data_protection": "COMPLIANT",
+      "access_control": "COMPLIANT",
+      "audit_logging": "COMPLIANT",
+      "incident_response": "COMPLIANT"
+    },
+    "violations": [],
+    "recommendations": []
+  },
+  "executive_summary": "Security monitoring for agent 'DisabledAgent' shows no threats detected. The system is operating securely with low risk levels."
+}

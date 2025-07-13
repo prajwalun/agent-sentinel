@@ -1,0 +1,49 @@
+{
+    "name": "BlueGuard Security Agent",
+    "description": "Advanced security monitoring and threat detection agent for A2A communication systems",
+    "url": "http://localhost:10105/",
+    "provider": "BlueGuard Security",
+    "version": "1.0.0",
+    "documentationUrl": "https://github.com/a2aproject/a2a-samples",
+    "capabilities": {
+        "streaming": "True",
+        "pushNotifications": "True",
+        "stateTransitionHistory": "True"
+    },
+    "authentication": {
+        "credentials": null,
+        "schemes": [
+            "public"
+        ]
+    },
+    "defaultInputModes": [
+        "text",
+        "text/plain"
+    ],
+    "defaultOutputModes": [
+        "text",
+        "text/plain"
+    ],
+    "skills": [
+        {
+            "id": "security_monitoring",
+            "name": "Security Monitoring",
+            "description": "Monitors A2A communications for security threats and generates comprehensive reports",
+            "tags": [
+                "security",
+                "monitoring",
+                "threat_detection",
+                "analysis",
+                "reporting",
+                "blueguard"
+            ],
+            "examples": [
+                "Analyze communication logs for threats",
+                "Generate security report for recent interactions",
+                "Monitor agent-to-agent communications"
+            ],
+            "inputModes": null,
+            "outputModes": null
+        }
+    ]
+} 

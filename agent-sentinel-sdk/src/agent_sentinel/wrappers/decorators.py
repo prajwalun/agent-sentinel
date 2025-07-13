@@ -13,12 +13,25 @@ from .agent_wrapper import AgentWrapper
 from ..logging.structured_logger import SecurityLogger
 
 
-def sentinel(cls):
+def sentinel(
+    cls,
+    enable_separate_logs: bool = True,
+    enable_threat_reports: bool = True,
+    log_format: str = "json",
+    report_format: str = "json"
+):
     """
     Simple decorator to monitor an entire agent class
     
     This decorator automatically wraps all public methods of a class
     with security monitoring.
+    
+    Args:
+        cls: The class to monitor
+        enable_separate_logs: Enable separate log generation
+        enable_threat_reports: Enable threat report generation
+        log_format: Log format ("json", "text", "csv")
+        report_format: Report format ("json", "html", "pdf")
     
     Usage:
         @sentinel
@@ -32,7 +45,11 @@ def sentinel(cls):
         enable_input_validation=True,
         strict_validation=False,
         enable_behavior_analysis=True,
-        enable_performance_monitoring=True
+        enable_performance_monitoring=True,
+        enable_separate_logs=enable_separate_logs,
+        enable_threat_reports=enable_threat_reports,
+        log_format=log_format,
+        report_format=report_format
     )
     
     # Store original methods
@@ -52,10 +69,6 @@ def sentinel(cls):
     # Add wrapper instance to class
     setattr(cls, '_agent_wrapper', wrapper_instance)
     setattr(cls, '_original_methods', original_methods)
-    
-    # Add utility methods to class
-    setattr(cls, 'get_security_stats', lambda self: wrapper_instance.get_agent_stats())
-    setattr(cls, 'get_session_info', lambda self, session_id: wrapper_instance.get_session_info(session_id))
     
     return cls
 

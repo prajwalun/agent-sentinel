@@ -12,10 +12,10 @@ try:
 except ImportError:
     from pydantic.v1 import BaseModel, Field
 from langchain_core.messages import HumanMessage
-from ..models.state import AgentState
+from models.state import AgentState
 
-from ..services.llm_service import LLMService
-from ..services.tracing_service import TracingService
+from services.llm_service import LLMService
+from services.tracing_service import TracingService
 
 logger = logging.getLogger(__name__)
 

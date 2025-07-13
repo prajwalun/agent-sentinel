@@ -11,10 +11,10 @@ from typing import Dict, List, Any, Optional
 from datetime import datetime
 from langchain_core.messages import HumanMessage
 # Command import removed - using simpler approach
-from ..models.state import AgentState
+from models.state import AgentState
 
-from ..services.llm_service import LLMService
-from ..services.tracing_service import TracingService
+from services.llm_service import LLMService
+from services.tracing_service import TracingService
 
 logger = logging.getLogger(__name__)
 
@@ -152,7 +152,7 @@ class ReportGeneratorAgent:
             report = self._generate_comprehensive_report(workflow_content)
             
             # Validate report quality
-            if not report or len(report.strip()) < 100:
+            if not report or (isinstance(report, dict) and len(json.dumps(report)) < 100):
                 logger.error("❌ Generated report is too short or empty")
                 return self._fallback_to_validator("Report generation failed - insufficient content")
             
@@ -171,7 +171,7 @@ class ReportGeneratorAgent:
             
             return {
                 "messages": [
-                    HumanMessage(content=report, name="reporter")
+                    HumanMessage(content=json.dumps(report, indent=2), name="reporter")
                 ],
                 "next": "validator"
             }
@@ -210,49 +210,403 @@ class ReportGeneratorAgent:
         
         return "\n".join(content_sections)
     
-    def _generate_comprehensive_report(self, workflow_content: str) -> str:
+    def _generate_comprehensive_report(self, workflow_content: str) -> dict:
         """
-        Generate comprehensive security report.
+        Generate comprehensive security report as structured JSON.
         
         Args:
             workflow_content: Content from all workflow agents
-            
+        
         Returns:
-            Complete security report
+            Complete security report as dict
         """
-        # Create messages for LLM
+        import re, json
+        # UnifiedReport schema for the LLM
+        unified_report_schema = '''
+{
+  "agent_id": "...",
+  "start_time": "...",
+  "end_time": "...",
+  "session_logs": [ { "timestamp": "...", "level": "...", "agent_id": "...", "message": "..." } ],
+  "security_events": [ { "id": "...", "timestamp": "...", "threat_type": "...", "severity": "LOW|MEDIUM|HIGH|CRITICAL", "message": "...", "confidence": 0.0, "details": { } } ],
+  "performance_metrics": {
+    "total_function_calls": 0,
+    "average_response_time_ms": 0,
+    "memory_usage_mb": 0,
+    "cpu_usage_percent": 0,
+    "success_rate": 0,
+    "error_rate": 0,
+    "security_events_count": 0,
+    "session_duration_seconds": 0,
+    "throughput_requests_per_minute": 0
+  },
+  "threat_analysis": {
+    "total_threats": 0,
+    "threat_breakdown": { },
+    "severity_distribution": { },
+    "confidence_analysis": {
+      "average_confidence": 0,
+      "high_confidence_threats": 0,
+      "confidence_distribution": { }
+    },
+    "risk_score": 0,
+    "most_common_threat": "",
+    "highest_severity": ""
+  },
+  "recommendations": [ "..." ],
+  "summary": {
+    "status": "CLEAN|WARNING|CRITICAL",
+    "risk_score": 0,
+    "threats_detected": 0,
+    "performance_score": 0,
+    "key_insights": [ "..." ],
+    "next_actions": [ "..." ]
+  },
+  "report_id": "...",
+  "analysis_type": "...",
+  "workflow_execution_time": 0,
+  "intelligence_insights": {
+    "enhanced_analysis": "...",
+    "threat_intelligence": "...",
+    "recommendations": [ "..." ]
+  }
+}
+'''
+        # LLM prompt
+        sdk_sample_json = '''
+{
+  "agent_id": "test_agent",
+  "report_id": "threat_report_test_agent_20250713_121254",
+  "generated_at": "2025-07-13 19:12:54.984460+00:00",
+  "time_range": {
+    "start": "2025-07-13 19:12:54.984404+00:00",
+    "end": "2025-07-13 19:12:54.984404+00:00"
+  },
+  "threat_summary": {
+    "total_threats": 3,
+    "threat_level": "MEDIUM",
+    "threat_breakdown": {
+      "command_injection": 1,
+      "data_exfiltration": 1,
+      "privilege_escalation": 1
+    },
+    "severity_breakdown": {
+      "HIGH": 2,
+      "MEDIUM": 1
+    },
+    "most_common_threat": "command_injection",
+    "highest_severity": "HIGH",
+    "time_distribution": {
+      "19": 3
+    }
+  },
+  "security_events": [
+    "SecurityEvent(command_injection, HIGH, 0.95)",
+    "SecurityEvent(data_exfiltration, HIGH, 0.88)",
+    "SecurityEvent(privilege_escalation, MEDIUM, 0.75)"
+  ],
+  "risk_assessment": {
+    "overall_risk_score": 2.33,
+    "risk_level": "MEDIUM",
+    "risk_factors": [
+      "High confidence threat: command_injection",
+      "High severity data_exfiltration detected",
+      "High severity command_injection detected"
+    ],
+    "trend_analysis": "STABLE",
+    "risk_distribution": {
+      "low": 1,
+      "medium": 2,
+      "high": 0
+    }
+  },
+  "threat_analysis": {
+    "threat_patterns": {
+      "command_injection": {
+        "count": 1,
+        "severities": [
+          "HIGH"
+        ],
+        "confidences": [
+          0.95
+        ],
+        "timestamps": [
+          "2025-07-13T19:12:54.984349+00:00"
+        ]
+      },
+      "data_exfiltration": {
+        "count": 1,
+        "severities": [
+          "HIGH"
+        ],
+        "confidences": [
+          0.88
+        ],
+        "timestamps": [
+          "2025-07-13T19:12:54.984356+00:00"
+        ]
+      },
+      "privilege_escalation": {
+        "count": 1,
+        "severities": [
+          "MEDIUM"
+        ],
+        "confidences": [
+          0.75
+        ],
+        "timestamps": [
+          "2025-07-13T19:12:54.984359+00:00"
+        ]
+      }
+    },
+    "attack_vectors": {
+      "Command Injection": 1,
+      "Data Exfiltration": 1,
+      "Privilege Escalation": 1
+    },
+    "vulnerability_analysis": {
+      "Input Validation": 1,
+      "Data Access Control": 1,
+      "Permission Management": 1
+    },
+    "threat_intelligence": {
+      "known_threats": 2,
+      "novel_threats": 0,
+      "threat_sources": [
+        "Data Access Abuse",
+        "Malicious Input",
+        "Permission Exploitation"
+      ]
+    }
+  },
+  "recommendations": [
+    "Implement data loss prevention (DLP) controls and monitor data access patterns.",
+    "Strengthen input validation and implement command execution restrictions.",
+    "Review and restrict agent permissions. Implement principle of least privilege.",
+    "Regularly review and update security policies and monitoring rules.",
+    "Implement comprehensive logging and audit trails for all agent activities.",
+    "Consider integrating with external threat intelligence feeds for enhanced detection."
+  ],
+  "compliance_check": {
+    "overall_compliance": "COMPLIANT",
+    "standards": {
+      "data_protection": "NON_COMPLIANT",
+      "access_control": "NON_COMPLIANT",
+      "audit_logging": "COMPLIANT",
+      "incident_response": "COMPLIANT"
+    },
+    "violations": [
+      "Data exfiltration attempts detected",
+      "Privilege escalation attempts detected"
+    ],
+    "recommendations": [
+      "Implement immediate remediation for detected violations",
+      "Review and update security controls",
+      "Conduct security awareness training"
+    ]
+  },
+  "executive_summary": "Security monitoring for agent 'test_agent' detected 3 security events with an overall risk level of MEDIUM (score: 2.33). High severity events: 2. The system is operating within acceptable security parameters."
+}
+'''
+        unified_report_sample = '''
+{
+  "agent_id": "AGT-123456",
+  "start_time": "2025-07-13T10:00:00Z",
+  "end_time": "2025-07-13T10:30:00Z",
+  "session_logs": [
+    {"timestamp": "2025-07-13T10:01:00Z", "level": "INFO", "agent_id": "AGT-123456", "message": "Agent started monitoring."},
+    {"timestamp": "2025-07-13T10:05:00Z", "level": "WARNING", "agent_id": "AGT-123456", "message": "Suspicious file access detected."}
+  ],
+  "security_events": [
+    {"id": "SE-1", "timestamp": "2025-07-13T10:05:00Z", "threat_type": "File Access", "severity": "HIGH", "message": "Unauthorized file access attempt.", "confidence": 0.95, "details": {"file": "/etc/passwd"}},
+    {"id": "SE-2", "timestamp": "2025-07-13T10:10:00Z", "threat_type": "Network", "severity": "MEDIUM", "message": "Unusual outbound connection.", "confidence": 0.85, "details": {"ip": "192.168.1.100"}}
+  ],
+  "performance_metrics": {
+    "total_function_calls": 1200,
+    "average_response_time_ms": 120,
+    "memory_usage_mb": 256,
+    "cpu_usage_percent": 45,
+    "success_rate": 99.2,
+    "error_rate": 0.8,
+    "security_events_count": 2,
+    "session_duration_seconds": 1800,
+    "throughput_requests_per_minute": 40
+  },
+  "threat_analysis": {
+    "total_threats": 2,
+    "threat_breakdown": {"File Access": 1, "Network": 1},
+    "severity_distribution": {"HIGH": 1, "MEDIUM": 1, "LOW": 0, "CRITICAL": 0},
+    "confidence_analysis": {"average_confidence": 0.9, "high_confidence_threats": 2, "confidence_distribution": {"high": 2}},
+    "risk_score": 0.72,
+    "most_common_threat": "File Access",
+    "highest_severity": "HIGH"
+  },
+  "recommendations": [
+    "Implement stricter file access controls.",
+    "Monitor outbound network connections.",
+    "Review agent permissions."
+  ],
+  "summary": {
+    "status": "WARNING",
+    "risk_score": 0.72,
+    "threats_detected": 2,
+    "performance_score": 88,
+    "key_insights": [
+      "Multiple high-severity threats detected.",
+      "Agent attempted unauthorized file access.",
+      "Unusual network activity observed."
+    ],
+    "next_actions": [
+      "Isolate affected agent.",
+      "Conduct forensic analysis.",
+      "Update security policies."
+    ]
+  },
+  "report_id": "AS-INTEL-20250713-100000",
+  "analysis_type": "comprehensive",
+  "workflow_execution_time": 34,
+  "intelligence_insights": {
+    "enhanced_analysis": "## Executive Summary\nThe agent exhibited suspicious behavior, including unauthorized file access and unusual network activity.\n\n## Threat Analysis\n- File Access: High severity, targeted /etc/passwd.\n- Network: Medium severity, outbound connection to unknown IP.\n\n## Recommendations\n- Implement stricter file access controls.\n- Monitor outbound network connections.\n- Review agent permissions.",
+    "threat_intelligence": "### Threat Actor Profile\n- Likely motivated by data exfiltration.\n- Techniques align with MITRE ATT&CK T1005, T1041.\n\n### Vulnerability Analysis\n- Exploited weak file permissions.\n- Lack of network monitoring enabled outbound connection.",
+    "recommendations": [
+      "Isolate affected agent.",
+      "Conduct forensic analysis.",
+      "Update security policies."
+    ]
+  }
+}
+'''
+        user_prompt = f"""
+You are an enterprise security analyst specializing in Agent Sentinel security reports.
+
+**Your Task:** Analyze the provided Agent Sentinel security report (see the JSON input sample below) and generate a complete UnifiedReport JSON that accurately maps all fields from the input report.
+
+**Input Analysis:** The input contains an Agent Sentinel security report with:
+- agent_id, report_id, generated_at timestamps
+- threat_summary with total_threats, threat_level, breakdowns
+- security_events array with threat types, severities, confidences (as strings)
+- risk_assessment with risk scores and factors
+- threat_analysis with patterns, attack vectors, vulnerability analysis
+- recommendations array
+- compliance_check with standards and violations
+- executive_summary
+
+**Output Requirements:**
+- If the input is already a valid UnifiedReport JSON (matches the schema below), return it unchanged.
+- Otherwise, generate a complete JSON object matching the UnifiedReport schema.
+- Map security_events from the input to the UnifiedReport security_events format (convert string format to object format)
+- Convert threat_summary data to threat_analysis fields
+- Use risk_assessment data for summary fields
+- Include all recommendations from the input
+- Generate realistic session_logs based on the security events
+- Calculate performance_metrics based on the report data
+- Ensure all timestamps are in ISO format
+- Use the agent_id and report_id from the input
+- **All summary and intelligence_insights fields must be strings, not objects.**
+- **Do NOT output any objects for summaries or threat_intelligence—always output human-readable markdown or text.**
+- All fields must be present and non-null (empty arrays/objects are fine if no data).
+- Never return extra fields or change the schema.
+- Output only the JSON object, nothing else.
+
+**UnifiedReport schema:**
+{unified_report_schema}
+
+**Sample Input (Agent Sentinel SDK JSON):**
+{sdk_sample_json}
+
+**Sample Output (UnifiedReport):**
+{unified_report_sample}
+
+**Agent Sentinel Security Report Content:**
+{workflow_content}
+
+**IMPORTANT:** Respond ONLY with the valid JSON object. Do NOT include any text outside the JSON.
+"""
         messages = self.llm_service.create_messages(
             system_prompt=self.system_prompt,
-            user_prompt=f"""
-            Generate a comprehensive enterprise security intelligence report based on the following 
-            workflow analysis data:
-
-            {workflow_content}
-
-            Create a professional, structured report that includes all required sections:
-            1. Executive Summary
-            2. Threat Analysis  
-            3. Risk Assessment
-            4. Attack Patterns
-            5. Agent Behavior Analysis
-            6. Timeline Analysis
-            7. Threat Intelligence (if research was performed)
-            8. Recommendations (with priority levels)
-            9. Future Prevention
-
-            Ensure the report is well-structured, comprehensive, and provides clear, actionable 
-            recommendations for addressing the identified threats. Use proper markdown formatting 
-            and maintain professional language throughout.
-            """
+            user_prompt=user_prompt
         )
-        
-        # Generate report from LLM
-        report = self.llm_service.invoke(messages)
-        
-        # Enhance with structured formatting
-        enhanced_report = self._enhance_report_formatting(report, workflow_content)
-        
-        return enhanced_report
+        # LLM call
+        raw_output = self.llm_service.invoke(messages)
+        logger.info(f"Raw LLM output: {raw_output}")
+        # Extract JSON from LLM output
+        def extract_json_from_text(text):
+            match = re.search(r"\{[\s\S]*\}", text)
+            if match:
+                try:
+                    return json.loads(match.group(0))
+                except Exception:
+                    return None
+            return None
+        structured_report = extract_json_from_text(raw_output)
+        if structured_report:
+            # Normalize field names to match frontend schema
+            def normalize_report_fields(report):
+                # Top-level logs
+                if "[REDACTED]_logs" in report:
+                    report["session_logs"] = report.pop("[REDACTED]_logs")
+                # Performance metrics duration
+                if "performance_metrics" in report and "[REDACTED]_duration_seconds" in report["performance_metrics"]:
+                    report["performance_metrics"]["session_duration_seconds"] = report["performance_metrics"].pop("[REDACTED]_duration_seconds")
+                return report
+            structured_report = normalize_report_fields(structured_report)
+        if not structured_report:
+            logger.error("LLM did not return valid JSON. Returning fallback structure.")
+            return {"error": "LLM did not return valid JSON."}
+
+        # Fill missing fields with sensible defaults to match UnifiedReport
+        def fill_unified_report_fields(report):
+            # Top-level fields
+            report.setdefault("agent_id", "unknown")
+            report.setdefault("start_time", "")
+            report.setdefault("end_time", "")
+            report.setdefault("session_logs", [])
+            report.setdefault("security_events", [])
+            report.setdefault("performance_metrics", {
+                "total_function_calls": 0,
+                "average_response_time_ms": 0,
+                "memory_usage_mb": 0,
+                "cpu_usage_percent": 0,
+                "success_rate": 0,
+                "error_rate": 0,
+                "security_events_count": 0,
+                "session_duration_seconds": 0,
+                "throughput_requests_per_minute": 0
+            })
+            report.setdefault("threat_analysis", {
+                "total_threats": 0,
+                "threat_breakdown": {},
+                "severity_distribution": {},
+                "confidence_analysis": {
+                    "average_confidence": 0,
+                    "high_confidence_threats": 0,
+                    "confidence_distribution": {}
+                },
+                "risk_score": 0,
+                "most_common_threat": "",
+                "highest_severity": ""
+            })
+            report.setdefault("recommendations", [])
+            report.setdefault("summary", {
+                "status": "CLEAN",
+                "risk_score": 0,
+                "threats_detected": 0,
+                "performance_score": 0,
+                "key_insights": [],
+                "next_actions": []
+            })
+            report.setdefault("report_id", "")
+            report.setdefault("analysis_type", "")
+            report.setdefault("workflow_execution_time", 0)
+            report.setdefault("intelligence_insights", {
+                "enhanced_analysis": "",
+                "threat_intelligence": "",
+                "recommendations": []
+            })
+            return report
+
+        complete_report = fill_unified_report_fields(structured_report)
+        return complete_report
     
     def _enhance_report_formatting(self, report: str, workflow_content: str) -> str:
         """
@@ -375,9 +729,14 @@ class ReportGeneratorAgent:
     
     def _fallback_to_validator(self, message: str) -> Dict[str, Any]:
         """Fallback to validator with error message."""
+        # Ensure message is a string for HumanMessage
+        if not isinstance(message, str):
+            msg_str = "Error: LLM did not return valid JSON."
+        else:
+            msg_str = message
         return {
             "messages": [
-                HumanMessage(content=message, name="reporter")
+                HumanMessage(content="Error: LLM did not return valid JSON.", name="reporter")
             ],
             "next": "validator"
         } 
