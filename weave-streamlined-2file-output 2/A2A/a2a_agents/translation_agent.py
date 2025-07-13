@@ -107,6 +107,46 @@ class TranslationAgent(BaseAgent):
             'translated_text': translated_text
         }
     
+    async def execute_skill(self, skill_name: str, params: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute a specific skill - wrapper for invoke method to match expected interface."""
+        await self.initialize()
+        
+        if skill_name == "translate":
+            text = params.get("text", "")
+            source_lang = params.get("source_language", "en")
+            target_lang = params.get("target_language", "es")
+            
+            if not text:
+                return {
+                    'response_type': 'text',
+                    'is_task_complete': True,
+                    'require_user_input': False,
+                    'content': "Please provide text to translate and specify source and target languages",
+                    'error': True
+                }
+            
+            # Perform translation
+            translated_text = self._translate_text(text, source_lang, target_lang)
+            
+            return {
+                'response_type': 'data',
+                'is_task_complete': True,
+                'require_user_input': False,
+                'content': translated_text,
+                'original_text': text,
+                'source_language': source_lang,
+                'target_language': target_lang,
+                'translated_text': translated_text
+            }
+        else:
+            return {
+                'response_type': 'error',
+                'is_task_complete': False,
+                'require_user_input': True,
+                'content': f'Unknown skill: {skill_name}. Available skills: translate',
+                'error': True
+            }
+    
     async def stream(self, query: str, context_id: str, task_id: str):
         """Stream response from the translation agent."""
         await self.initialize()

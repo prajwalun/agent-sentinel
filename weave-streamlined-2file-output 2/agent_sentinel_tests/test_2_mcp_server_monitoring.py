@@ -71,19 +71,19 @@ class TestMCPServerMonitoring:
             # Test 3: Agent execution
             logger.info("⚙️ Testing agent execution...")
             execution_tests = [
-                ("math_agent", "add", {"a": 15, "b": 25}),
-                ("weather_agent", "get_weather", {"city": "London"}),
-                ("translation_agent", "translate", {"text": "Hello", "from_lang": "English", "to_lang": "Spanish"})
+                ("math_agent", "Calculate 15 + 25"),
+                ("weather_agent", "What's the weather in London?"),
+                ("translation_agent", "Translate 'Hello' from English to Spanish")
             ]
             
-            for agent_id, skill, params in execution_tests:
+            for agent_id, query in execution_tests:
                 try:
-                    result = await server.execute_agent(agent_id, skill, params)
-                    operations_results.append(f"Executed {agent_id}.{skill}: {result}")
-                    logger.info(f"✅ {agent_id}.{skill}: {result}")
+                    result = await server.invoke_agent(agent_id, query, "test_session")
+                    operations_results.append(f"Executed {agent_id}: {result}")
+                    logger.info(f"✅ {agent_id}: {result}")
                 except Exception as e:
-                    operations_results.append(f"Failed {agent_id}.{skill}: {e}")
-                    logger.error(f"❌ {agent_id}.{skill} failed: {e}")
+                    operations_results.append(f"Failed {agent_id}: {e}")
+                    logger.error(f"❌ {agent_id} failed: {e}")
             
             # Test 4: Agent card retrieval
             logger.info("📄 Testing agent card retrieval...")
@@ -126,7 +126,7 @@ class TestMCPServerMonitoring:
             
             for agent_id, skill, params in malicious_tests:
                 try:
-                    result = await server.execute_agent(agent_id, skill, params)
+                    result = await server.invoke_agent(agent_id, f"{skill} with params", "security_session")
                     security_test_results.append(f"Security test {agent_id}.{skill}: {result}")
                     logger.info(f"🔍 Security test {agent_id}.{skill}: {result}")
                 except Exception as e:

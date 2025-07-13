@@ -25,9 +25,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [mounted, setMounted] = useState(false)
 
   // Check for stored user on mount
   useEffect(() => {
+    setMounted(true)
     const storedUser = localStorage.getItem("auth_user")
     if (storedUser) {
       setUser(JSON.parse(storedUser))
@@ -48,9 +50,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error("Please enter a password")
       }
 
-      // Create user from email
+      // Create user from email - use email as ID to avoid hydration issues
+      const userId = btoa(email).replace(/[^a-zA-Z0-9]/g, '').substring(0, 12)
       const newUser: User = {
-        id: Date.now().toString(),
+        id: userId,
         email: email,
         fullName: email.split("@")[0],
         company: "Demo Company",
@@ -58,7 +61,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       setUser(newUser)
-      localStorage.setItem("auth_user", JSON.stringify(newUser))
+      if (mounted) {
+        localStorage.setItem("auth_user", JSON.stringify(newUser))
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed")
       throw err
@@ -69,7 +74,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = () => {
     setUser(null)
-    localStorage.removeItem("auth_user")
+    if (mounted) {
+      localStorage.removeItem("auth_user")
+    }
   }
 
   return (

@@ -14,14 +14,33 @@ interface ActivityEvent {
 }
 
 // Convert SecurityEvent to ActivityEvent format
-const convertSecurityEvent = (event: SecurityEvent): ActivityEvent => ({
-  id: event.id,
-  timestamp: new Date(event.timestamp).toLocaleString(),
-  type: "security",
-  severity: event.severity,
-  message: `${event.threat_type} detected in Agent "${event.agent_id}"`,
-  agentId: event.agent_id,
-})
+const convertSecurityEvent = (event: SecurityEvent): ActivityEvent => {
+  // Use a consistent date format to avoid hydration issues
+  const date = new Date(event.timestamp)
+  const now = new Date()
+  const diffMs = now.getTime() - date.getTime()
+  const diffMins = Math.floor(diffMs / (1000 * 60))
+  
+  let timeAgo: string
+  if (diffMins < 1) {
+    timeAgo = "Just now"
+  } else if (diffMins < 60) {
+    timeAgo = `${diffMins} min ago`
+  } else if (diffMins < 1440) {
+    timeAgo = `${Math.floor(diffMins / 60)} hr ago`
+  } else {
+    timeAgo = `${Math.floor(diffMins / 1440)} days ago`
+  }
+
+  return {
+    id: event.id,
+    timestamp: timeAgo,
+    type: "security",
+    severity: event.severity,
+    message: `${event.threat_type} detected in Agent "${event.agent_id}"`,
+    agentId: event.agent_id,
+  }
+}
 
 function ActivityItem({ event }: { event: ActivityEvent }) {
   const getIcon = () => {
@@ -53,8 +72,15 @@ function ActivityItem({ event }: { event: ActivityEvent }) {
 export function RecentActivity() {
   const [events, setEvents] = useState<ActivityEvent[]>([])
   const [loading, setLoading] = useState(true)
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    if (!mounted) return
+
     const fetchRecentEvents = async () => {
       try {
         const securityEvents = await apiService.getSecurityEvents()
@@ -70,7 +96,26 @@ export function RecentActivity() {
     }
 
     fetchRecentEvents()
-  }, [])
+  }, [mounted])
+
+  if (!mounted) {
+    return (
+      <div className="card-dark rounded-lg p-6">
+        <h2 className="text-xl font-semibold text-white mb-4">Recent Activity</h2>
+        <div className="space-y-3">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="flex items-start space-x-3 py-3">
+              <div className="h-5 w-5 bg-gray-600 animate-pulse rounded-full"></div>
+              <div className="flex-1 min-w-0">
+                <div className="h-4 bg-gray-600 animate-pulse rounded mb-2"></div>
+                <div className="h-3 bg-gray-700 animate-pulse rounded w-20"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
 
   if (loading) {
     return (

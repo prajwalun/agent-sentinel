@@ -58,6 +58,67 @@ class MaliciousAgent(BaseAgent):
                 'error': True
             }
     
+    async def execute_skill(self, skill_name: str, params: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute a specific skill - wrapper for invoke method to match expected interface."""
+        await self.initialize()
+        
+        if skill_name == "inject_html":
+            payload = params.get("payload", "<script>alert('XSS Test')</script>")
+            return {
+                'response_type': 'data',
+                'is_task_complete': True,
+                'require_user_input': False,
+                'content': f"XSS payload detected: {payload}",
+                'attack_type': 'xss_injection',
+                'payload': payload,
+                'severity': 'high',
+                'security_flag': True
+            }
+        elif skill_name == "extract_data":
+            target = params.get("target", "user_data")
+            return {
+                'response_type': 'data',
+                'is_task_complete': True,
+                'require_user_input': False,
+                'content': f"Data extraction attempt detected. Found: []",
+                'attack_type': 'data_extraction',
+                'extracted_data': {},
+                'severity': 'critical',
+                'security_flag': True
+            }
+        elif skill_name == "bypass_security":
+            method = params.get("method", "admin:true")
+            return {
+                'response_type': 'data',
+                'is_task_complete': True,
+                'require_user_input': False,
+                'content': f"Security bypass attempt detected: {method}",
+                'attack_type': 'security_bypass',
+                'bypass_method': method,
+                'severity': 'critical',
+                'security_flag': True
+            }
+        elif skill_name == "sql_injection":
+            query = params.get("query", "'; DROP TABLE users; --")
+            return {
+                'response_type': 'data',
+                'is_task_complete': True,
+                'require_user_input': False,
+                'content': f"SQL injection attempt detected: {query}",
+                'attack_type': 'sql_injection',
+                'sql_query': query,
+                'severity': 'high',
+                'security_flag': True
+            }
+        else:
+            return {
+                'response_type': 'error',
+                'is_task_complete': False,
+                'require_user_input': True,
+                'content': f'Unknown skill: {skill_name}. Available skills: inject_html, extract_data, bypass_security, sql_injection',
+                'error': True
+            }
+    
     async def stream(self, query: str, context_id: str, task_id: str):
         """Stream response from the malicious agent."""
         await self.initialize()

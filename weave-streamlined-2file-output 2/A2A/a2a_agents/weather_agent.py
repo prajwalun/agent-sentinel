@@ -92,6 +92,52 @@ class WeatherAgent(BaseAgent):
                 'note': 'Mock data generated'
             }
     
+    async def execute_skill(self, skill_name: str, params: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute a specific skill - wrapper for invoke method to match expected interface."""
+        await self.initialize()
+        
+        if skill_name == "get_weather" and "city" in params:
+            city = params["city"]
+            
+            # Get weather data for the city
+            if city in self._weather_data:
+                weather = self._weather_data[city]
+                response = f"Weather in {city}: {weather['temperature']}°C, {weather['condition']}, Humidity: {weather['humidity']}%"
+                
+                return {
+                    'response_type': 'data',
+                    'is_task_complete': True,
+                    'require_user_input': False,
+                    'content': response,
+                    'city': city,
+                    'weather_data': weather
+                }
+            else:
+                # Generate mock weather data for unknown cities
+                mock_weather = {
+                    "temperature": random.randint(10, 35),
+                    "condition": random.choice(["Sunny", "Cloudy", "Rainy", "Partly Cloudy", "Clear"]),
+                    "humidity": random.randint(40, 90)
+                }
+                response = f"Weather in {city}: {mock_weather['temperature']}°C, {mock_weather['condition']}, Humidity: {mock_weather['humidity']}%"
+                
+                return {
+                    'response_type': 'data',
+                    'is_task_complete': True,
+                    'require_user_input': False,
+                    'content': response,
+                    'city': city,
+                    'weather_data': mock_weather
+                }
+        else:
+            return {
+                'response_type': 'error',
+                'is_task_complete': False,
+                'require_user_input': True,
+                'content': f'Unknown skill: {skill_name}. Available skills: get_weather',
+                'error': True
+            }
+    
     async def stream(self, query: str, context_id: str, task_id: str):
         """Stream response from the weather agent."""
         await self.initialize()

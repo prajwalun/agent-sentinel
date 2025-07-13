@@ -214,6 +214,35 @@ class A2AMCPServer:
             logger.error(f"Error listing agents: {e}")
             raise
     
+    async def execute_agent(self, agent_name: str, skill_name: str, params: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute a specific agent skill - wrapper for invoke_agent method to match expected interface."""
+        if agent_name not in self.a2a_server.agents:
+            return {
+                'response_type': 'error',
+                'is_task_complete': False,
+                'require_user_input': True,
+                'content': f'Agent {agent_name} not found',
+                'error': 'true'
+            }
+        
+        agent = self.a2a_server.agents[agent_name]
+        
+        # Use the agent's execute_skill method if available, otherwise fall back to invoke
+        if hasattr(agent, 'execute_skill'):
+            return await agent.execute_skill(skill_name, params)
+        else:
+            # Fallback to invoke method with a constructed query
+            if skill_name == "add" and "a" in params and "b" in params:
+                query = f"add {params['a']} and {params['b']}"
+            elif skill_name == "get_weather" and "city" in params:
+                query = f"get weather for {params['city']}"
+            elif skill_name == "translate" and "text" in params:
+                query = f"translate {params['text']}"
+            else:
+                query = f"{skill_name} {params}"
+            
+            return await agent.invoke(query, "execute_agent_session")
+    
     async def run_agent_workflow(self):
         """Run agent workflow using A2A protocol"""
         logger.info("Starting A2A agent workflow...")

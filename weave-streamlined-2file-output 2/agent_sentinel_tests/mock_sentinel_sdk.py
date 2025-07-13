@@ -189,7 +189,10 @@ class MockSentinelDecorator:
             "prompt_injection": ["ignore all previous", "system:", "admin:"]
         }
         
-        content = f"{interaction.get('args', '')} {interaction.get('kwargs', '')} {result}".lower()
+        args_str = str(interaction.get('args', ''))
+        kwargs_str = str(interaction.get('kwargs', ''))
+        result_str = str(result)
+        content = f"{args_str} {kwargs_str} {result_str}".lower()
         
         for threat_type, patterns in security_patterns.items():
             for pattern in patterns:

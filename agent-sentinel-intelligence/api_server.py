@@ -394,41 +394,68 @@ def _extract_security_events(report_content: str) -> List[SecurityEvent]:
     
     # Parse the report content to find security events
     lines = report_content.split('\n')
-    current_event = None
+    event_count = 0
     
     for i, line in enumerate(lines):
-        if "FINDING #" in line:
-            if current_event:
-                events.append(current_event)
-            
-            # Extract event details
-            event_id = f"event_{len(events) + 1}"
+        line = line.strip()
+        
+        # Look for various security event patterns
+        if any(keyword in line.lower() for keyword in [
+            "security event:", "threat detected", "vulnerability", "attack", 
+            "injection", "xss", "sql injection", "command injection", 
+            "data exfiltration", "privilege escalation", "malware", 
+            "suspicious activity", "breach", "intrusion"
+        ]):
+            event_count += 1
+            event_id = f"event_{event_count}"
             timestamp = datetime.utcnow().isoformat()
             
-            # Look for threat type and severity in next lines
-            threat_type = "Unknown"
-            severity = "MEDIUM"
-            message = "Security event detected"
+            # Extract threat type
+            threat_type = "unknown"
+            if "command injection" in line.lower():
+                threat_type = "command_injection"
+            elif "sql injection" in line.lower():
+                threat_type = "sql_injection"
+            elif "xss" in line.lower():
+                threat_type = "xss"
+            elif "data exfiltration" in line.lower():
+                threat_type = "data_exfiltration"
+            elif "privilege escalation" in line.lower():
+                threat_type = "privilege_escalation"
+            elif "malware" in line.lower():
+                threat_type = "malware"
+            else:
+                threat_type = "security_violation"
             
-            for j in range(i + 1, min(i + 10, len(lines))):
-                if "Threats:" in lines[j]:
-                    threat_type = lines[j].split("Threats:")[1].strip()
-                    severity = "HIGH" if "XSS" in threat_type or "injection" in threat_type else "MEDIUM"
-                    message = f"Threat detected: {threat_type}"
-                    break
+            # Extract severity
+            severity = "MEDIUM"  # default
+            if "high" in line.lower() or "critical" in line.lower():
+                severity = "HIGH"
+            elif "medium" in line.lower():
+                severity = "MEDIUM"
+            elif "low" in line.lower():
+                severity = "LOW"
             
-            current_event = SecurityEvent(
+            # Extract confidence if available
+            confidence = 0.75  # default
+            import re
+            conf_match = re.search(r'confidence[:\s]*(\d+\.?\d*)', line.lower())
+            if conf_match:
+                confidence = float(conf_match.group(1))
+                if confidence > 1.0:
+                    confidence = confidence / 100.0  # Convert percentage to decimal
+            
+            # Create security event
+            event = SecurityEvent(
                 id=event_id,
                 timestamp=timestamp,
                 threat_type=threat_type,
                 severity=severity,
-                message=message,
-                confidence=0.85,
-                details={"source": "Security Report"}
+                message=line,
+                confidence=confidence,
+                details={"source": "Security Report", "line_number": i + 1}
             )
-    
-    if current_event:
-        events.append(current_event)
+            events.append(event)
     
     return events
 
