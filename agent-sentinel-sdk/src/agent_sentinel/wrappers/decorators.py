@@ -80,35 +80,6 @@ def monitor(func):
     return wrapper_instance.monitor()(func)
 
 
-def secure_function(func):
-    """
-    Simple decorator to secure standalone functions
-    
-    This decorator can be used to secure standalone functions.
-    
-    Usage:
-        @secure_function
-        def process_data(data: str) -> str:
-            return data.upper()
-    """
-    # Create a wrapper instance for this function
-    wrapper_instance = AgentWrapper(
-        agent_id=f"{getattr(func, '__module__', 'unknown')}.{getattr(func, '__name__', 'unknown')}"
-    )
-    
-    @functools.wraps(func)
-    def wrapper(*args, **kwargs):
-        # Use the wrapper's secure method functionality
-        secured_func = wrapper_instance.monitor()(func)
-        return secured_func(*args, **kwargs)
-    
-    # Add wrapper instance to function for accessing stats
-    setattr(wrapper, '_agent_wrapper', wrapper_instance)
-    setattr(wrapper, 'get_security_stats', lambda: wrapper_instance.get_agent_stats())
-    
-    return wrapper
-
-
 @contextmanager
 def monitor_agent_session(
     agent_id: str,

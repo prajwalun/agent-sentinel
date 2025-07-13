@@ -6,9 +6,8 @@ behavioral analysis, and enterprise-grade reporting capabilities.
 """
 
 from .core.sentinel import AgentSentinel
-from .wrappers.decorators import sentinel, monitor, secure_function
-from .wrappers.mcp_wrapper import secure_mcp_tool, secure_mcp_method
-from .wrappers.communication_wrapper import secure_communication
+from .wrappers.decorators import sentinel, monitor
+from .wrappers.mcp_wrapper import secure_mcp_method
 
 # Main class with alias for better UX
 Sentinel = AgentSentinel
@@ -23,10 +22,6 @@ __all__ = [
     "sentinel",
     "monitor", 
     "monitor_mcp",  # Nice alias for MCP monitoring
-    "secure_function",
-    "secure_mcp_tool",
-    "secure_mcp_method",
-    "secure_communication",
 ]
 
 # Version

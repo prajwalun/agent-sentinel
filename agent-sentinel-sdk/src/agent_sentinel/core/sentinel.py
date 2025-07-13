@@ -141,7 +141,13 @@ class AgentSentinel:
                     config={"update_interval": 3600, "max_indicators": 10000},
                     logger=threat_logger
                 )
-                asyncio.create_task(self.threat_intelligence.start())
+                # Start threat intelligence in background if we're in an async context
+                try:
+                    loop = asyncio.get_running_loop()
+                    loop.create_task(self.threat_intelligence.start())
+                except RuntimeError:
+                    # No running event loop, start it when needed
+                    pass
             except Exception as e:
                 self.logger.warning(f"Failed to initialize threat intelligence: {e}")
         

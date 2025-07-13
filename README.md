@@ -20,12 +20,20 @@ The core Python SDK that provides security monitoring and threat detection for A
 
 **Quick Start:**
 ```python
-from agent_sentinel import monitor, monitor_mcp
+from agent_sentinel import monitor, sentinel, monitor_mcp
 
+# Monitor individual functions
 @monitor
 def process_data(data: str) -> str:
     return data.upper()
 
+# Monitor entire classes
+@sentinel
+class MyAgent:
+    def analyze_data(self, data):
+        return data.upper()
+
+# Monitor MCP tools
 @monitor_mcp()
 def search_database(query: str) -> str:
     return f"Searching for: {query}"
@@ -52,11 +60,25 @@ A modern, enterprise-grade web dashboard for visualizing monitoring data and sec
 
 2. **Add monitoring to your agents:**
    ```python
-   from agent_sentinel import monitor, monitor_mcp
+   from agent_sentinel import monitor, sentinel, monitor_mcp
    
+   # Monitor individual functions
    @monitor
    def your_agent_function():
        # Your agent code here
+       pass
+   
+   # Monitor entire classes
+   @sentinel
+   class YourAgent:
+       def process_data(self, data):
+           # Your agent code here
+           pass
+   
+   # Monitor MCP tools
+   @monitor_mcp()
+   def your_mcp_tool():
+       # Your MCP tool code here
        pass
    ```
 

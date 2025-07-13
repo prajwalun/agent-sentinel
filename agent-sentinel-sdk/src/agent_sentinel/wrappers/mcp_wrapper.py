@@ -707,9 +707,14 @@ def secure_mcp_method(
             pass
     """
     def decorator(func):
+        # Robustly extract module and name for agent_id
+        func_module = getattr(func, "__module__", None) or "unknown_module"
+        func_name = getattr(func, "__name__", None) or "unknown_function"
+        safe_agent_id = agent_id or f"{func_module}.{func_name}"
+        
         # Create a wrapper instance for this method
         wrapper_instance = MCPWrapper(
-            agent_id=agent_id or f"{func.__module__}.{func.__name__}",
+            agent_id=safe_agent_id,
             logger=logger,
             enable_input_validation=validate_inputs,
             enable_output_validation=validate_outputs
