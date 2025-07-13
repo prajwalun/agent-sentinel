@@ -1,0 +1,81 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
+    --card: 0 0% 10.2%;
+    --card-foreground: 0 0% 100%;
+    --popover: 0 0% 10.2%;
+    --popover-foreground: 0 0% 100%;
+    --primary: 0 84% 60%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 17.6%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 0 0% 17.6%;
+    --muted-foreground: 0 0% 42%;
+    --accent: 0 84% 60%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 17.6%;
+    --input: 0 0% 17.6%;
+    --ring: 0 84% 60%;
+    --radius: 0.5rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    background: #000000;
+    color: #ffffff;
+  }
+}
+
+.gradient-bg {
+  background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+}
+
+.card-dark {
+  background: #1a1a1a;
+  border: 1px solid #2d2d2d;
+}
+
+.status-clean {
+  @apply text-green-600;
+}
+
+.status-warning {
+  @apply text-orange-600;
+}
+
+.status-critical {
+  @apply text-red-600;
+}
+
+.btn-primary {
+  background: #dc2626;
+  color: #ffffff;
+  border: none;
+}
+
+.btn-primary:hover {
+  background: #b91c1c;
+}
+
+.input-dark {
+  background: #000000;
+  border: 1px solid #2d2d2d;
+  color: #ffffff;
+}
+
+.input-dark:focus {
+  border-color: #dc2626;
+  box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.2);
+}

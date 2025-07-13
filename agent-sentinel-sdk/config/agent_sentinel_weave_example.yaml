@@ -1,0 +1,104 @@
+# Agent Sentinel Configuration with Weave Integration
+# Enterprise-grade configuration example
+
+agent_sentinel:
+  # Basic configuration
+  agent_id: "production-agent-001"
+  environment: "production"
+  
+  # Detection configuration
+  detection:
+    enabled: true
+    confidence_threshold: 0.8
+    rules:
+      sql_injection:
+        enabled: true
+        severity: "HIGH"
+      xss_attack:
+        enabled: true
+        severity: "HIGH"
+      command_injection:
+        enabled: true
+        severity: "CRITICAL"
+      prompt_injection:
+        enabled: true
+        severity: "HIGH"
+    rate_limits:
+      default_limit: 1000
+      default_window: 60
+  
+  # Weave LLM Tracing Configuration
+  weave:
+    # Enable Weave tracing
+    enabled: true
+    
+    # Project configuration
+    project_name: "agent-sentinel-production"
+    # api_key: "your-weave-api-key"  # Set via AGENT_SENTINEL_WEAVE_API_KEY env var
+    # base_url: "https://api.wandb.ai"  # Optional custom endpoint
+    
+    # Tracing configuration
+    trace_llm_calls: true              # Trace all LLM API calls
+    trace_intelligence_ops: true       # Trace intelligence gathering operations
+    trace_report_generation: true      # Trace report generation
+    
+    # Performance configuration
+    max_trace_size: 10485760          # 10MB max trace size
+    trace_timeout: 30.0               # 30 second timeout
+    batch_size: 100                   # Batch size for trace uploads
+    flush_interval: 5.0               # Flush interval in seconds
+    
+    # Retry configuration
+    max_retries: 3                    # Maximum retry attempts
+    retry_delay: 1.0                  # Delay between retries
+    
+    # Sampling configuration
+    sampling_rate: 1.0                # 100% sampling (adjust for production)
+  
+  # Logging configuration
+  logging:
+    level: "INFO"
+    format: "json"
+    file: "logs/agent_sentinel.log"
+    max_size: 104857600  # 100MB
+    backup_count: 5
+  
+  # Alert configuration
+  alerts:
+    enabled: true
+    webhook_url: "https://your-webhook-endpoint.com/alerts"
+    email:
+      enabled: false
+    slack:
+      enabled: false
+  
+  # Dashboard configuration
+  dashboard:
+    enabled: true
+    host: "0.0.0.0"
+    port: 8000
+    debug: false
+
+# Threat Intelligence Configuration
+threat_intelligence:
+  enabled: true
+  auto_enrich: true
+  min_severity_for_enrichment: "MEDIUM"
+  enrichment_timeout: 15.0
+  max_concurrent_enrichments: 3
+  
+  # LLM orchestration
+  enable_llm_orchestration: true
+  llm_model: "gpt-4o-mini"
+  llm_timeout: 30.0
+  
+  # OpenAI configuration
+  # openai_api_key: "your-openai-key"  # Set via OPENAI_API_KEY env var
+
+# Environment Variables Reference:
+# AGENT_SENTINEL_WEAVE_ENABLED=true
+# AGENT_SENTINEL_WEAVE_PROJECT=agent-sentinel-production
+# AGENT_SENTINEL_WEAVE_API_KEY=your-weave-api-key
+# AGENT_SENTINEL_WEAVE_SAMPLING_RATE=1.0
+# OPENAI_API_KEY=your-openai-key
+# EXA_API_KEY=your-exa-key 

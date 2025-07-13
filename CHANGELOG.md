@@ -5,6 +5,29 @@ All notable changes to Sentinel will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.8] - 2025-07-13
+
+### Added
+- **Unified Reporting System**: New comprehensive reporting that combines logs, security events, and analysis into a single file
+- **Report Generator**: `UnifiedReportGenerator` class for creating detailed monitoring reports
+- **CLI Report Command**: `agent-sentinel report` command for generating unified reports
+- **Programmatic Reporting**: `generate_unified_report()` and `get_unified_report_path()` methods
+- **Executive Summary**: Status indicators (CLEAN/WARNING/CRITICAL) with risk scoring
+- **Threat Analysis**: Detailed breakdown of detected threats by type and severity
+- **Actionable Recommendations**: Smart security advice based on detected threats
+- **Performance Metrics**: Comprehensive monitoring statistics and insights
+
+### Enhanced
+- **User Experience**: Single file output eliminates need to manage separate logs and reports
+- **Report Quality**: Professional, enterprise-grade reporting with rich insights
+- **CLI Integration**: Seamless command-line reporting with custom output options
+- **Documentation**: Updated README with unified reporting examples and usage
+
+### Changed
+- **Report Format**: JSON-based unified reports with structured metadata
+- **File Organization**: Reports automatically saved to `logs/` directory with timestamps
+- **Content Structure**: Organized sections for summary, analysis, recommendations, and logs
+
 ## [0.1.4] - 2024-01-16
 
 ### Fixed
