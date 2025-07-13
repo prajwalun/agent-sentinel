@@ -35,8 +35,9 @@ export function ExecutiveSummary({ summary }: ExecutiveSummaryProps) {
   }
 
   const getRiskScoreColor = () => {
-    if (summary.risk_score < 20) return "bg-green-600"
-    if (summary.risk_score < 50) return "bg-orange-600"
+    if (summary.risk_score < 0.34) return "bg-green-600"
+    if (summary.risk_score < 0.67) return "bg-yellow-400"
+    if (summary.risk_score < 0.86) return "bg-orange-500"
     return "bg-red-600"
   }
 
@@ -58,10 +59,16 @@ export function ExecutiveSummary({ summary }: ExecutiveSummaryProps) {
           <div>
             <div className="flex items-center justify-between mb-2">
               <span className="text-white font-medium">Risk Score</span>
-              <span className="text-white font-bold">{summary.risk_score}/100</span>
+              <span className="text-white font-bold">
+                {summary.risk_score.toFixed(2)}/1
+                <span className="ml-2 text-gray-400 text-sm">({(summary.risk_score * 100).toFixed(0)}%)</span>
+              </span>
             </div>
             <div className="w-full bg-gray-700 rounded-full h-3">
-              <div className={`h-3 rounded-full ${getRiskScoreColor()}`} style={{ width: `${summary.risk_score}%` }} />
+              <div
+                className={`h-3 rounded-full ${getRiskScoreColor()}`}
+                style={{ width: `${summary.risk_score * 100}%` }}
+              />
             </div>
           </div>
 
