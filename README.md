@@ -6,22 +6,17 @@ Agent Sentinel provides comprehensive security monitoring, threat detection, and
 
 ## 🏗️ Project Structure
 
-This repository contains two main components:
+This repository contains three main components:
 
 ### 📦 [Agent Sentinel SDK](./agent-sentinel-sdk/)
 The core Python SDK that provides security monitoring and threat detection for AI agents.
 
-**Latest in v0.2.0 - CRITICAL BUG FIXES:**
-- 🔧 **FIXED**: Event aggregation bug - decorators now properly share events with main AgentSentinel instance
-- 🔧 **FIXED**: Agent ID mismatch - `get_events()` now automatically finds events from all decorators
-- ✅ **PRODUCTION READY**: All decorators working correctly with comprehensive event collection
-
-**Features:**
-- **3-line integration** with `@monitor` and `@monitor_mcp()` decorators
-- **Real-time threat detection** (SQL injection, XSS, code injection, etc.)
-- **Performance monitoring** with detailed metrics
-- **Unified reporting** - comprehensive reports in a single file
-- **Enterprise-grade security** with configurable detection rules
+**Latest in v0.4.0 - PRODUCTION READY:**
+- ✅ **Enterprise-grade security** with multi-layer threat detection
+- ✅ **3-line integration** with `@monitor` and `@sentinel` decorators
+- ✅ **Real-time threat detection** (SQL injection, XSS, code injection, etc.)
+- ✅ **Performance monitoring** with detailed metrics
+- ✅ **Unified reporting** - comprehensive reports in a single file
 
 **Quick Start:**
 ```python
@@ -44,6 +39,16 @@ def search_database(query: str) -> str:
     return f"Searching for: {query}"
 ```
 
+### 🧠 [Agent Sentinel Intelligence](./agent-sentinel-intelligence/)
+Multi-agent intelligence engine that analyzes security reports and generates actionable threat intelligence.
+
+**Features:**
+- **5-stage workflow** (Analyzer → Supervisor → Researcher → Reporter → Validator)
+- **OpenAI GPT-4o integration** for advanced threat analysis
+- **External threat intelligence** via Exa.ai research
+- **Weights & Biases tracing** for distributed monitoring
+- **RESTful API** for seamless integration
+
 ### 🎨 [Agent Sentinel Dashboard](./agent-sentinel-dashboard/)
 A modern, enterprise-grade web dashboard for visualizing monitoring data and security reports.
 
@@ -54,6 +59,9 @@ A modern, enterprise-grade web dashboard for visualizing monitoring data and sec
 - **Responsive design** for desktop and mobile
 - **Authentication** with Google OAuth and Supabase
 - **Export capabilities** (PDF, JSON)
+
+### 🎯 [Demo Examples](./demo/)
+Comprehensive demo agents and examples showcasing Agent Sentinel integration patterns.
 
 ## 🚀 Getting Started
 
@@ -95,6 +103,29 @@ A modern, enterprise-grade web dashboard for visualizing monitoring data and sec
    report_path = sentinel.generate_unified_report()
    ```
 
+### For Intelligence Engine Users
+1. **Navigate to the intelligence directory:**
+   ```bash
+   cd agent-sentinel-intelligence
+   ```
+
+2. **Install dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. **Set up environment variables:**
+   ```env
+   OPENAI_API_KEY=your_openai_api_key
+   EXA_API_KEY=your_exa_api_key
+   WANDB_API_KEY=your_wandb_api_key
+   ```
+
+4. **Run the intelligence engine:**
+   ```bash
+   uvicorn api_server:app --reload --host 0.0.0.0 --port 8001
+   ```
+
 ### For Dashboard Users
 1. **Navigate to the dashboard directory:**
    ```bash
@@ -110,6 +141,7 @@ A modern, enterprise-grade web dashboard for visualizing monitoring data and sec
    ```env
    NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+   NEXT_PUBLIC_API_URL=http://localhost:8001
    ```
 
 4. **Run the dashboard:**
@@ -203,7 +235,7 @@ security:
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see our [Contributing Guide](./CONTRIBUTING.md) for details.
+We welcome contributions! Please see our [Contributing Guide](./extra/CONTRIBUTING.md) for details.
 
 ### Development Setup
 1. **Clone the repository:**
@@ -218,7 +250,13 @@ We welcome contributions! Please see our [Contributing Guide](./CONTRIBUTING.md)
    pip install -e .
    ```
 
-3. **Set up dashboard development:**
+3. **Set up intelligence engine development:**
+   ```bash
+   cd agent-sentinel-intelligence
+   pip install -r requirements.txt
+   ```
+
+4. **Set up dashboard development:**
    ```bash
    cd agent-sentinel-dashboard
    npm install
@@ -227,10 +265,10 @@ We welcome contributions! Please see our [Contributing Guide](./CONTRIBUTING.md)
 ## 📄 Documentation
 
 - **[SDK Documentation](./agent-sentinel-sdk/README.md)** - Complete SDK guide
+- **[Intelligence Engine Documentation](./agent-sentinel-intelligence/README.md)** - Intelligence engine setup and usage
 - **[Dashboard Documentation](./agent-sentinel-dashboard/README.md)** - Dashboard setup and usage
-- **[API Reference](./agent-sentinel-sdk/docs/)** - Detailed API documentation
-- **[Security Guide](./SECURITY.md)** - Security best practices
-- **[Changelog](./CHANGELOG.md)** - Version history and updates
+- **[Demo Examples](./demo/README.md)** - Demo agents and integration examples
+- **[Additional Documentation](./extra/)** - Extended documentation and reference materials
 
 ## 🏢 Enterprise Support
 
