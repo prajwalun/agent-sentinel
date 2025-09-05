@@ -14,7 +14,7 @@ import sys
 import json
 from pydantic import ValidationError
 
-from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, Header
+from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, Header, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -237,6 +237,19 @@ async def health_check():
         "workflow_ready": workflow_instance is not None
     }
 
+@app.options("/analyze/file")
+async def analyze_file_options():
+    """Handle OPTIONS requests for file upload endpoint"""
+    return JSONResponse(
+        status_code=200,
+        content={},
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "POST, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type, Authorization",
+        }
+    )
+
 @app.post("/api-keys/generate")
 async def generate_api_key(user_id: str, description: str = ""):
     """Generate a new API key for a user"""
@@ -303,7 +316,11 @@ async def analyze_report(request: AnalysisRequest, user_info: Dict[str, Any] = D
         raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
 
 @app.post("/analyze/file")
-async def analyze_file(file: UploadFile = File(...), analysis_type: str = "comprehensive"):
+async def analyze_file(
+    file: UploadFile = File(...), 
+    analysis_type: str = Form("comprehensive"),
+    user_info: Dict[str, Any] = Depends(authenticate_api_key)
+):
     """
     Analyze a security report file and return enhanced intelligence insights
     """
