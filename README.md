@@ -187,29 +187,71 @@ Each detection produces a `SecurityEvent` containing:
 
 ---
 
-## Running the Full Stack
+## Getting Started
 
-### 1. Backend (Intelligence API)
+### Prerequisites
+
+| Requirement | Version | Notes |
+|-------------|---------|-------|
+| **Python** | 3.9+ | Backend and SDK |
+| **Node.js** | 18+ | Dashboard (Next.js 14) |
+| **npm** | 9+ | Comes with Node.js |
+| **OpenAI API key** | — | Required for AI-powered analysis (GPT-4o) |
+| **Docker** (optional) | 20+ | For one-command full-stack startup |
+
+### Option A: Docker (Recommended — One Command)
+
+The fastest way to get everything running:
+
+```bash
+# 1. Clone the repo
+git clone https://github.com/prajwalun/agent-sentinel.git
+cd agent-sentinel
+
+# 2. Create your .env file
+cp .env.example .env
+# Edit .env and add your OPENAI_API_KEY (required)
+# Optionally set JWT_SECRET and ADMIN_SECRET to custom values
+
+# 3. Start everything
+docker-compose up --build
+```
+
+This starts:
+- **Backend** at `http://localhost:8001` (FastAPI + SQLite + LangGraph)
+- **Dashboard** at `http://localhost:3000` (Next.js)
+- A persistent Docker volume for the SQLite database
+
+Open `http://localhost:3000`, create an account, and you are ready to go.
+
+### Option B: Manual Setup
+
+**Step 1 — Backend (Intelligence API)**
 
 ```bash
 cd agent-sentinel-intelligence
 pip install -r requirements.txt
 ```
 
-Create a `.env` file (or copy from `.env.example`):
+Create a `.env` file in the project root (or copy from `.env.example`):
 
-```
-OPENAI_API_KEY=your_openai_key
-JWT_SECRET=your_random_secret
+```bash
+cp ../.env.example ../.env
+# Edit ../.env and set at minimum:
+#   OPENAI_API_KEY=sk-...
+#   JWT_SECRET=any-random-string
+#   ADMIN_SECRET=any-random-string
 ```
 
 Start the server:
 
 ```bash
-uvicorn api_server:app --host 0.0.0.0 --port 8001
+python -m uvicorn api_server:app --host 0.0.0.0 --port 8001
 ```
 
-### 2. Dashboard
+Verify it is running: `curl http://localhost:8001/health`
+
+**Step 2 — Dashboard**
 
 ```bash
 cd agent-sentinel-dashboard
@@ -218,18 +260,24 @@ echo 'NEXT_PUBLIC_API_URL=http://localhost:8001' > .env.local
 npm run dev
 ```
 
-Open `http://localhost:3000`, create an account, and generate an API key from the Settings page.
+Open `http://localhost:3000`. Create an account (email + password), then go to **Settings** to generate an API key — you will need this to connect the SDK.
 
-### 3. Connect the SDK to the Backend
+**Step 3 — Install the SDK**
 
-Set two environment variables so the SDK automatically streams events to the backend:
+```bash
+pip install agent-sentinel
+```
+
+**Step 4 — Connect the SDK to the Backend**
+
+Set two environment variables so the SDK automatically streams events to the running backend:
 
 ```bash
 export SENTINEL_API_URL=http://localhost:8001
-export SENTINEL_API_KEY=<your API key from the dashboard>
+export SENTINEL_API_KEY=<your API key from the dashboard Settings page>
 ```
 
-Then use the SDK as normal:
+Then use the SDK in your Python code:
 
 ```python
 from agent_sentinel import monitor
@@ -238,18 +286,42 @@ from agent_sentinel import monitor
 def my_agent(query):
     return process(query)
 
+my_agent("Hello, world!")
 # Events are now sent to the backend in real time.
-# Open the dashboard to see them appear on the Agents page
+# Open the dashboard to see them on the Agents page
 # and in the live event stream.
 ```
 
-### 4. Docker (Full Stack)
+**Step 5 — (Optional) Use the SDK Standalone**
 
-```bash
-docker-compose up --build
+The SDK works without a backend. Threat detection, event recording, and report generation all work locally:
+
+```python
+from agent_sentinel import monitor, AgentSentinel
+
+@monitor
+def my_agent(query):
+    return process(query)
+
+my_agent("test input")
+
+sentinel = AgentSentinel()
+sentinel.generate_unified_report()  # writes a JSON report to disk
 ```
 
-This starts the backend on port 8001 and the dashboard on port 3000.
+---
+
+## Environment Variables
+
+| Variable | Required | Used By | Purpose |
+|----------|----------|---------|---------|
+| `OPENAI_API_KEY` | Yes | Backend | Powers the LangGraph AI analysis workflow (GPT-4o) |
+| `JWT_SECRET` | Recommended | Backend | Secret for signing JWT tokens (auto-generated if unset) |
+| `ADMIN_SECRET` | Recommended | Backend | Secret for admin-level API key generation |
+| `EXA_API_KEY` | No | Backend | External threat intelligence research via Exa.ai |
+| `SENTINEL_API_URL` | No | SDK | Backend URL for automatic event streaming |
+| `SENTINEL_API_KEY` | No | SDK | API key for SDK-to-backend authentication |
+| `NEXT_PUBLIC_API_URL` | No | Dashboard | Backend URL the dashboard connects to (default: `http://localhost:8001`) |
 
 ---
 
@@ -277,20 +349,6 @@ The E2E tests verify that:
 - Multi-agent pipelines with a compromised agent in the chain are caught
 - MCP tool servers with malicious tool I/O trigger security events
 - Real-world agent frameworks (A2A protocol, Agno/OpenAI) work with the SDK decorators
-
----
-
-## Environment Variables
-
-| Variable | Used By | Purpose |
-|----------|---------|---------|
-| `OPENAI_API_KEY` | Backend | Powers the LangGraph AI analysis workflow (GPT-4o) |
-| `EXA_API_KEY` | Backend (optional) | External threat intelligence research via Exa.ai |
-| `SENTINEL_API_URL` | SDK (optional) | Backend URL for automatic event streaming |
-| `SENTINEL_API_KEY` | SDK (optional) | API key for SDK-to-backend authentication |
-| `JWT_SECRET` | Backend | Secret for signing JWT tokens (auto-generated if unset) |
-| `ADMIN_SECRET` | Backend | Secret for admin-level API key generation |
-| `NEXT_PUBLIC_API_URL` | Dashboard | Backend URL the dashboard connects to |
 
 ---
 
