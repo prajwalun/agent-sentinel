@@ -8,6 +8,16 @@ No changes to your agent code. No subclassing. No framework lock-in.
 
 ---
 
+## Why I Built This
+
+The rise of AI agents brought a wave of "vibe-coded" projects - agents built rapidly with AI assistance, published to GitHub, and deployed without any security review. The AI-generated code itself often introduced vulnerabilities (unsanitized inputs, hardcoded credentials, unsafe tool calls), and the agents themselves became a new attack surface that traditional security tools were never designed to handle. WAFs and SAST scanners do not understand prompt injection. Firewalls do not catch an agent being tricked into exfiltrating data through its own tool calls.
+
+I saw two problems happening at the same time: agents were being deployed faster than teams could review them, and the tooling to secure them simply did not exist. The security tools that did start appearing required significant integration effort - SDKs that demanded you restructure your agent around their framework, or platforms that only worked with specific agent libraries.
+
+I wanted to build something that a developer could adopt in 30 seconds. That is why Agent Sentinel uses decorators: you add one line to your existing agent and it is immediately monitored. No refactoring, no framework migration, no configuration files. The goal is to make the secure path the easy path.
+
+---
+
 ## What It Monitors
 
 Agent Sentinel is designed to work across the full spectrum of AI agent architectures:
@@ -254,6 +264,19 @@ The E2E tests verify that:
 - **Async AI analysis.** The Intelligence API runs LangGraph workflows in background threads and returns a `run_id` for polling. The dashboard polls every 3 seconds and renders results when complete.
 - **Iterative refinement.** The LangGraph workflow includes a Validator agent that can reject a report and send it back to the Supervisor for re-analysis, up to 3 times. This produces higher-quality threat intelligence.
 - **SQLite with WAL mode.** The backend uses SQLite for zero-configuration deployment while supporting concurrent reads during long-running analysis. Foreign keys, indexes on hot columns, and SHA-256 hashed API keys are enforced at the schema level.
+
+---
+
+## Future Roadmap
+
+Agent Sentinel currently operates in **detection mode** - it identifies and reports threats but does not block them. The next evolution is making it preventive:
+
+- **Blocking mode.** Give the decorator a policy (log-only, warn, or block). In block mode, a function call that triggers a HIGH or CRITICAL threat is stopped before it reaches the agent, and the caller gets a safe error instead of a compromised response.
+- **Agent sandbox.** A dashboard feature where you upload an agent and run it against a suite of known attack vectors (prompt injection, tool manipulation, data exfiltration attempts) in an isolated environment. You see a security scorecard before deploying the agent to production.
+- **Remediation suggestions.** When a threat is detected, suggest a concrete fix: input sanitization for SQL injection, prompt hardening for prompt injection, URL allowlisting for exfiltration attempts.
+- **Policy engine.** Configurable per-agent rules: "block all SQL patterns for this agent", "allow external URLs only from these domains", "flag any output longer than 10,000 characters."
+- **Alerting integrations.** Push notifications to Slack, PagerDuty, or email when a critical threat is detected, so security teams can respond in real time.
+- **PostgreSQL and Redis.** Replace SQLite for horizontal scaling across multiple backend instances, and add Redis for shared rate limiting and event buffering.
 
 ---
 

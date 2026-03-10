@@ -290,3 +290,26 @@ cd agent-sentinel-sdk && python -m pytest tests/ -v
 python tests/test_agents_e2e.py
 python tests/test_real_agents_e2e.py
 ```
+
+---
+
+## Future Improvements
+
+### Short-term
+
+- **Blocking / enforcement mode.** The SDK currently logs threats but never blocks execution. A planned `policy` parameter on the decorator (`@monitor(policy="block")`) will let developers enforce rules: block the call, return a sanitized fallback, or escalate to a human-in-the-loop review before the agent output reaches the caller.
+- **Remediation suggestions.** When a threat is flagged, the analysis report should include actionable guidance: input parameterization for SQL injection, prompt hardening for injection attempts, URL allowlisting for exfiltration patterns.
+- **Webhook / alerting integrations.** Push real-time notifications (Slack, PagerDuty, email) for CRITICAL-severity events so that security teams can react without polling the dashboard.
+
+### Medium-term
+
+- **Agent sandbox.** A dashboard feature where a developer uploads an agent and runs it against a curated attack suite (prompt injection variants, tool manipulation, data exfiltration probes) inside an isolated container. The output is a security scorecard with pass/fail per threat category, generated before the agent is deployed to production.
+- **Advanced policy engine.** Per-agent or per-organization rules: "block all SQL-like patterns for this agent", "allow outbound URLs only from these domains", "flag any output exceeding N tokens." Policies are stored in the database and evaluated at the decorator layer for zero-latency enforcement.
+- **Multi-tenant support.** Organization-scoped agents, API keys, and dashboards, enabling SaaS deployment where multiple teams share the backend without data leakage.
+
+### Long-term / scaling
+
+- **PostgreSQL migration.** Replace SQLite with PostgreSQL for horizontal read/write scaling, connection pooling (PgBouncer), and production-grade durability across multiple backend replicas.
+- **Redis integration.** Shared rate-limiting counters, cross-instance event buffering, and pub/sub for real-time SSE fan-out to multiple dashboard instances.
+- **Kubernetes-native deployment.** Helm charts with HPA for the backend and dashboard, persistent volume claims for the database, and network policies for security isolation.
+- **SDK plugin architecture.** Allow third-party threat detectors (custom regex sets, ML-based classifiers, LLM-as-a-judge evaluators) to be plugged into the SDK validation pipeline without modifying core code.
