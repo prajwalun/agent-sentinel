@@ -514,7 +514,7 @@ class SecurityAnalysisWorkflow:
                     "workflow_version": "2.0.0",
                     "execution_time": getattr(self, 'execution_time', 0),
                     "total_steps": len(getattr(self, 'execution_history', [])),
-                    "config": self.config.dict()
+                    "config": self.config.model_dump(mode="json")
                 },
                 "report_content": report_content,
                 "workflow_results": getattr(self, 'execution_history', [])

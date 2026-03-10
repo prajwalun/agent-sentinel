@@ -10,6 +10,8 @@ import time
 import json
 import sys
 import os
+
+import pytest
 from concurrent.futures import ThreadPoolExecutor
 from typing import Dict, Any, List
 
@@ -297,6 +299,7 @@ def test_mcp_monitoring():
         return False
     return True
 
+@pytest.mark.asyncio
 async def test_concurrent_sessions():
     """Test concurrent session handling"""
     print("\n=== Testing Concurrent Sessions ===")

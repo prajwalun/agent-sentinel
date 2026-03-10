@@ -1,23 +1,39 @@
-# Core dependencies for API server
+# Agent Sentinel Intelligence — Python dependencies
+# Install: pip install -r requirements.txt
+
+# --- API server ---
 fastapi>=0.100.0
 uvicorn>=0.20.0
-pydantic>=2.0.0
-python-dotenv>=1.0.0
-requests>=2.28.0
 python-multipart>=0.0.6
 
-# Optional: LangChain for enhanced analysis
+# --- Data validation ---
+pydantic>=2.0.0
+
+# --- LLM / multi-agent workflow ---
 langchain>=0.1.0
 langchain-core>=0.1.0
 langchain-openai>=0.1.0
+langchain-google-genai>=0.1.0
+langgraph>=0.1.0
+openai>=1.0.0
+google-generativeai>=0.3.0
 
-# Data processing
-pandas>=1.5.0
-numpy>=1.21.0
+# --- Web research ---
+exa-py>=0.1.0
 
-# Logging
+# --- Observability ---
+weave>=0.1.0
+wandb>=0.15.0
 structlog>=23.0.0
 
-# Testing
+# --- Report generation ---
+reportlab>=4.0.0
+
+# --- Utilities ---
+python-dotenv>=1.0.0
+requests>=2.28.0
+
+# --- Dev / testing (install with: pip install -r requirements.txt ".[dev]") ---
 pytest>=7.0.0
-pytest-asyncio>=0.21.0 
+pytest-asyncio>=0.21.0
+httpx>=0.24.0
