@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, Check, Copy, Download, Printer } from "lucide-react"
+import { ArrowLeft, Download, Printer } from "lucide-react"
 import { ExecutiveSummary } from "./ExecutiveSummary"
 import { PerformanceMetrics } from "./PerformanceMetrics"
 import { SecurityEvents } from "./SecurityEvents"
@@ -107,8 +107,6 @@ interface ReportVisualizationProps {
 
 export function ReportVisualization({ report, onBack }: ReportVisualizationProps) {
   const [mounted, setMounted] = useState(false)
-  const [copied, setCopied] = useState(false)
-
   useEffect(() => {
     setMounted(true)
   }, [])
@@ -128,18 +126,6 @@ export function ReportVisualization({ report, onBack }: ReportVisualizationProps
     link.click()
     document.body.removeChild(link)
     URL.revokeObjectURL(url)
-  }
-
-  const handleShare = async () => {
-    const shareText = `Agent Sentinel Report — ${report.agent_id}\nReport ID: ${report.report_id}\n${window.location.href}`
-    try {
-      await navigator.clipboard.writeText(shareText)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    } catch {
-      // Clipboard API unavailable (e.g. non-secure context) — fall back to a prompt
-      window.prompt("Copy this report link:", shareText)
-    }
   }
 
   const formatDate = (dateString: string) => {
@@ -197,19 +183,6 @@ export function ReportVisualization({ report, onBack }: ReportVisualizationProps
           <Button onClick={handleExportPDF} variant="outline" className="text-white border-gray-600">
             <Printer className="h-4 w-4 mr-2" />
             Export PDF
-          </Button>
-          <Button onClick={handleShare} variant="outline" className="text-white border-gray-600">
-            {copied ? (
-              <>
-                <Check className="h-4 w-4 mr-2 text-green-400" />
-                <span className="text-green-400">Copied!</span>
-              </>
-            ) : (
-              <>
-                <Copy className="h-4 w-4 mr-2" />
-                Share
-              </>
-            )}
           </Button>
         </div>
       </div>

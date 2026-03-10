@@ -168,7 +168,7 @@ config.local.yaml
 .agent_sentinel/
 weave_data/
 security_reports/
-reports/
+/reports/
 
 # Node
 node_modules/

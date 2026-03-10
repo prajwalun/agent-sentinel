@@ -845,51 +845,171 @@ def _get_highest_severity(events: List[Dict[str, Any]]) -> str:
     return "LOW"
 
 
-def _extract_prose_insights(
-    workflow_result: Dict[str, Any],
-) -> tuple:
+def _extract_reporter_data(workflow_result: Dict[str, Any]) -> Dict[str, Any]:
     """
-    The reporter agent serialises the full UnifiedReport JSON into the
-    HumanMessage content, so ``workflow_result["enhanced_analysis"]`` is a
-    JSON string rather than plain prose.  Parse it and pull the actual
-    narrative fields out of ``intelligence_insights``.
+    Parse the reporter agent's JSON-encoded UnifiedReport and extract all
+    useful fields: prose insights, performance metrics, recommendations,
+    and next actions.
 
-    Returns (enhanced_prose, threat_intel_prose, recommendations).
+    The reporter serialises the full UnifiedReport into the HumanMessage
+    content, so ``workflow_result["enhanced_analysis"]`` is typically a JSON
+    string containing every field the LLM produced.
     """
+    empty: Dict[str, Any] = {
+        "enhanced_analysis": "",
+        "threat_intelligence": "",
+        "recommendations": [],
+        "next_actions": [],
+        "performance_metrics": {},
+        "key_insights": [],
+    }
+
     raw = workflow_result.get("enhanced_analysis", "")
-    if raw and raw.strip().startswith("{"):
-        try:
-            parsed = json.loads(raw)
-            if isinstance(parsed, dict):
-                ii = parsed.get("intelligence_insights", {}) or {}
-                return (
-                    ii.get("enhanced_analysis", "") or "",
-                    ii.get("threat_intelligence", "") or "",
-                    parsed.get("recommendations", []),
-                )
-        except (json.JSONDecodeError, ValueError):
-            pass
-    # Already plain prose (or empty)
-    return raw, workflow_result.get("threat_intelligence", ""), []
+    if not raw or not raw.strip().startswith("{"):
+        return empty
+
+    try:
+        parsed = json.loads(raw)
+    except (json.JSONDecodeError, ValueError):
+        return empty
+
+    if not isinstance(parsed, dict):
+        return empty
+
+    ii = parsed.get("intelligence_insights", {}) or {}
+    summary = parsed.get("summary", {}) or {}
+    perf = parsed.get("performance_metrics", {}) or {}
+
+    return {
+        "enhanced_analysis": ii.get("enhanced_analysis", "") or "",
+        "threat_intelligence": ii.get("threat_intelligence", "") or "",
+        "recommendations": parsed.get("recommendations", []) or [],
+        "next_actions": summary.get("next_actions", []) or [],
+        "performance_metrics": perf,
+        "key_insights": summary.get("key_insights", []) or [],
+    }
 
 
-def _safe_insight_text(value: str) -> str:
-    """
-    Return the value only if it looks like prose/markdown from the LLM.
-    If it parses as JSON, it means we accidentally stored structured data
-    instead of the LLM's narrative output — return empty string so the
-    frontend shows a sensible fallback rather than raw JSON.
-    """
+def _prose_or_empty(value: str) -> str:
+    """Return the string only if it is actual prose, not serialised JSON."""
     if not value or not value.strip():
         return ""
-    stripped = value.strip()
-    if stripped.startswith(("{", "[")):
+    s = value.strip()
+    if s.startswith(("{", "[")):
         try:
-            json.loads(stripped)
-            return ""  # it's valid JSON, not LLM prose
+            json.loads(s)
+            return ""
         except json.JSONDecodeError:
             pass
     return value
+
+
+def _generate_fallback_insights(
+    events: List[Dict[str, Any]],
+    threat_breakdown: Dict[str, int],
+    severity_dist: Dict[str, int],
+    risk_score: float,
+) -> tuple:
+    """
+    Build readable prose summaries from structured event data when the LLM
+    did not produce usable narrative insights.
+    """
+    if not events:
+        return (
+            "No security events were detected during this analysis session. "
+            "The monitored agent operated within expected parameters.",
+            "No active threat indicators were identified. Continue routine monitoring.",
+        )
+
+    total = len(events)
+    high_sev = severity_dist.get("HIGH", 0) + severity_dist.get("CRITICAL", 0)
+    top_threat = max(threat_breakdown, key=threat_breakdown.get) if threat_breakdown else "unknown"
+    top_count = threat_breakdown.get(top_threat, 0)
+
+    enhanced_lines = [
+        f"## Analysis Overview",
+        f"The analysis identified **{total} security event{'s' if total != 1 else ''}** "
+        f"with an overall risk score of **{risk_score:.2f}**.",
+        "",
+    ]
+    if high_sev:
+        enhanced_lines.append(
+            f"- **{high_sev}** event{'s' if high_sev != 1 else ''} rated HIGH or CRITICAL severity, requiring immediate attention."
+        )
+    enhanced_lines.append(
+        f"- Most prevalent threat: **{top_threat.replace('_', ' ').title()}** ({top_count} occurrence{'s' if top_count != 1 else ''})."
+    )
+
+    breakdown_items = sorted(threat_breakdown.items(), key=lambda x: x[1], reverse=True)
+    if len(breakdown_items) > 1:
+        enhanced_lines.append("")
+        enhanced_lines.append("## Threat Breakdown")
+        for ttype, count in breakdown_items:
+            enhanced_lines.append(f"- **{ttype.replace('_', ' ').title()}**: {count} event{'s' if count != 1 else ''}")
+
+    sev_parts = []
+    for sev in ("CRITICAL", "HIGH", "MEDIUM", "LOW"):
+        if severity_dist.get(sev, 0):
+            sev_parts.append(f"{severity_dist[sev]} {sev}")
+    if sev_parts:
+        enhanced_lines.append("")
+        enhanced_lines.append(f"## Severity Distribution")
+        enhanced_lines.append(f"- {', '.join(sev_parts)}")
+
+    threat_intel_lines = [
+        f"### Threat Landscape",
+        f"The detected threats span **{len(threat_breakdown)} distinct categor{'ies' if len(threat_breakdown) != 1 else 'y'}**.",
+        "",
+    ]
+    for ttype, count in breakdown_items[:3]:
+        readable = ttype.replace("_", " ").title()
+        threat_intel_lines.append(f"- **{readable}** — {count} occurrence{'s' if count != 1 else ''}. "
+                                  "Review agent inputs/outputs for exploitation patterns.")
+
+    if high_sev:
+        threat_intel_lines.append("")
+        threat_intel_lines.append(
+            f"### Risk Assessment\n"
+            f"With {high_sev} high-severity event{'s' if high_sev != 1 else ''}, "
+            f"the current risk posture warrants escalation to the security team."
+        )
+
+    return "\n".join(enhanced_lines), "\n".join(threat_intel_lines)
+
+
+def _generate_fallback_next_actions(
+    events: List[Dict[str, Any]],
+    threat_breakdown: Dict[str, int],
+) -> List[str]:
+    """Generate distinct, immediate next-action items from event data."""
+    actions: List[str] = []
+
+    if not events:
+        return ["Continue routine security monitoring"]
+
+    severity_set = {e["severity"] for e in events}
+    if "CRITICAL" in severity_set or "HIGH" in severity_set:
+        actions.append("Immediately investigate HIGH/CRITICAL severity events and isolate affected agents")
+
+    threat_types = set(threat_breakdown.keys())
+    if "sql_injection" in threat_types:
+        actions.append("Audit database query construction and enforce parameterized queries")
+    if "prompt_injection" in threat_types:
+        actions.append("Add prompt hardening and input pre-screening before LLM calls")
+    if "data_exfiltration" in threat_types:
+        actions.append("Review outbound data flows and enforce URL allowlisting")
+    if "xss" in threat_types:
+        actions.append("Sanitize all agent outputs rendered in web contexts")
+    if "command_injection" in threat_types:
+        actions.append("Restrict shell/command execution and validate all command arguments")
+    if "path_traversal" in threat_types:
+        actions.append("Enforce path canonicalization and restrict file system access scope")
+
+    if not actions:
+        actions.append("Review detected events and apply targeted mitigations")
+
+    actions.append("Schedule a follow-up security review within 48 hours")
+    return actions[:5]
 
 
 def _build_report(
@@ -912,11 +1032,10 @@ def _build_report(
     )
     most_common = max(threat_breakdown, key=threat_breakdown.get) if threat_breakdown else "none"
 
-    # Extract prose insight strings from the reporter's JSON-encoded output.
-    enhanced_prose, threat_intel_prose, parsed_recs = _extract_prose_insights(workflow_result)
+    reporter_data = _extract_reporter_data(workflow_result)
 
-    # Pull recommendations from workflow or use sensible defaults
-    recs = parsed_recs or workflow_result.get("recommendations", [])
+    # --- Recommendations ---------------------------------------------------
+    recs = reporter_data["recommendations"] or workflow_result.get("recommendations", [])
     if isinstance(recs, str):
         recs = [recs]
     if not recs:
@@ -925,6 +1044,48 @@ def _build_report(
             "Implement input validation at agent boundaries",
             "Enable continuous monitoring with the Agent Sentinel SDK",
         ]
+
+    # --- Next actions (must differ from recommendations) -------------------
+    next_actions = reporter_data["next_actions"]
+    if not next_actions or next_actions == recs[:len(next_actions)]:
+        next_actions = _generate_fallback_next_actions(events, threat_breakdown)
+
+    # --- Performance metrics (merge reporter LLM output with known data) ---
+    rp = reporter_data["performance_metrics"]
+    perf_metrics: Dict[str, Any] = {
+        "security_events_count": len(events),
+        "session_duration_seconds": round(duration_ms / 1000.0, 3),
+    }
+    if rp.get("total_function_calls"):
+        perf_metrics["total_function_calls"] = rp["total_function_calls"]
+    else:
+        perf_metrics["total_function_calls"] = len(events)
+
+    if rp.get("success_rate") is not None and rp["success_rate"] != 0:
+        perf_metrics["success_rate"] = rp["success_rate"]
+    else:
+        safe_count = sum(1 for e in events if e.get("severity") in ("LOW", "MEDIUM"))
+        perf_metrics["success_rate"] = round(
+            (safe_count / len(events) * 100) if events else 100.0, 1
+        )
+
+    # --- Intelligence insights ---------------------------------------------
+    enhanced_prose = _prose_or_empty(reporter_data["enhanced_analysis"])
+    threat_intel_prose = _prose_or_empty(reporter_data["threat_intelligence"])
+
+    if not enhanced_prose or not threat_intel_prose:
+        fb_enhanced, fb_threat = _generate_fallback_insights(
+            events, threat_breakdown, severity_dist, risk_score,
+        )
+        if not enhanced_prose:
+            enhanced_prose = fb_enhanced
+        if not threat_intel_prose:
+            threat_intel_prose = fb_threat
+
+    # --- Key insights ------------------------------------------------------
+    key_insights = reporter_data["key_insights"]
+    if not key_insights:
+        key_insights = _extract_key_insights(enhanced_prose)
 
     now = datetime.now(timezone.utc).isoformat()
     return {
@@ -935,10 +1096,7 @@ def _build_report(
         "analysis_type": "comprehensive",
         "workflow_execution_time": duration_ms / 1000.0,
         "security_events": events,
-        "performance_metrics": {
-            "security_events_count": len(events),
-            "session_duration_seconds": duration_ms / 1000.0,
-        },
+        "performance_metrics": perf_metrics,
         "threat_analysis": {
             "total_threats": len(events),
             "threat_breakdown": threat_breakdown,
@@ -957,28 +1115,27 @@ def _build_report(
             "risk_score": risk_score,
             "threats_detected": len(events),
             "performance_score": 85.0,
-            "key_insights": _extract_insights(workflow_result),
-            "next_actions": recs[:3],
+            "key_insights": key_insights,
+            "next_actions": next_actions,
         },
         "intelligence_insights": {
-            "enhanced_analysis": _safe_insight_text(enhanced_prose),
-            "threat_intelligence": _safe_insight_text(threat_intel_prose),
+            "enhanced_analysis": enhanced_prose,
+            "threat_intelligence": threat_intel_prose,
         },
     }
 
 
-def _extract_insights(workflow_result: Dict[str, Any]) -> List[str]:
-    """Pull key insights from the LLM workflow output."""
-    # Use the prose helper so we don't accidentally scan a raw JSON blob.
-    prose, _, _ = _extract_prose_insights(workflow_result)
+def _extract_key_insights(prose: str) -> List[str]:
+    """Pull key insight bullet points from prose text."""
     insights: List[str] = []
-    if prose:
-        for line in prose.split("\n"):
-            stripped = line.strip().lstrip("- *#")
-            if stripped and len(stripped) > 20 and not stripped.startswith("{"):
-                insights.append(stripped)
-            if len(insights) >= 5:
-                break
+    if not prose:
+        return ["Security analysis completed", "Review events for details"]
+    for line in prose.split("\n"):
+        stripped = line.strip().lstrip("- *#")
+        if stripped and len(stripped) > 20 and not stripped.startswith("{"):
+            insights.append(stripped)
+        if len(insights) >= 5:
+            break
     if not insights:
         insights = ["Security analysis completed", "Review events for details"]
     return insights[:5]
