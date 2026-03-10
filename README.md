@@ -130,22 +130,60 @@ For the full architecture, data flows, API reference, and database schema, see [
 
 ## Threat Detection
 
-The SDK detects these threat categories in real time on every instrumented call:
+### Detection Pipeline
 
-| Threat | What It Catches | Examples |
-|--------|----------------|----------|
-| SQL injection | Malicious SQL fragments in agent I/O | `'; DROP TABLE users; --`, `UNION SELECT`, `OR 1=1` |
-| XSS | Script injection and event handler abuse | `<script>alert('xss')</script>`, `onerror=`, `javascript:` |
-| Prompt injection | Attempts to override agent instructions | `ignore previous instructions`, `system prompt override` |
-| Command injection | OS command execution attempts | `; rm -rf /`, `\| curl evil.com`, backtick execution |
-| Path traversal | File system escape attempts | `../../etc/passwd`, `..\\windows\\system32` |
-| Data exfiltration | Credential leakage and suspicious URLs | API key patterns, base64-encoded credentials, external URLs |
+Every decorated call passes through a multi-stage validation pipeline before and (optionally) after execution:
 
-Each event includes:
-- `threat_type` identifying the category
-- `severity` rated LOW, MEDIUM, HIGH, or CRITICAL
-- `confidence` score from 0.0 to 1.0
-- Full context including the triggering input and detection method
+```
+Agent Input
+  │
+  ├─► InputValidator
+  │     ├─ SQLInjectionValidator    (12 compiled regex patterns)
+  │     ├─ XSSValidator             (11 compiled regex patterns)
+  │     ├─ CommandInjectionValidator (10 compiled regex patterns)
+  │     └─ PromptInjectionValidator (19 compiled regex patterns)
+  │
+  ├─► PathTraversalDetector          (8 compiled regex patterns)
+  ├─► DataExfiltrationDetector       (sensitive token counting, URL analysis)
+  │
+  ▼
+Execute Agent Function
+  │
+  ├─► OutputValidator (when validate_outputs=True)
+  │     └─ Same pattern checks on agent response
+  │
+  ▼
+SecurityEvent(threat_type, severity, confidence, context)
+  └─► GlobalEventRegistry (thread-safe singleton)
+```
+
+### 60+ Compiled Regex Patterns Across 6 Threat Categories
+
+All patterns are compiled at import time (`re.compile`) for zero-allocation matching at runtime.
+
+| Threat | Patterns | Severity | What It Catches |
+|--------|----------|----------|----------------|
+| **SQL injection** | 12 | CRITICAL | `UNION SELECT`, `DROP TABLE`, `INSERT INTO`, `DELETE FROM`, tautologies (`' OR '1'='1'`), comment injection (`--`, `/* */`) |
+| **XSS** | 11 | HIGH | `<script>`, `<iframe>`, `<embed>`, `<object>`, `javascript:`, `vbscript:`, `data:base64`, event handlers (`onerror=`, `onload=`) |
+| **Prompt injection** | 19 | HIGH | `ignore previous instructions`, `forget all rules`, `pretend to be`, `system prompt`, `override instructions`, `jailbreak`, `reset conversation`, role manipulation |
+| **Command injection** | 10 | CRITICAL | Shell metacharacters (`;`, `|`, `` ` ``), `$(...)` subshells, `rm -rf`, `wget`/`curl` to external hosts, `sudo`, `chmod`, `nc` |
+| **Path traversal** | 8 | HIGH | `../`, `..\`, URL-encoded variants (`%2e%2e%2f`), `/etc/passwd`, `/windows/system32` |
+| **Data exfiltration** | Token analysis | CRITICAL | API key patterns, base64-encoded credentials, high density of sensitive tokens, suspicious outbound URLs |
+
+### 21 Threat Type Classifications
+
+Beyond the 6 regex-detected categories, the SDK defines 21 total threat types used for risk scoring, report enrichment, and the enterprise detection engine:
+
+`sql_injection` · `xss_attack` · `command_injection` · `path_traversal` · `prompt_injection` · `data_exfiltration` · `rate_limit_violation` · `resource_exhaustion` · `malicious_payload` · `unauthorized_access` · `behavioral_anomaly` · `communication_tampering` · `privilege_escalation` · `suspicious_tool_usage` · `unusual_data_access` · `timing_attack` · `frequency_attack` · `sequence_attack` · `parameter_manipulation` · `resource_abuse` · `cross_agent_attack`
+
+### SecurityEvent Output
+
+Each detection produces a `SecurityEvent` containing:
+- `threat_type` — which of the 21 categories was triggered
+- `severity` — rated LOW, MEDIUM, HIGH, or CRITICAL
+- `confidence` — score from 0.0 to 1.0, based on pattern match strength
+- `context` — the triggering input, matched pattern, and detection method
+- `timestamp` — UTC time of detection
 
 ---
 

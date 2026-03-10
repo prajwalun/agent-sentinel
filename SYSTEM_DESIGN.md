@@ -79,16 +79,20 @@ def my_func(query):
 
 ### Threat Detection
 
-`InputValidator` uses compiled regex patterns to detect:
+`InputValidator` runs a multi-stage validation pipeline with 60+ compiled regex patterns across 6 threat categories. All patterns are compiled at import time for zero-allocation matching.
 
-- **SQL injection** - `DROP TABLE`, `UNION SELECT`, `' OR 1=1`, tautologies
-- **XSS** - `<script>`, `onerror=`, `javascript:`, event handlers
-- **Command injection** - `; rm`, `| curl`, backtick execution
-- **Prompt injection** - `ignore previous instructions`, `system prompt`, role overrides
-- **Path traversal** - `../../etc/passwd`, `..\\windows`
-- **Data exfiltration** - suspicious URLs, credential patterns
+| Category | Patterns | Severity | Examples |
+|----------|----------|----------|----------|
+| SQL injection | 12 | CRITICAL | `UNION SELECT`, `DROP TABLE`, `INSERT INTO`, tautologies, comment injection |
+| XSS | 11 | HIGH | `<script>`, `<iframe>`, `javascript:`, `data:base64`, event handlers |
+| Prompt injection | 19 | HIGH | `ignore previous instructions`, `system prompt`, `jailbreak`, role manipulation |
+| Command injection | 10 | CRITICAL | Shell metacharacters, `$(...)`, `rm -rf`, `wget`/`curl`, `sudo` |
+| Path traversal | 8 | HIGH | `../`, `..\`, URL-encoded variants, `/etc/passwd` |
+| Data exfiltration | Token analysis | CRITICAL | API key patterns, base64 credentials, suspicious outbound URLs |
 
-Each detection produces a `SecurityEvent` with `threat_type`, `severity` (LOW/MEDIUM/HIGH/CRITICAL), and `confidence` (0.0–1.0).
+The SDK defines 21 total `ThreatType` classifications. The 6 above are regex-detected on every call; the remaining 15 (privilege escalation, behavioral anomaly, cross-agent attack, timing attack, etc.) are used by the enterprise detection engine, risk scoring, and report enrichment.
+
+Each detection produces a `SecurityEvent` with `threat_type`, `severity` (LOW/MEDIUM/HIGH/CRITICAL), `confidence` (0.0–1.0), and full context.
 
 ### Event Storage
 
