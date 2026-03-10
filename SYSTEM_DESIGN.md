@@ -1,12 +1,12 @@
-# Agent Sentinel — System Design
+# Agent Sentinel - System Design
 
 ## Overview
 
 Agent Sentinel is a security monitoring platform for AI agents. It consists of three components that work independently or together:
 
-1. **SDK** (`agent-sentinel-sdk/`) — Python library that instruments agent code via decorators
-2. **Intelligence API** (`agent-sentinel-intelligence/`) — FastAPI backend with LangGraph-powered multi-agent analysis
-3. **Dashboard** (`agent-sentinel-dashboard/`) — Next.js frontend for visualization and management
+1. **SDK** (`agent-sentinel-sdk/`) - Python library that instruments agent code via decorators
+2. **Intelligence API** (`agent-sentinel-intelligence/`) - FastAPI backend with LangGraph-powered multi-agent analysis
+3. **Dashboard** (`agent-sentinel-dashboard/`) - Next.js frontend for visualization and management
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -52,13 +52,13 @@ Agent Sentinel is a security monitoring platform for AI agents. It consists of t
 
 ### Purpose
 
-Provides zero-friction security monitoring for any Python-based AI agent. A single decorator instruments a function, class, or MCP tool — no changes to the agent's own code.
+Provides zero-friction security monitoring for any AI agent built in Python, including single-agent functions, multi-agent pipelines, entire agent classes, and MCP tool servers. A single decorator instruments the target with no changes to the agent's own code. All events from all decorated agents flow into one global registry, enabling unified reporting across multi-agent systems.
 
 ### Decorator API
 
 | Decorator | Target | What it does |
 |-----------|--------|-------------|
-| `@monitor` | Function or method | Wraps with `AgentWrapper.monitor()` — validates inputs/outputs per call |
+| `@monitor` | Function or method | Wraps with `AgentWrapper.monitor()` - validates inputs/outputs per call |
 | `@sentinel` | Class | Creates one `AgentWrapper`, wraps every public method |
 | `@monitor_mcp` | MCP tool function | Creates an `MCPWrapper`, validates tool I/O |
 
@@ -81,12 +81,12 @@ def my_func(query):
 
 `InputValidator` uses compiled regex patterns to detect:
 
-- **SQL injection** — `DROP TABLE`, `UNION SELECT`, `' OR 1=1`, tautologies
-- **XSS** — `<script>`, `onerror=`, `javascript:`, event handlers
-- **Command injection** — `; rm`, `| curl`, backtick execution
-- **Prompt injection** — `ignore previous instructions`, `system prompt`, role overrides
-- **Path traversal** — `../../etc/passwd`, `..\\windows`
-- **Data exfiltration** — suspicious URLs, credential patterns
+- **SQL injection** - `DROP TABLE`, `UNION SELECT`, `' OR 1=1`, tautologies
+- **XSS** - `<script>`, `onerror=`, `javascript:`, event handlers
+- **Command injection** - `; rm`, `| curl`, backtick execution
+- **Prompt injection** - `ignore previous instructions`, `system prompt`, role overrides
+- **Path traversal** - `../../etc/passwd`, `..\\windows`
+- **Data exfiltration** - suspicious URLs, credential patterns
 
 Each detection produces a `SecurityEvent` with `threat_type`, `severity` (LOW/MEDIUM/HIGH/CRITICAL), and `confidence` (0.0–1.0).
 
@@ -102,11 +102,11 @@ Each detection produces a `SecurityEvent` with `threat_type`, `severity` (LOW/ME
 | File | Responsibility |
 |------|---------------|
 | `wrappers/decorators.py` | `@monitor`, `@sentinel` entry points |
-| `wrappers/agent_wrapper.py` | `AgentWrapper` — execution, validation, recording |
+| `wrappers/agent_wrapper.py` | `AgentWrapper` - execution, validation, recording |
 | `wrappers/mcp_wrapper.py` | `MCPWrapper`, `secure_mcp_method` (aliased as `monitor_mcp`) |
-| `security/validators.py` | `InputValidator` — regex-based threat detection |
-| `core/event_registry.py` | `GlobalEventRegistry` — singleton event store |
-| `core/sentinel.py` | `AgentSentinel` — top-level API, report generation |
+| `security/validators.py` | `InputValidator` - regex-based threat detection |
+| `core/event_registry.py` | `GlobalEventRegistry` - singleton event store |
+| `core/sentinel.py` | `AgentSentinel` - top-level API, report generation |
 | `core/report_generator.py` | Unified JSON report builder |
 
 ---
@@ -225,7 +225,7 @@ A Next.js web application that provides real-time visibility into agent security
 | File | Responsibility |
 |------|---------------|
 | `contexts/AuthContext.tsx` | JWT auth state, login/logout, localStorage sync |
-| `lib/api.ts` | `apiService` — typed HTTP client for all backend calls |
+| `lib/api.ts` | `apiService` - typed HTTP client for all backend calls |
 | `hooks/useLiveEvents.ts` | SSE hook for real-time event streaming |
 | `components/dashboard/DashboardView.tsx` | Main dashboard layout |
 | `components/reports/ReportVisualization.tsx` | Report renderer with PDF/share |

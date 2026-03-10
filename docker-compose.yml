@@ -1,0 +1,31 @@
+services:
+  backend:
+    build:
+      context: ./agent-sentinel-intelligence
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8001"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - EXA_API_KEY=${EXA_API_KEY:-}
+      - JWT_SECRET=${JWT_SECRET:-change_me}
+      - ADMIN_SECRET=${ADMIN_SECRET:-change_me}
+      - DATABASE_PATH=/app/data/sentinel.db
+    volumes:
+      - sentinel-data:/app/data
+    restart: unless-stopped
+
+  dashboard:
+    build:
+      context: ./agent-sentinel-dashboard
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8001
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  sentinel-data:
