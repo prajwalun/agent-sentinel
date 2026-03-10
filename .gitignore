@@ -176,15 +176,33 @@ node_modules/
 
 # Database
 *.db
+*.db-shm
+*.db-wal
 *.sqlite3
 
 # Generated output
 intelligence.log
 
-# Third-party repos (kept locally for reference, not tracked)
-extra/Awesome-AI-Agents-main/
-extra/awesome-llm-apps-main 2/
-extra/weave-streamlined-2file-output 2/
+# Extra folder (reference material, interview notes, third-party repos)
+extra/
+
+# Demo folder (old demo agents, kept locally)
+demo/
+
+# Stale artifacts and local-only files
+test_sdk.py
+SDK_SYSTEM_DESIGN.md
+.pre-commit-config.yaml
+agent-sentinel-intelligence/a2a_security_report.txt
+agent-sentinel-intelligence/agent_sentinel_report.json
+agent-sentinel-intelligence/analyze_a2a_report.py
+agent-sentinel-intelligence/RESTRUCTURE_SUMMARY.md
+agent-sentinel-sdk/CHANGELOG.md
+agent-sentinel-sdk/PUBLISHING_SUMMARY.md
+agent-sentinel-sdk/SDK_IMPROVEMENTS_SUMMARY.md
+agent-sentinel-sdk/test_json_threat_report.py
+agent-sentinel-sdk/test_separate_logs_and_reports.py
+agent-sentinel-sdk/src/reports/
 
 # MacOS
 .DS_Store

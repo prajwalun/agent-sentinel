@@ -1,300 +1,131 @@
 # Agent Sentinel
 
-**Enterprise Security Monitoring for AI Agents**
+**Security monitoring for AI agents — add one decorator, detect threats in real time.**
 
-Agent Sentinel provides comprehensive security monitoring, threat detection, and performance analytics for AI agents. Secure any AI agent in just 3 lines of code with real-time threat detection, behavioral analysis, and unified reporting.
+Agent Sentinel instruments any Python AI agent with a single decorator. It detects prompt injection, SQL injection, XSS, command injection, data exfiltration, and more — then surfaces findings through a live dashboard backed by AI-powered analysis.
 
-## 🏗️ Project Structure
+## Quick Start
 
-This repository contains three main components:
+```bash
+pip install agent-sentinel
+```
 
-### 📦 [Agent Sentinel SDK](./agent-sentinel-sdk/)
-The core Python SDK that provides security monitoring and threat detection for AI agents.
-
-**Latest in v0.4.0 - PRODUCTION READY:**
-- ✅ **Enterprise-grade security** with multi-layer threat detection
-- ✅ **3-line integration** with `@monitor` and `@sentinel` decorators
-- ✅ **Real-time threat detection** (SQL injection, XSS, code injection, etc.)
-- ✅ **Performance monitoring** with detailed metrics
-- ✅ **Unified reporting** - comprehensive reports in a single file
-
-**Quick Start:**
 ```python
-from agent_sentinel import monitor, sentinel, monitor_mcp
+from agent_sentinel import monitor, AgentSentinel
 
-# Monitor individual functions
 @monitor
-def process_data(data: str) -> str:
-    return data.upper()
+def my_agent(query: str) -> str:
+    return llm.invoke(query)
 
-# Monitor entire classes
-@sentinel
-class MyAgent:
-    def analyze_data(self, data):
-        return data.upper()
+# Run your agent as usual — threats are detected automatically
+my_agent("What is the weather today?")
 
-# Monitor MCP tools
-@monitor_mcp()
-def search_database(query: str) -> str:
-    return f"Searching for: {query}"
+# Generate a report
+sentinel = AgentSentinel()
+sentinel.generate_unified_report()
 ```
 
-### 🧠 [Agent Sentinel Intelligence](./agent-sentinel-intelligence/)
-Multi-agent intelligence engine that analyzes security reports and generates actionable threat intelligence.
+Three decorators cover every agent pattern:
 
-**Features:**
-- **5-stage workflow** (Analyzer → Supervisor → Researcher → Reporter → Validator)
-- **OpenAI GPT-4o integration** for advanced threat analysis
-- **External threat intelligence** via Exa.ai research
-- **Weights & Biases tracing** for distributed monitoring
-- **RESTful API** for seamless integration
-
-### 🎨 [Agent Sentinel Dashboard](./agent-sentinel-dashboard/)
-A modern, enterprise-grade web dashboard for visualizing monitoring data and security reports.
-
-**Features:**
-- **Real-time monitoring** with live security events
-- **Unified report visualization** with comprehensive insights
-- **Black & red enterprise theme** for professional appearance
-- **Responsive design** for desktop and mobile
-- **Authentication** with Google OAuth and Supabase
-- **Export capabilities** (PDF, JSON)
-
-### 🎯 [Demo Examples](./demo/)
-Comprehensive demo agents and examples showcasing Agent Sentinel integration patterns.
-
-## 🚀 Getting Started
-
-### For SDK Users
-1. **Install the SDK:**
-   ```bash
-   pip install agent-sentinel
-   ```
-
-2. **Add monitoring to your agents:**
-   ```python
-   from agent_sentinel import monitor, sentinel, monitor_mcp
-   
-   # Monitor individual functions
-   @monitor
-   def your_agent_function():
-       # Your agent code here
-       pass
-   
-   # Monitor entire classes
-   @sentinel
-   class YourAgent:
-       def process_data(self, data):
-           # Your agent code here
-           pass
-   
-   # Monitor MCP tools
-   @monitor_mcp()
-   def your_mcp_tool():
-       # Your MCP tool code here
-       pass
-   ```
-
-3. **Generate reports:**
-   ```python
-   from agent_sentinel.core.sentinel import AgentSentinel
-   
-   sentinel = AgentSentinel(agent_id="my-agent")
-   report_path = sentinel.generate_unified_report()
-   ```
-
-### For Intelligence Engine Users
-1. **Navigate to the intelligence directory:**
-   ```bash
-   cd agent-sentinel-intelligence
-   ```
-
-2. **Install dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. **Set up environment variables:**
-   ```env
-   OPENAI_API_KEY=your_openai_api_key
-   EXA_API_KEY=your_exa_api_key
-   WANDB_API_KEY=your_wandb_api_key
-   ```
-
-4. **Run the intelligence engine:**
-   ```bash
-   uvicorn api_server:app --reload --host 0.0.0.0 --port 8001
-   ```
-
-### For Dashboard Users
-1. **Navigate to the dashboard directory:**
-   ```bash
-   cd agent-sentinel-dashboard
-   ```
-
-2. **Install dependencies:**
-   ```bash
-   npm install
-   ```
-
-3. **Set up environment variables:**
-   ```env
-   NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-   NEXT_PUBLIC_API_URL=http://localhost:8001
-   ```
-
-4. **Run the dashboard:**
-   ```bash
-   npm run dev
-   ```
-
-## 📊 Unified Reporting
-
-Agent Sentinel generates comprehensive unified reports that combine:
-- **Security events** with severity and confidence scores
-- **Performance metrics** (response time, memory usage, etc.)
-- **Threat analysis** with detailed breakdowns
-- **Actionable recommendations**
-- **Session logs** for complete audit trail
-
-**Sample Report Structure:**
-```json
-{
-  "agent_id": "MathAgent",
-  "executive_summary": {
-    "status": "WARNING",
-    "risk_score": 28.5,
-    "threats_detected": 4,
-    "performance_score": 87.2
-  },
-  "security_events": [...],
-  "performance_metrics": {...},
-  "threat_analysis": {...},
-  "recommendations": [...]
-}
+```python
+@monitor                       # functions and methods
+@sentinel                      # entire classes (wraps all public methods)
+@monitor_mcp                   # MCP tool functions
 ```
 
-## 🛡️ Security Features
+No changes to agent code. No subclassing. No configuration required.
 
-### Threat Detection
-- **SQL Injection** - Detects and blocks malicious SQL patterns
-- **XSS Attacks** - Prevents cross-site scripting attempts
-- **Code Injection** - Monitors for unauthorized code execution
-- **Input Validation** - Validates and sanitizes user inputs
-- **Performance Monitoring** - Tracks resource usage and performance
+## Project Structure
 
-### Enterprise Features
-- **Row Level Security** - Data isolation per user/organization
-- **Audit Logging** - Complete audit trail of all activities
-- **Real-time Alerts** - Instant notifications for security events
-- **Configurable Rules** - Customizable detection thresholds
-- **API Rate Limiting** - Protection against abuse
-
-## 🎨 Design Philosophy
-
-### Visual Theme
-- **Black & Red Enterprise Theme** - Professional, security-focused appearance
-- **High Contrast** - Excellent accessibility and readability
-- **Clean Typography** - Modern, readable fonts
-- **Responsive Design** - Works perfectly on all devices
-
-### User Experience
-- **3-Line Integration** - Minimal code changes required
-- **Real-time Updates** - Live monitoring and alerts
-- **Comprehensive Reports** - Everything in one unified file
-- **Actionable Insights** - Clear recommendations and next steps
-
-## 📈 Performance
-
-- **Lightweight SDK** - Minimal performance impact
-- **Real-time Processing** - Instant threat detection
-- **Scalable Architecture** - Handles high-volume monitoring
-- **Efficient Storage** - Optimized data storage and retrieval
-
-## 🔧 Configuration
-
-### SDK Configuration
-```yaml
-# config/agent_sentinel.yaml
-agent_id: "my-agent"
-logging:
-  level: "INFO"
-  file: "logs/agent_sentinel.log"
-security:
-  sql_injection_threshold: 0.8
-  xss_threshold: 0.7
-  performance_warning_mb: 500
+```
+agent-sentinel-sdk/            Python SDK — decorators, threat detection, event registry
+agent-sentinel-intelligence/   FastAPI backend — auth, storage, LangGraph AI analysis
+agent-sentinel-dashboard/      Next.js frontend — real-time dashboard, reports, settings
+tests/                         E2E test suites with real agent integrations
 ```
 
-### Dashboard Configuration
-- **Supabase Integration** - Authentication and data storage
-- **Google OAuth** - Single sign-on capabilities
-- **Real-time Updates** - WebSocket connections
-- **Export Options** - PDF and JSON report export
+## Architecture
 
-## 🤝 Contributing
+The SDK detects threats locally and optionally streams events to the Intelligence API, which stores them in SQLite, runs multi-agent AI analysis (LangGraph), and serves the Dashboard via REST and SSE.
 
-We welcome contributions! Please see our [Contributing Guide](./extra/CONTRIBUTING.md) for details.
+See [SYSTEM_DESIGN.md](./SYSTEM_DESIGN.md) for the full architecture, data flows, API reference, and database schema.
 
-### Development Setup
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/your-org/agent-sentinel.git
-   cd agent-sentinel
-   ```
+## Running the Full Stack
 
-2. **Set up SDK development:**
-   ```bash
-   cd agent-sentinel-sdk
-   pip install -e .
-   ```
+### 1. Backend
 
-3. **Set up intelligence engine development:**
-   ```bash
-   cd agent-sentinel-intelligence
-   pip install -r requirements.txt
-   ```
+```bash
+cd agent-sentinel-intelligence
+pip install -r requirements.txt
+cp ../.env.example .env        # add your OPENAI_API_KEY
+uvicorn api_server:app --host 0.0.0.0 --port 8001
+```
 
-4. **Set up dashboard development:**
-   ```bash
-   cd agent-sentinel-dashboard
-   npm install
-   ```
+### 2. Dashboard
 
-## 📄 Documentation
+```bash
+cd agent-sentinel-dashboard
+npm install
+echo 'NEXT_PUBLIC_API_URL=http://localhost:8001' > .env.local
+npm run dev
+```
 
-- **[SDK Documentation](./agent-sentinel-sdk/README.md)** - Complete SDK guide
-- **[Intelligence Engine Documentation](./agent-sentinel-intelligence/README.md)** - Intelligence engine setup and usage
-- **[Dashboard Documentation](./agent-sentinel-dashboard/README.md)** - Dashboard setup and usage
-- **[Demo Examples](./demo/README.md)** - Demo agents and integration examples
-- **[Additional Documentation](./extra/)** - Extended documentation and reference materials
+### 3. SDK (connect to backend)
 
-## 🏢 Enterprise Support
+```python
+from agent_sentinel import monitor
 
-For enterprise customers, we offer:
-- **Custom integrations** and deployments
-- **Advanced security features** and configurations
-- **Dedicated support** and training
-- **SLA guarantees** and uptime commitments
+# Events are automatically sent when SENTINEL_API_URL and SENTINEL_API_KEY are set
+# export SENTINEL_API_URL=http://localhost:8001
+# export SENTINEL_API_KEY=<your key from the dashboard settings page>
 
-## 📞 Support
+@monitor
+def my_agent(query):
+    return process(query)
+```
 
-- **Documentation:** [docs.agentsentinel.com](https://docs.agentsentinel.com)
-- **Issues:** [GitHub Issues](https://github.com/your-org/agent-sentinel/issues)
-- **Discussions:** [GitHub Discussions](https://github.com/your-org/agent-sentinel/discussions)
-- **Email:** support@agentsentinel.com
+## Threat Detection
 
-## 📜 License
+The SDK detects these threat categories in real time:
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+| Threat | Examples |
+|--------|----------|
+| SQL injection | `'; DROP TABLE users; --`, `OR 1=1` |
+| XSS | `<script>alert('xss')</script>`, `onerror=` |
+| Prompt injection | `ignore previous instructions`, `system prompt` |
+| Command injection | `; rm -rf /`, `\| curl evil.com` |
+| Path traversal | `../../etc/passwd` |
+| Data exfiltration | Credential patterns, suspicious external URLs |
 
-## 🙏 Acknowledgments
+Each event includes `threat_type`, `severity` (LOW–CRITICAL), `confidence` (0.0–1.0), and the triggering context.
 
-- Built with modern Python and TypeScript
-- Powered by Supabase for authentication and data storage
-- Designed for enterprise security and scalability
+## Testing
 
----
+```bash
+# Backend API tests (39 tests)
+cd agent-sentinel-intelligence && python -m pytest tests/ -v
 
-**Agent Sentinel** - Secure your AI agents with enterprise-grade monitoring and threat detection.
+# SDK unit tests (52 tests)
+cd agent-sentinel-sdk && python -m pytest tests/ -v
+
+# E2E with synthetic agents (6 scenarios)
+python tests/test_agents_e2e.py
+
+# E2E with real agents from extra/ (8 scenarios — A2A protocol, Agno + OpenAI)
+python tests/test_real_agents_e2e.py
+```
+
+## Environment Variables
+
+| Variable | Required | Purpose |
+|----------|----------|---------|
+| `OPENAI_API_KEY` | For AI analysis | LangGraph workflow (GPT-4o) |
+| `EXA_API_KEY` | Optional | External threat intelligence research |
+| `SENTINEL_API_URL` | Optional | Backend URL for SDK event streaming |
+| `SENTINEL_API_KEY` | Optional | API key for SDK authentication |
+| `JWT_SECRET` | Backend | JWT signing secret (auto-generated if unset) |
+| `ADMIN_SECRET` | Backend | Admin API key generation |
+
+## License
+
+MIT — see [LICENSE](./LICENSE).
