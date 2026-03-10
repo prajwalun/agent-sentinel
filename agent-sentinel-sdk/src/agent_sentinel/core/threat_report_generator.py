@@ -11,8 +11,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass, field
-import requests
-
 from .types import SecurityEvent
 from .constants import ThreatType, SeverityLevel
 
@@ -470,13 +468,39 @@ class ThreatReportGenerator:
                 sources.append("Permission Exploitation")
         
         return list(set(sources))  # Remove duplicates
-    
+
+    def _report_to_dict(self, report: "ThreatReport") -> dict:
+        """
+        Serialize a ThreatReport to a fully JSON-safe dictionary.
+
+        SecurityEvent instances are serialized via .to_dict(). All datetime
+        objects are ISO-formatted. Enums are converted to their .value.
+        Nested dicts and lists are handled recursively.
+        """
+        def _serialize(obj):
+            if hasattr(obj, "to_dict"):
+                return obj.to_dict()
+            if hasattr(obj, "isoformat"):
+                return obj.isoformat()
+            if hasattr(obj, "value") and hasattr(type(obj), "__mro__"):
+                # Enum detection
+                import enum
+                if isinstance(obj, enum.Enum):
+                    return obj.value
+            if isinstance(obj, dict):
+                return {k: _serialize(v) for k, v in obj.items()}
+            if isinstance(obj, (list, tuple)):
+                return [_serialize(item) for item in obj]
+            return obj
+
+        return {key: _serialize(value) for key, value in report.__dict__.items()}
+
     def _save_report(self, report: ThreatReport) -> None:
         """Save report to file"""
         try:
             if self.report_format == "json":
                 with open(self.report_file, 'w') as f:
-                    json.dump(report.__dict__, f, default=str, indent=2)
+                    json.dump(self._report_to_dict(report), f, indent=2)
             elif self.report_format == "html":
                 html_content = self._generate_html_report(report)
                 with open(self.report_file, 'w') as f:
@@ -484,7 +508,7 @@ class ThreatReportGenerator:
             else:
                 # Default to JSON
                 with open(self.report_file, 'w') as f:
-                    json.dump(report.__dict__, f, default=str, indent=2)
+                    json.dump(self._report_to_dict(report), f, indent=2)
             
             self.logger.info(f"Threat report saved to {self.report_file}")
         except Exception as e:

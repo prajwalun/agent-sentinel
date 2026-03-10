@@ -168,6 +168,23 @@ config.local.yaml
 .agent_sentinel/
 weave_data/
 security_reports/
+reports/
+
+# Node
+node_modules/
+.next/
+
+# Database
+*.db
+*.sqlite3
+
+# Generated output
+intelligence.log
+
+# Third-party repos (kept locally for reference, not tracked)
+extra/Awesome-AI-Agents-main/
+extra/awesome-llm-apps-main 2/
+extra/weave-streamlined-2file-output 2/
 
 # MacOS
 .DS_Store
@@ -175,4 +192,4 @@ security_reports/
 # Windows
 Thumbs.db
 ehthumbs.db
-Desktop.ini 
+Desktop.ini

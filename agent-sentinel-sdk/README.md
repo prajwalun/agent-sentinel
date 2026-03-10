@@ -7,14 +7,19 @@ Secure any AI agent in just 3 lines of code with real-time threat detection, beh
 [![PyPI version](https://badge.fury.io/py/agent-sentinel.svg)](https://badge.fury.io/py/agent-sentinel)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Production Ready](https://img.shields.io/badge/Status-Production%20Ready-green.svg)](https://github.com/agentsentinel/agent-sentinel)
+[![Status: Beta](https://img.shields.io/badge/Status-Beta-orange.svg)](https://github.com/agentsentinel/agent-sentinel)
 
 ## 🚀 Quick Start
 
 ```python
-from agent_sentinel.wrappers.decorators import monitor
+from agent_sentinel import monitor
 
-# Secure your agent in just 2 lines
+# Option 1: bare decorator (agent_id auto-derived from module.function)
+@monitor
+def my_agent_function(data):
+    return process_data(data)
+
+# Option 2: named agent
 @monitor(agent_id="my_agent")
 def my_agent_function(data):
     return process_data(data)
@@ -38,7 +43,7 @@ def my_agent_function(data):
 - **Serialization Safety** - Secure handling of complex data structures
 
 ### 🔧 Production Readiness
-- **100% Test Coverage** - All comprehensive tests passing
+- **Verified Test Suite** - Core functionality tested with pytest
 - **Backward Compatibility** - No breaking changes to existing integrations
 - **Universal Compatibility** - Works with any Python-based AI agent
 - **Real-time Monitoring** - Live metrics and performance tracking
@@ -77,82 +82,100 @@ pip install agent-sentinel
 
 ## 🚀 Usage Examples
 
-### Basic Agent Monitoring
+### Basic Function Monitoring
 
 ```python
-from agent_sentinel.wrappers.decorators import monitor
+from agent_sentinel import monitor
 
-# Monitor your agent function
-@monitor(agent_id="data_processor")
-def process_data(data):
-    # Your agent logic here
-    return {"result": "processed", "data": data}
+# Bare decorator — agent_id auto-derived
+@monitor
+def process_data(data: str) -> str:
+    return data.upper()
 
-# Use your monitored agent
-result = process_data({"input": "test"})
+# Named agent with strict validation
+@monitor(agent_id="data_processor", validate_inputs=True, strict_validation=True)
+def secure_process(data: str) -> str:
+    return data.upper()
+
+result = secure_process("hello")
 ```
 
 ### Class-Based Agent Monitoring
 
 ```python
-from agent_sentinel.wrappers.decorators import monitor
+from agent_sentinel import sentinel
 
+# Wrap every public method on the class
+@sentinel
 class MyAgent:
-    def __init__(self):
-        self.agent_id = "my_class_agent"
-    
-    @monitor(agent_id="my_class_agent")
-    def process(self, data):
-        return self._internal_process(data)
-    
-    def _internal_process(self, data):
-        # Your agent logic here
-        return {"status": "success", "data": data}
+    def respond(self, query: str) -> str:
+        return f"Answer: {query}"
 
-# Use your monitored class
-agent = MyAgent()
-result = agent.process({"input": "test"})
+    def summarize(self, text: str) -> str:
+        return text[:100]
+
+# Named agent
+@sentinel(agent_id="prod_agent", enable_threat_reports=True)
+class ProdAgent:
+    def process(self, payload: dict) -> dict:
+        return {"status": "ok", "data": payload}
+
+agent = ProdAgent()
+result = agent.process({"input": "hello"})
 ```
 
-### MCP Agent Monitoring
+### MCP Server / Tool Monitoring
 
 ```python
-from agent_sentinel.wrappers.decorators import monitor_mcp
+from agent_sentinel import monitor_mcp
 
-class MCPAgent:
-    def __init__(self):
-        self.resources = ["file_system", "database"]
-    
-    @monitor_mcp(agent_id="mcp_agent")
-    def call_resource(self, resource, method, params):
-        # Your MCP logic here
-        return {"resource": resource, "method": method, "result": "success"}
+class FileSystemTool:
+    @monitor_mcp(agent_id="fs_tool")
+    def read_file(self, params: dict) -> dict:
+        path = params.get("path", "")
+        return {"content": open(path).read()}
 
-# Use your monitored MCP agent
-mcp_agent = MCPAgent()
-result = mcp_agent.call_resource("file_system", "read", {"path": "/file"})
+    @monitor_mcp(agent_id="fs_tool")
+    def write_file(self, params: dict) -> dict:
+        path = params.get("path", "")
+        content = params.get("content", "")
+        with open(path, "w") as f:
+            f.write(content)
+        return {"status": "written"}
+
+tool = FileSystemTool()
+result = tool.read_file({"path": "/etc/hosts"})
+```
+
+### Session-Based Monitoring
+
+```python
+from agent_sentinel.wrappers.decorators import monitor_agent_session
+from agent_sentinel import get_all_events
+
+with monitor_agent_session("pipeline_agent", "ingestion_run") as wrapper:
+    result = process_batch(data)
+    stats = wrapper.get_agent_stats()
+
+# Retrieve all events across all agents
+events = get_all_events()
 ```
 
 ### Advanced Configuration
 
 ```python
-from agent_sentinel.wrappers.decorators import monitor
+from agent_sentinel import monitor
 
-# Configure for production use
 @monitor(
     agent_id="production_agent",
-    enable_input_validation=True,
-    enable_behavior_analysis=True,
-    enable_performance_monitoring=True,
-    strict_validation=True,
-    max_session_duration=3600,  # 1 hour
-    max_concurrent_sessions=100,
-    session_cleanup_interval=300,  # 5 minutes
-    memory_threshold_mb=512
+    validate_inputs=True,
+    validate_outputs=True,
+    strict_validation=True,       # Block on suspicious inputs
+    enable_separate_logs=True,    # Write per-agent log files
+    enable_threat_reports=True,   # Generate JSON threat reports
 )
-def production_agent(data):
-    # Your production agent logic
-    return process_production_data(data)
+def production_agent(payload: dict) -> dict:
+    return process_production_data(payload)
 ```
 
 ## 📊 Logging & Reporting

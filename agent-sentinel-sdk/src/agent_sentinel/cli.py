@@ -6,9 +6,9 @@ Command-line interface for Sentinel security monitoring SDK.
 """
 
 import argparse
-import asyncio
 import json
 import sys
+import time
 from pathlib import Path
 from typing import Optional
 
@@ -202,8 +202,9 @@ def run_monitor(args):
         # Set up logging
         logger = SecurityLogger(
             name="sentinel_cli",
-            level=args.log_level,
-            json_format=True
+            agent_id=getattr(args, 'agent_id', 'cli') or 'cli',
+            log_level=args.log_level,
+            json_format=True,
         )
         
         logger.info("Sentinel monitoring started", extra={
@@ -219,20 +220,16 @@ def run_monitor(args):
         
         if args.daemon:
             print("🔄 Running in daemon mode...")
-            # In a real implementation, this would fork to background
-            # For now, just run in foreground
             try:
-                # Keep running
                 while True:
-                    asyncio.sleep(1)
+                    time.sleep(1)
             except KeyboardInterrupt:
                 pass
         else:
             print("📊 Monitoring active. Press Ctrl+C to stop.")
             try:
-                # Keep running
                 while True:
-                    asyncio.sleep(1)
+                    time.sleep(1)
             except KeyboardInterrupt:
                 pass
         
@@ -286,7 +283,7 @@ def validate_strict_config(config):
         if config.detection.confidence_threshold < 0.8:
             raise ValueError("Confidence threshold should be >= 0.8 for production")
         
-        if not config.logging.json_format:
+        if getattr(config.logging, 'format', 'text') != 'json':
             raise ValueError("JSON logging format required for production")
 
 
@@ -396,8 +393,10 @@ def run_report(args):
         if args.agent_id:
             sentinel.agent_id = args.agent_id
         
-        # Generate unified report
-        report_path = sentinel.generate_unified_report(args.output)
+        # Generate unified report — pass output path if specified
+        report_path = sentinel.generate_unified_report(
+            file_path=args.output if hasattr(args, 'output') and args.output else None
+        )
         
         print(f"✅ Unified report generated: {report_path}")
         print(f"📄 Report contains:")
