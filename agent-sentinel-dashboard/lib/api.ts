@@ -252,8 +252,20 @@ class ApiService {
       body: formData,
     })
 
+    if (response.status === 401) {
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("sentinel_token")
+        localStorage.removeItem("sentinel_user")
+        window.location.href = "/auth/login"
+      }
+      throw new Error("Authentication expired")
+    }
+
     if (!response.ok) {
-      throw new Error(`Upload failed: ${response.status} ${response.statusText}`)
+      const body = await response.json().catch(() => ({}))
+      throw new Error(
+        body.detail || `Upload failed: ${response.status} ${response.statusText}`
+      )
     }
 
     const result = await response.json()
@@ -300,8 +312,13 @@ class ApiService {
     return this.request("/api/metrics")
   }
 
-  async createApiKey(): Promise<{ api_key: string; message: string }> {
-    return this.request("/api/keys", { method: "POST" })
+  async createApiKey(
+    description: string = "API key"
+  ): Promise<{ api_key: string; message: string }> {
+    return this.request("/api/keys", {
+      method: "POST",
+      body: JSON.stringify({ description }),
+    })
   }
 
   async listApiKeys(): Promise<{
@@ -309,6 +326,10 @@ class ApiService {
     total: number
   }> {
     return this.request("/api/keys")
+  }
+
+  async revokeApiKey(keyId: string): Promise<{ message: string }> {
+    return this.request(`/api/keys/${keyId}`, { method: "DELETE" })
   }
 
   async startAnalysis(

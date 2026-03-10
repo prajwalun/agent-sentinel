@@ -34,8 +34,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const storedToken = localStorage.getItem("sentinel_token")
     const storedUser = localStorage.getItem("sentinel_user")
     if (storedToken && storedUser) {
-      setToken(storedToken)
-      setUser(JSON.parse(storedUser))
+      try {
+        setToken(storedToken)
+        setUser(JSON.parse(storedUser))
+      } catch {
+        localStorage.removeItem("sentinel_token")
+        localStorage.removeItem("sentinel_user")
+      }
     }
     setLoading(false)
   }, [])

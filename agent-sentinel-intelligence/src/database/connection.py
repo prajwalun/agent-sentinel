@@ -42,6 +42,7 @@ CREATE TABLE IF NOT EXISTS agents (
     created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
     last_seen   TEXT
 );
+CREATE INDEX IF NOT EXISTS idx_agents_last_seen ON agents(last_seen DESC);
 
 CREATE TABLE IF NOT EXISTS security_events (
     id              TEXT PRIMARY KEY,
@@ -55,14 +56,16 @@ CREATE TABLE IF NOT EXISTS security_events (
     detected_at     TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
     FOREIGN KEY (agent_id) REFERENCES agents(id)
 );
-CREATE INDEX IF NOT EXISTS idx_events_agent    ON security_events(agent_id);
-CREATE INDEX IF NOT EXISTS idx_events_severity ON security_events(severity);
-CREATE INDEX IF NOT EXISTS idx_events_detected ON security_events(detected_at);
+CREATE INDEX IF NOT EXISTS idx_events_agent      ON security_events(agent_id);
+CREATE INDEX IF NOT EXISTS idx_events_severity   ON security_events(severity);
+CREATE INDEX IF NOT EXISTS idx_events_detected   ON security_events(detected_at);
+CREATE INDEX IF NOT EXISTS idx_events_threat_type ON security_events(threat_type);
+CREATE INDEX IF NOT EXISTS idx_events_agent_time  ON security_events(agent_id, detected_at DESC);
 
 CREATE TABLE IF NOT EXISTS api_keys (
     id          TEXT PRIMARY KEY,
     key_hash    TEXT NOT NULL UNIQUE,
-    user_id     TEXT NOT NULL,
+    user_id     TEXT NOT NULL REFERENCES users(id),
     description TEXT NOT NULL DEFAULT '',
     created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
     last_used   TEXT,
@@ -73,11 +76,12 @@ CREATE INDEX IF NOT EXISTS idx_keys_hash    ON api_keys(key_hash);
 CREATE INDEX IF NOT EXISTS idx_keys_user_id ON api_keys(user_id);
 
 CREATE TABLE IF NOT EXISTS request_log (
-    id         INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id    TEXT NOT NULL,
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id      TEXT NOT NULL REFERENCES users(id),
     requested_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
 );
-CREATE INDEX IF NOT EXISTS idx_reqlog_user_time ON request_log(user_id, requested_at);
+CREATE INDEX IF NOT EXISTS idx_reqlog_user_time  ON request_log(user_id, requested_at);
+CREATE INDEX IF NOT EXISTS idx_reqlog_requested  ON request_log(requested_at);
 
 CREATE TABLE IF NOT EXISTS analysis_runs (
     id           TEXT PRIMARY KEY,
@@ -91,8 +95,10 @@ CREATE TABLE IF NOT EXISTS analysis_runs (
     duration_ms  INTEGER,
     FOREIGN KEY (agent_id) REFERENCES agents(id)
 );
-CREATE INDEX IF NOT EXISTS idx_runs_agent ON analysis_runs(agent_id);
-CREATE INDEX IF NOT EXISTS idx_runs_input ON analysis_runs(input_hash);
+CREATE INDEX IF NOT EXISTS idx_runs_agent      ON analysis_runs(agent_id);
+CREATE INDEX IF NOT EXISTS idx_runs_input      ON analysis_runs(input_hash);
+CREATE INDEX IF NOT EXISTS idx_runs_created_at ON analysis_runs(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_runs_status     ON analysis_runs(status);
 """
 
 

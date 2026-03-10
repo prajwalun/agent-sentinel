@@ -217,6 +217,13 @@ class Repository:
         ).fetchone()
         return row["cnt"]
 
+    def get_event_counts_by_agent(self) -> Dict[str, int]:
+        """Return {agent_id: count} for all agents in a single query."""
+        rows = get_db().execute(
+            "SELECT agent_id, COUNT(*) AS cnt FROM security_events GROUP BY agent_id"
+        ).fetchall()
+        return {r["agent_id"]: r["cnt"] for r in rows}
+
     def get_severity_counts(self, since: Optional[str] = None) -> Dict[str, int]:
         clauses = []
         params: List[Any] = []
@@ -290,6 +297,16 @@ class Repository:
             (user_id,),
         ).fetchall()
         return [_row_to_dict(r) for r in rows]
+
+    def revoke_api_key(self, key_id: str, user_id: str) -> bool:
+        """Deactivate a key. Checks ownership so users cannot revoke others' keys."""
+        db = get_db()
+        cursor = db.execute(
+            "UPDATE api_keys SET is_active = 0 WHERE id = ? AND user_id = ?",
+            (key_id, user_id),
+        )
+        db.commit()
+        return cursor.rowcount > 0
 
     def check_rate_limit(self, user_id: str, max_per_hour: int = 100) -> bool:
         """
@@ -390,6 +407,13 @@ class Repository:
             params,
         ).fetchall()
         return [_row_to_dict(r) for r in rows]
+
+    def get_analysis_run(self, run_id: str) -> Optional[Dict[str, Any]]:
+        """Fetch a single analysis run by ID."""
+        row = get_db().execute(
+            "SELECT * FROM analysis_runs WHERE id = ?", (run_id,)
+        ).fetchone()
+        return _row_to_dict(row) if row else None
 
     def get_analysis_run_count(self) -> int:
         row = get_db().execute("SELECT COUNT(*) AS cnt FROM analysis_runs").fetchone()

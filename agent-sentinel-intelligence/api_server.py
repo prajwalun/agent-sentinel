@@ -357,12 +357,18 @@ async def generate_api_key(body: KeyGenerateRequest, _: None = Depends(require_a
     }
 
 
+class CreateKeyRequest(BaseModel):
+    description: str = Field(default="API key", max_length=256)
+
+
 @app.post("/api/keys")
 async def create_own_api_key(
+    body: Optional[CreateKeyRequest] = None,
     user_info: Dict[str, Any] = Depends(require_auth),
 ):
     """Authenticated users can create new API keys for themselves."""
-    raw_key = repo.create_api_key(user_info["user_id"], description="Dashboard-generated key")
+    desc = body.description if body else "API key"
+    raw_key = repo.create_api_key(user_info["user_id"], description=desc)
     return {
         "api_key": raw_key,
         "message": "Store this key securely — it will not be shown again.",
@@ -374,6 +380,17 @@ async def list_own_api_keys(user_info: Dict[str, Any] = Depends(require_auth)):
     """List the authenticated user's API keys (hashes and metadata, not raw keys)."""
     keys = repo.list_api_keys_for_user(user_info["user_id"])
     return {"keys": keys, "total": len(keys)}
+
+
+@app.delete("/api/keys/{key_id}")
+async def revoke_api_key(
+    key_id: str, user_info: Dict[str, Any] = Depends(require_auth)
+):
+    """Deactivate an API key. Only the owning user can revoke their keys."""
+    revoked = repo.revoke_api_key(key_id, user_info["user_id"])
+    if not revoked:
+        raise HTTPException(status_code=404, detail="Key not found or not owned by you")
+    return {"message": "API key revoked"}
 
 
 @app.get("/api/keys/validate")
@@ -401,13 +418,18 @@ async def dashboard_stats(_: Dict[str, Any] = Depends(require_auth)):
 
 @app.get("/api/agents")
 async def list_agents(
-    status: Optional[str] = Query(None), _: Dict[str, Any] = Depends(require_auth)
+    status: Optional[str] = Query(None),
+    limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+    _: Dict[str, Any] = Depends(require_auth),
 ):
     agents = repo.list_agents(status=status)
-    # Enrich with event counts
+    event_counts = repo.get_event_counts_by_agent()
     for agent in agents:
-        agent["event_count"] = repo.get_event_count(agent_id=agent["id"])
-    return {"agents": agents, "total": len(agents)}
+        agent["event_count"] = event_counts.get(agent["id"], 0)
+    total = len(agents)
+    paginated = agents[offset : offset + limit]
+    return {"agents": paginated, "total": total, "limit": limit, "offset": offset}
 
 
 @app.post("/api/agents", status_code=201)
@@ -468,11 +490,15 @@ async def create_event(body: EventCreateRequest, _: Dict[str, Any] = Depends(req
 
 
 @app.get("/api/events/stream")
-async def event_stream(request: Request):
+async def event_stream(request: Request, token: str = Query(...)):
     """
     Server-Sent Events endpoint.  Pushes new security events to
     connected clients every 2 seconds.
+
+    Requires a valid JWT passed as a query parameter because the
+    browser EventSource API does not support custom headers.
     """
+    _decode_jwt(token)  # raises 401 if invalid/expired
 
     async def generate() -> AsyncGenerator[str, None]:
         last_seen_count = repo.get_event_count()
@@ -507,7 +533,8 @@ async def list_reports(
     _: Dict[str, Any] = Depends(require_auth),
 ):
     runs = repo.list_analysis_runs(agent_id=agent_id, status=status, limit=limit)
-    return {"reports": runs, "total": len(runs)}
+    total = repo.get_analysis_run_count()
+    return {"reports": runs, "total": total}
 
 
 # ---------------------------------------------------------------------------
@@ -515,12 +542,20 @@ async def list_reports(
 # ---------------------------------------------------------------------------
 
 _running_analyses: Dict[str, Dict[str, Any]] = {}
+_ANALYSIS_TTL_SECONDS = 600  # remove completed/failed entries after 10 minutes
 
 
-class AsyncAnalysisRequest(BaseModel):
-    report_content: str = Field(..., min_length=1, max_length=1_000_000)
-    analysis_type: str = "comprehensive"
-    agent_id: Optional[str] = None
+def _schedule_eviction(run_id: str) -> None:
+    """Remove a terminal analysis entry from memory after TTL expires."""
+    import threading
+
+    def _evict():
+        _running_analyses.pop(run_id, None)
+
+    threading.Timer(_ANALYSIS_TTL_SECONDS, _evict).start()
+
+
+AsyncAnalysisRequest = AnalysisRequest  # same schema used by both sync and async
 
 
 @app.post("/api/analysis/start", status_code=202)
@@ -576,14 +611,17 @@ async def start_analysis(
                 "phase": "done",
                 "result": report,
             }
+            _schedule_eviction(run_id)
         except Exception as exc:
             duration_ms = int((time.monotonic() - start) * 1000)
+            logger.error("Background analysis %s failed: %s", run_id, exc)
             repo.fail_analysis_run(run_id, str(exc))
             _running_analyses[run_id] = {
                 "status": "failed",
                 "phase": "error",
                 "error": str(exc),
             }
+            _schedule_eviction(run_id)
 
     threading.Thread(target=_background_analyze, daemon=True).start()
 
@@ -605,15 +643,20 @@ async def get_analysis_status(
         return resp
 
     # Fallback to database if not in memory (e.g. after restart)
-    rows = repo.list_analysis_runs(limit=1)
-    for row in rows:
-        if row.get("id") == run_id:
-            return {
-                "run_id": run_id,
-                "status": row.get("status", "unknown"),
-                "phase": "done" if row.get("status") == "completed" else row.get("status"),
-                "result": json.loads(row["result_json"]) if row.get("result_json") else None,
-            }
+    row = repo.get_analysis_run(run_id)
+    if row:
+        result = None
+        if row.get("result_json"):
+            try:
+                result = json.loads(row["result_json"])
+            except (json.JSONDecodeError, TypeError):
+                result = None
+        return {
+            "run_id": run_id,
+            "status": row.get("status", "unknown"),
+            "phase": "done" if row.get("status") == "completed" else row.get("status"),
+            "result": result,
+        }
 
     raise HTTPException(status_code=404, detail="Analysis run not found")
 

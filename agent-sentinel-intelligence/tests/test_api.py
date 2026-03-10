@@ -32,9 +32,13 @@ from database.connection import get_db
 def _reset_db():
     """Reinitialise the in-memory database before each test."""
     init_db(":memory:")
-    # Seed demo key
-    key_hash = hashlib.sha256(b"as_test_demo_key_123456").hexdigest()
     db = get_db()
+    # Seed a demo user so FK on api_keys is satisfied
+    db.execute(
+        "INSERT OR IGNORE INTO users (id, email, password_hash, name) VALUES (?, ?, ?, ?)",
+        ("demo-user", "demo@test.local", "not-a-real-hash", "Demo User"),
+    )
+    key_hash = hashlib.sha256(b"as_test_demo_key_123456").hexdigest()
     db.execute(
         "INSERT OR IGNORE INTO api_keys (id, key_hash, user_id, description) VALUES (?, ?, ?, ?)",
         ("key_demo", key_hash, "demo-user", "Test demo key"),
@@ -105,6 +109,14 @@ class TestKeyManagement:
         assert r.status_code in (401, 403, 422)
 
     def test_generate_key_with_admin(self):
+        # Create the user first so FK is satisfied
+        db = get_db()
+        db.execute(
+            "INSERT OR IGNORE INTO users (id, email, password_hash, name) VALUES (?, ?, ?, ?)",
+            ("new_user", "new@test.local", "hash", "New User"),
+        )
+        db.commit()
+
         r = client.post(
             "/api/keys/generate",
             json={"user_id": "new_user", "description": "test key"},
@@ -366,3 +378,193 @@ class TestUserAuth:
         })
         assert r2.status_code == 200
         assert r2.json()["total"] >= 1
+
+
+# -------------------------------------------------------------------
+# Key revocation
+# -------------------------------------------------------------------
+
+
+class TestKeyRevocation:
+    def _signup_and_get_token(self, email: str):
+        resp = client.post("/api/auth/signup", json={
+            "email": email,
+            "password": "password123456",
+            "name": "Revoke Tester",
+        })
+        return resp.json()["token"]
+
+    def test_revoke_own_key(self):
+        token = self._signup_and_get_token("revoke1@example.com")
+        auth = {"Authorization": f"Bearer {token}"}
+
+        new_key = client.post("/api/keys", headers=auth).json()["api_key"]
+        keys = client.get("/api/keys", headers=auth).json()["keys"]
+        active_key = next(k for k in keys if k["is_active"])
+
+        r = client.delete(f"/api/keys/{active_key['id']}", headers=auth)
+        assert r.status_code == 200
+
+        keys_after = client.get("/api/keys", headers=auth).json()["keys"]
+        revoked = next(k for k in keys_after if k["id"] == active_key["id"])
+        assert revoked["is_active"] == 0
+
+    def test_revoke_nonexistent_key_returns_404(self):
+        token = self._signup_and_get_token("revoke2@example.com")
+        auth = {"Authorization": f"Bearer {token}"}
+        r = client.delete("/api/keys/nonexistent_id", headers=auth)
+        assert r.status_code == 404
+
+    def test_cannot_revoke_other_users_key(self):
+        token_a = self._signup_and_get_token("revokeA@example.com")
+        token_b = self._signup_and_get_token("revokeB@example.com")
+
+        client.post("/api/keys", headers={"Authorization": f"Bearer {token_a}"})
+        keys_a = client.get("/api/keys", headers={"Authorization": f"Bearer {token_a}"}).json()["keys"]
+        key_id = keys_a[0]["id"]
+
+        r = client.delete(
+            f"/api/keys/{key_id}",
+            headers={"Authorization": f"Bearer {token_b}"},
+        )
+        assert r.status_code == 404
+
+    def test_revoked_api_key_cannot_authenticate(self):
+        token = self._signup_and_get_token("revoke3@example.com")
+        auth = {"Authorization": f"Bearer {token}"}
+
+        raw = client.post("/api/keys", headers=auth).json()["api_key"]
+        # Verify it works before revoking
+        r1 = client.get("/api/agents", headers={"Authorization": f"Bearer {raw}"})
+        assert r1.status_code == 200
+
+        keys = client.get("/api/keys", headers=auth).json()["keys"]
+        # Find the key that was just created (not the default one)
+        key_record = [k for k in keys if k["description"] != "Default key"][-1]
+
+        client.delete(f"/api/keys/{key_record['id']}", headers=auth)
+
+        r2 = client.get("/api/agents", headers={"Authorization": f"Bearer {raw}"})
+        assert r2.status_code == 401
+
+
+class TestKeyWithDescription:
+    def test_custom_description(self):
+        signup = client.post("/api/auth/signup", json={
+            "email": "desc@example.com",
+            "password": "password123456",
+            "name": "Desc User",
+        })
+        token = signup.json()["token"]
+        auth = {"Authorization": f"Bearer {token}"}
+
+        client.post("/api/keys", json={"description": "Production"}, headers=auth)
+        keys = client.get("/api/keys", headers=auth).json()["keys"]
+        described = [k for k in keys if k["description"] == "Production"]
+        assert len(described) == 1
+
+
+# -------------------------------------------------------------------
+# SSE authentication
+# -------------------------------------------------------------------
+
+
+class TestSSEAuth:
+    def test_stream_rejects_without_token(self):
+        r = client.get("/api/events/stream")
+        assert r.status_code == 422  # missing required query param
+
+    def test_stream_rejects_invalid_token(self):
+        r = client.get("/api/events/stream?token=bad-token-here")
+        assert r.status_code == 401
+
+
+# -------------------------------------------------------------------
+# Agent pagination
+# -------------------------------------------------------------------
+
+
+class TestAgentPagination:
+    def test_pagination_params(self):
+        for i in range(5):
+            client.post(
+                "/api/agents",
+                json={"id": f"pg_{i}", "name": f"Paginated Agent {i}"},
+                headers=AUTH,
+            )
+        r = client.get("/api/agents?limit=2&offset=0", headers=AUTH)
+        data = r.json()
+        assert len(data["agents"]) == 2
+        assert data["total"] == 5
+        assert data["offset"] == 0
+
+        r2 = client.get("/api/agents?limit=2&offset=3", headers=AUTH)
+        assert len(r2.json()["agents"]) == 2
+
+    def test_agents_include_event_count(self):
+        client.post(
+            "/api/agents",
+            json={"id": "cnt_agent", "name": "Count Agent"},
+            headers=AUTH,
+        )
+        for _ in range(3):
+            client.post(
+                "/api/events",
+                json={
+                    "agent_id": "cnt_agent",
+                    "threat_type": "xss",
+                    "severity": "LOW",
+                    "confidence": 0.5,
+                    "message": "test",
+                },
+                headers=AUTH,
+            )
+        r = client.get("/api/agents", headers=AUTH)
+        agent = next(a for a in r.json()["agents"] if a["id"] == "cnt_agent")
+        assert agent["event_count"] == 3
+
+
+# -------------------------------------------------------------------
+# Analysis status DB fallback
+# -------------------------------------------------------------------
+
+
+class TestAnalysisStatusFallback:
+    def test_nonexistent_run_returns_404(self):
+        r = client.get("/api/analysis/no_such_run/status", headers=AUTH)
+        assert r.status_code == 404
+
+    def test_db_run_found_via_fallback(self):
+        from database import Repository
+        repo = Repository()
+        client.post(
+            "/api/agents",
+            json={"id": "fb_agent", "name": "Fallback Agent"},
+            headers=AUTH,
+        )
+        run_id = repo.create_analysis_run("fb_agent", "testhash")
+        r = client.get(f"/api/analysis/{run_id}/status", headers=AUTH)
+        assert r.status_code == 200
+        assert r.json()["status"] == "pending"
+
+
+# -------------------------------------------------------------------
+# Report total count
+# -------------------------------------------------------------------
+
+
+class TestReportTotal:
+    def test_total_reflects_db_count(self):
+        from database import Repository
+        repo = Repository()
+        client.post(
+            "/api/agents",
+            json={"id": "rpt_agent", "name": "Report Agent"},
+            headers=AUTH,
+        )
+        for i in range(5):
+            repo.create_analysis_run("rpt_agent", f"hash_{i}")
+        r = client.get("/api/reports?limit=2", headers=AUTH)
+        data = r.json()
+        assert len(data["reports"]) == 2
+        assert data["total"] == 5

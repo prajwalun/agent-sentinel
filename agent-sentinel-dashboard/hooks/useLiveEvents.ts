@@ -20,7 +20,14 @@ export function useLiveEvents(maxBuffer = 50) {
       sourceRef.current.close()
     }
 
-    const es = new EventSource(`${API_BASE_URL}/api/events/stream`)
+    const token = typeof window !== "undefined"
+      ? localStorage.getItem("sentinel_token")
+      : null
+    if (!token) return
+
+    const es = new EventSource(
+      `${API_BASE_URL}/api/events/stream?token=${encodeURIComponent(token)}`
+    )
     sourceRef.current = es
 
     es.onopen = () => setConnected(true)

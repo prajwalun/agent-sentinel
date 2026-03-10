@@ -234,30 +234,39 @@ export function ReportUpload({ onReportSelect }: ReportUploadProps) {
         </h3>
 
         <p className="text-gray-400 text-sm">
-          The Agent Sentinel SDK generates a local JSON report every time your
-          agent runs. You can also trigger one manually:
+          After monitoring your agent with the SDK, generate a JSON report
+          and upload it here for AI-powered analysis:
         </p>
 
         <div className="bg-black rounded-lg p-4 font-mono text-sm text-gray-300 space-y-1">
-          <p className="text-gray-500"># In your Python project</p>
+          <p className="text-gray-500"># pip install agent-sentinel</p>
           <p>
             <span className="text-red-400">from</span> agent_sentinel{" "}
-            <span className="text-red-400">import</span> AgentSentinel
+            <span className="text-red-400">import</span> AgentSentinel, monitor
           </p>
+          <p>&nbsp;</p>
           <p>sentinel = AgentSentinel()</p>
-          <p className="text-gray-500 mt-2"># After your agent runs...</p>
+          <p>&nbsp;</p>
+          <p className="text-gray-500"># Wrap your agent with @monitor</p>
+          <p>@monitor</p>
           <p>
-            report_path = sentinel.generate_unified_report()
+            <span className="text-red-400">def</span>{" "}
+            <span className="text-blue-400">my_agent</span>(prompt):
           </p>
-          <p className="text-gray-500"># Upload the file at report_path here</p>
+          <p>    <span className="text-red-400">return</span> llm.invoke(prompt)</p>
+          <p>&nbsp;</p>
+          <p className="text-gray-500"># Run your agent, then generate the report</p>
+          <p>my_agent(<span className="text-green-400">&quot;user query&quot;</span>)</p>
+          <p>report_path = sentinel.generate_unified_report()</p>
+          <p className="text-gray-500"># Upload the JSON file at report_path here</p>
         </div>
 
         <p className="text-gray-500 text-xs">
-          Reports are also saved automatically to the{" "}
-          <code className="text-gray-400">logs/</code> folder in your working
+          The report is saved to the{" "}
+          <code className="text-gray-400">logs/</code> folder in your project
           directory. Alternatively, trigger analysis directly from the{" "}
           <strong className="text-gray-300">Agents</strong> page for any agent
-          that has already pushed events to this dashboard.
+          that has already pushed events to this dashboard via the SDK.
         </p>
       </div>
 
