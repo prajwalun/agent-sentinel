@@ -18,10 +18,12 @@ import sys
 import time
 import uuid
 from contextlib import asynccontextmanager
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, AsyncGenerator, Dict, List, Optional
 
+import bcrypt
+import jwt
 from fastapi import (
     Depends,
     FastAPI,
@@ -59,6 +61,11 @@ _request_count: int = 0
 
 # Confidence-score regex compiled once at module level
 _CONFIDENCE_RE = re.compile(r"confidence[:\s]*(\d+\.?\d*)", re.IGNORECASE)
+
+# JWT configuration
+JWT_SECRET = os.getenv("JWT_SECRET", "sentinel-dev-secret-change-in-production")
+JWT_ALGORITHM = "HS256"
+JWT_EXPIRY_HOURS = int(os.getenv("JWT_EXPIRY_HOURS", "24"))
 
 
 # ---------------------------------------------------------------------------
@@ -157,6 +164,41 @@ class KeyGenerateRequest(BaseModel):
     description: str = ""
 
 
+class SignUpRequest(BaseModel):
+    email: str = Field(..., min_length=5, max_length=256)
+    password: str = Field(..., min_length=8, max_length=128)
+    name: str = Field(..., min_length=1, max_length=128)
+
+
+class LoginRequest(BaseModel):
+    email: str = Field(..., min_length=1, max_length=256)
+    password: str = Field(..., min_length=1, max_length=128)
+
+
+# ---------------------------------------------------------------------------
+# JWT helpers
+# ---------------------------------------------------------------------------
+
+
+def _create_jwt(user_id: str, email: str) -> str:
+    payload = {
+        "sub": user_id,
+        "email": email,
+        "iat": datetime.now(timezone.utc),
+        "exp": datetime.now(timezone.utc) + timedelta(hours=JWT_EXPIRY_HOURS),
+    }
+    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+
+
+def _decode_jwt(token: str) -> Dict[str, Any]:
+    try:
+        return jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expired")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+
 # ---------------------------------------------------------------------------
 # Auth dependency
 # ---------------------------------------------------------------------------
@@ -166,18 +208,30 @@ _bearer = HTTPBearer()
 async def require_auth(
     credentials: HTTPAuthorizationCredentials = Depends(_bearer),
 ) -> Dict[str, Any]:
-    """Validate Bearer token against the api_keys table."""
+    """
+    Validate Bearer token — supports both API keys (as_ prefix, for SDK)
+    and JWT tokens (for dashboard sessions).
+    """
     global _request_count
     _request_count += 1
 
-    key_record = repo.validate_api_key(credentials.credentials)
-    if not key_record:
-        raise HTTPException(status_code=401, detail="Invalid or inactive API key")
+    token = credentials.credentials
 
-    if not repo.check_rate_limit(key_record["user_id"]):
-        raise HTTPException(status_code=429, detail="Rate limit exceeded (100 req/hr)")
+    # API key path (SDK clients)
+    if token.startswith("as_"):
+        key_record = repo.validate_api_key(token)
+        if not key_record:
+            raise HTTPException(status_code=401, detail="Invalid or inactive API key")
+        if not repo.check_rate_limit(key_record["user_id"]):
+            raise HTTPException(status_code=429, detail="Rate limit exceeded (100 req/hr)")
+        return {"user_id": key_record["user_id"], "auth_type": "api_key", **key_record}
 
-    return key_record
+    # JWT path (dashboard sessions)
+    claims = _decode_jwt(token)
+    user = repo.get_user_by_id(claims["sub"])
+    if not user or not user.get("is_active"):
+        raise HTTPException(status_code=401, detail="User account not found or inactive")
+    return {"user_id": user["id"], "email": user["email"], "auth_type": "jwt"}
 
 
 async def require_admin(
@@ -221,7 +275,75 @@ async def get_metrics():
 
 
 # ---------------------------------------------------------------------------
-# API key management (admin-gated)
+# User authentication (public — no token required)
+# ---------------------------------------------------------------------------
+
+
+@app.post("/api/auth/signup", status_code=201)
+async def signup(body: SignUpRequest):
+    existing = repo.get_user_by_email(body.email)
+    if existing:
+        raise HTTPException(status_code=409, detail="Email already registered")
+
+    hashed = bcrypt.hashpw(body.password.encode(), bcrypt.gensalt()).decode()
+    user = repo.create_user(email=body.email, password_hash=hashed, name=body.name)
+
+    # Provision an initial API key so they can start using the SDK immediately
+    api_key = repo.create_api_key(user["id"], description="Default key")
+    token = _create_jwt(user["id"], user["email"])
+
+    return {
+        "token": token,
+        "user": {
+            "id": user["id"],
+            "email": user["email"],
+            "name": user["name"],
+            "created_at": user["created_at"],
+        },
+        "api_key": api_key,
+    }
+
+
+@app.post("/api/auth/login")
+async def login(body: LoginRequest):
+    user = repo.get_user_by_email(body.email)
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+
+    if not bcrypt.checkpw(body.password.encode(), user["password_hash"].encode()):
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+
+    if not user.get("is_active"):
+        raise HTTPException(status_code=403, detail="Account is deactivated")
+
+    token = _create_jwt(user["id"], user["email"])
+    return {
+        "token": token,
+        "user": {
+            "id": user["id"],
+            "email": user["email"],
+            "name": user["name"],
+            "created_at": user["created_at"],
+        },
+    }
+
+
+@app.get("/api/auth/me")
+async def get_current_user(user_info: Dict[str, Any] = Depends(require_auth)):
+    """Return the authenticated user's profile."""
+    user = repo.get_user_by_id(user_info["user_id"])
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {
+        "id": user["id"],
+        "email": user["email"],
+        "name": user["name"],
+        "created_at": user["created_at"],
+    }
+
+
+# ---------------------------------------------------------------------------
+# API key management (admin-gated or self-service for authenticated users)
 # ---------------------------------------------------------------------------
 
 
@@ -235,13 +357,30 @@ async def generate_api_key(body: KeyGenerateRequest, _: None = Depends(require_a
     }
 
 
+@app.post("/api/keys")
+async def create_own_api_key(
+    user_info: Dict[str, Any] = Depends(require_auth),
+):
+    """Authenticated users can create new API keys for themselves."""
+    raw_key = repo.create_api_key(user_info["user_id"], description="Dashboard-generated key")
+    return {
+        "api_key": raw_key,
+        "message": "Store this key securely — it will not be shown again.",
+    }
+
+
+@app.get("/api/keys")
+async def list_own_api_keys(user_info: Dict[str, Any] = Depends(require_auth)):
+    """List the authenticated user's API keys (hashes and metadata, not raw keys)."""
+    keys = repo.list_api_keys_for_user(user_info["user_id"])
+    return {"keys": keys, "total": len(keys)}
+
+
 @app.get("/api/keys/validate")
 async def validate_current_key(user_info: Dict[str, Any] = Depends(require_auth)):
     return {
         "valid": True,
         "user_id": user_info["user_id"],
-        "call_count": user_info["call_count"],
-        "created_at": user_info["created_at"],
     }
 
 

@@ -42,26 +42,40 @@ class GlobalEventRegistry:
     def register_event(self, event: SecurityEvent) -> None:
         """
         Register a security event from any monitoring component.
-        
-        Args:
-            event: SecurityEvent to register
+
+        Events are stored locally and, if SENTINEL_API_KEY / SENTINEL_API_URL
+        are set, pushed to the backend asynchronously via BackendEventSink.
         """
         with self.event_lock:
-            # Add to global event list
             self.events.append(event)
-            
-            # Add to agent-specific events
+
             agent_id = event.agent_id
             if agent_id not in self.events_by_agent:
                 self.events_by_agent[agent_id] = []
             self.events_by_agent[agent_id].append(event)
-        
-        # Process through global event handlers
+
+        # Push to backend if configured (fire-and-forget)
+        try:
+            from .backend_sink import get_backend_sink
+
+            sink = get_backend_sink()
+            if sink is not None:
+                sink.enqueue({
+                    "agent_id": event.agent_id,
+                    "threat_type": event.threat_type.value,
+                    "severity": event.severity.value,
+                    "confidence": event.confidence,
+                    "message": event.message,
+                    "context": event.context if isinstance(event.context, dict) else {},
+                    "detection_method": getattr(event, "detection_method", "sdk"),
+                })
+        except Exception:
+            pass  # Never break the user's agent
+
         for handler in self.event_handlers:
             try:
                 handler(event)
-            except Exception as e:
-                # Log error but don't break the system
+            except Exception:
                 pass
     
     def get_events(

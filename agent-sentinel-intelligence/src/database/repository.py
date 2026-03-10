@@ -36,6 +36,34 @@ class Repository:
     """
 
     # ------------------------------------------------------------------
+    # Users
+    # ------------------------------------------------------------------
+
+    def create_user(
+        self, email: str, password_hash: str, name: str = ""
+    ) -> Dict[str, Any]:
+        user_id = f"usr_{uuid.uuid4().hex[:16]}"
+        db = get_db()
+        db.execute(
+            "INSERT INTO users (id, email, password_hash, name) VALUES (?, ?, ?, ?)",
+            (user_id, email, password_hash, name),
+        )
+        db.commit()
+        return self.get_user_by_id(user_id)
+
+    def get_user_by_email(self, email: str) -> Optional[Dict[str, Any]]:
+        row = get_db().execute(
+            "SELECT * FROM users WHERE email = ?", (email,)
+        ).fetchone()
+        return _row_to_dict(row) if row else None
+
+    def get_user_by_id(self, user_id: str) -> Optional[Dict[str, Any]]:
+        row = get_db().execute(
+            "SELECT * FROM users WHERE id = ?", (user_id,)
+        ).fetchone()
+        return _row_to_dict(row) if row else None
+
+    # ------------------------------------------------------------------
     # Agents
     # ------------------------------------------------------------------
 
@@ -253,6 +281,15 @@ class Repository:
         )
         get_db().commit()
         return _row_to_dict(row)
+
+    def list_api_keys_for_user(self, user_id: str) -> List[Dict[str, Any]]:
+        """Return metadata for all keys belonging to a user (never raw keys)."""
+        rows = get_db().execute(
+            "SELECT id, user_id, description, created_at, last_used, call_count, is_active "
+            "FROM api_keys WHERE user_id = ? ORDER BY created_at DESC",
+            (user_id,),
+        ).fetchall()
+        return [_row_to_dict(r) for r in rows]
 
     def check_rate_limit(self, user_id: str, max_per_hour: int = 100) -> bool:
         """

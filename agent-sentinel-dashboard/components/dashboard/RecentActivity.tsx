@@ -4,118 +4,39 @@ import { AlertTriangle, CheckCircle, XCircle, Clock } from "lucide-react"
 import { useEffect, useState } from "react"
 import { apiService, type SecurityEvent } from "@/lib/api"
 
-interface ActivityEvent {
-  id: string
-  timestamp: string
-  type: "security" | "performance" | "info"
-  severity: "low" | "medium" | "high" | "critical"
-  message: string
-  agentId?: string
+function timeAgo(iso: string): string {
+  const diffMs = Date.now() - new Date(iso).getTime()
+  const mins = Math.floor(diffMs / 60_000)
+  if (mins < 1) return "Just now"
+  if (mins < 60) return `${mins} min ago`
+  if (mins < 1440) return `${Math.floor(mins / 60)} hr ago`
+  return `${Math.floor(mins / 1440)} days ago`
 }
 
-// Convert SecurityEvent to ActivityEvent format
-const convertSecurityEvent = (event: SecurityEvent): ActivityEvent => {
-  // Use a consistent date format to avoid hydration issues
-  const date = new Date(event.timestamp)
-  const now = new Date()
-  const diffMs = now.getTime() - date.getTime()
-  const diffMins = Math.floor(diffMs / (1000 * 60))
-  
-  let timeAgo: string
-  if (diffMins < 1) {
-    timeAgo = "Just now"
-  } else if (diffMins < 60) {
-    timeAgo = `${diffMins} min ago`
-  } else if (diffMins < 1440) {
-    timeAgo = `${Math.floor(diffMins / 60)} hr ago`
-  } else {
-    timeAgo = `${Math.floor(diffMins / 1440)} days ago`
+function SeverityIcon({ severity }: { severity: string }) {
+  switch (severity) {
+    case "CRITICAL":
+      return <XCircle className="h-5 w-5 text-red-400" />
+    case "HIGH":
+      return <AlertTriangle className="h-5 w-5 text-orange-400" />
+    case "MEDIUM":
+      return <AlertTriangle className="h-5 w-5 text-yellow-400" />
+    default:
+      return <CheckCircle className="h-5 w-5 text-green-400" />
   }
-
-  return {
-    id: event.id,
-    timestamp: timeAgo,
-    type: "security",
-    severity: event.severity,
-    message: `${event.threat_type} detected in Agent "${event.agent_id}"`,
-    agentId: event.agent_id,
-  }
-}
-
-function ActivityItem({ event }: { event: ActivityEvent }) {
-  const getIcon = () => {
-    switch (event.severity) {
-      case "critical":
-        return <XCircle className="h-5 w-5 text-red-400" />
-      case "high":
-        return <AlertTriangle className="h-5 w-5 text-orange-400" />
-      case "medium":
-        return <AlertTriangle className="h-5 w-5 text-yellow-400" />
-      case "low":
-        return <CheckCircle className="h-5 w-5 text-green-400" />
-      default:
-        return <Clock className="h-5 w-5 text-gray-400" />
-    }
-  }
-
-  return (
-    <div className="flex items-start space-x-3 py-3 border-b border-gray-800 last:border-b-0">
-      {getIcon()}
-      <div className="flex-1 min-w-0">
-        <p className="text-white text-sm">{event.message}</p>
-        <p className="text-gray-400 text-xs mt-1">{event.timestamp}</p>
-      </div>
-    </div>
-  )
 }
 
 export function RecentActivity() {
-  const [events, setEvents] = useState<ActivityEvent[]>([])
+  const [events, setEvents] = useState<SecurityEvent[]>([])
   const [loading, setLoading] = useState(true)
-  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    setMounted(true)
+    apiService
+      .getSecurityEvents(5)
+      .then((data) => setEvents(data.events))
+      .catch(() => setEvents([]))
+      .finally(() => setLoading(false))
   }, [])
-
-  useEffect(() => {
-    if (!mounted) return
-
-    const fetchRecentEvents = async () => {
-      try {
-        const securityEvents = await apiService.getSecurityEvents()
-        const activityEvents = securityEvents.slice(0, 5).map(convertSecurityEvent)
-        setEvents(activityEvents)
-      } catch (error) {
-        console.error('Error fetching recent events:', error)
-        // Show empty state instead of mock data
-        setEvents([])
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchRecentEvents()
-  }, [mounted])
-
-  if (!mounted) {
-    return (
-      <div className="card-dark rounded-lg p-6">
-        <h2 className="text-xl font-semibold text-white mb-4">Recent Activity</h2>
-        <div className="space-y-3">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="flex items-start space-x-3 py-3">
-              <div className="h-5 w-5 bg-gray-600 animate-pulse rounded-full"></div>
-              <div className="flex-1 min-w-0">
-                <div className="h-4 bg-gray-600 animate-pulse rounded mb-2"></div>
-                <div className="h-3 bg-gray-700 animate-pulse rounded w-20"></div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    )
-  }
 
   if (loading) {
     return (
@@ -124,10 +45,10 @@ export function RecentActivity() {
         <div className="space-y-3">
           {[...Array(4)].map((_, i) => (
             <div key={i} className="flex items-start space-x-3 py-3">
-              <div className="h-5 w-5 bg-gray-600 animate-pulse rounded-full"></div>
+              <div className="h-5 w-5 bg-gray-600 animate-pulse rounded-full" />
               <div className="flex-1 min-w-0">
-                <div className="h-4 bg-gray-600 animate-pulse rounded mb-2"></div>
-                <div className="h-3 bg-gray-700 animate-pulse rounded w-20"></div>
+                <div className="h-4 bg-gray-600 animate-pulse rounded mb-2" />
+                <div className="h-3 bg-gray-700 animate-pulse rounded w-20" />
               </div>
             </div>
           ))}
@@ -142,18 +63,44 @@ export function RecentActivity() {
       <div className="space-y-0">
         {events.length > 0 ? (
           events.map((event) => (
-            <ActivityItem key={event.id} event={event} />
+            <div
+              key={event.id}
+              className="flex items-start space-x-3 py-3 border-b border-gray-800 last:border-b-0"
+            >
+              <SeverityIcon severity={event.severity} />
+              <div className="flex-1 min-w-0">
+                <p className="text-white text-sm">
+                  {event.threat_type} detected in Agent &quot;{event.agent_id}&quot;
+                </p>
+                <p className="text-gray-400 text-xs mt-1">
+                  {timeAgo(event.detected_at)} &middot; Confidence{" "}
+                  {Math.round(event.confidence * 100)}%
+                </p>
+              </div>
+              <span
+                className={`text-xs px-2 py-0.5 rounded ${
+                  event.severity === "CRITICAL"
+                    ? "bg-red-900/30 text-red-400"
+                    : event.severity === "HIGH"
+                      ? "bg-orange-900/30 text-orange-400"
+                      : event.severity === "MEDIUM"
+                        ? "bg-yellow-900/30 text-yellow-400"
+                        : "bg-green-900/30 text-green-400"
+                }`}
+              >
+                {event.severity}
+              </span>
+            </div>
           ))
         ) : (
           <div className="text-center py-8">
             <Clock className="h-12 w-12 text-gray-600 mx-auto mb-3" />
             <p className="text-gray-400">No recent activity</p>
-            <p className="text-gray-500 text-sm mt-1">Security events will appear here</p>
+            <p className="text-gray-500 text-sm mt-1">
+              Security events will appear here when your SDK detects threats
+            </p>
           </div>
         )}
-      </div>
-      <div className="mt-4 pt-4 border-t border-gray-800">
-        <button className="text-red-400 hover:text-red-300 text-sm font-medium">View All Activity →</button>
       </div>
     </div>
   )

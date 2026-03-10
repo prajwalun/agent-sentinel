@@ -262,3 +262,107 @@ class TestStatusLogic:
         from api_server import _determine_status
         events = [{"severity": "CRITICAL"}]
         assert _determine_status(events) == "CRITICAL"
+
+
+# -------------------------------------------------------------------
+# User authentication
+# -------------------------------------------------------------------
+
+
+class TestUserAuth:
+    def test_signup_creates_user(self):
+        r = client.post("/api/auth/signup", json={
+            "email": "test@example.com",
+            "password": "securepassword123",
+            "name": "Test User",
+        })
+        assert r.status_code == 201
+        data = r.json()
+        assert "token" in data
+        assert data["user"]["email"] == "test@example.com"
+        assert "api_key" in data
+        assert data["api_key"].startswith("as_")
+
+    def test_signup_duplicate_email_fails(self):
+        client.post("/api/auth/signup", json={
+            "email": "dup@example.com",
+            "password": "securepassword123",
+            "name": "Dup User",
+        })
+        r = client.post("/api/auth/signup", json={
+            "email": "dup@example.com",
+            "password": "anotherpassword123",
+            "name": "Another User",
+        })
+        assert r.status_code == 409
+
+    def test_login_success(self):
+        client.post("/api/auth/signup", json={
+            "email": "login@example.com",
+            "password": "mypassword123",
+            "name": "Login User",
+        })
+        r = client.post("/api/auth/login", json={
+            "email": "login@example.com",
+            "password": "mypassword123",
+        })
+        assert r.status_code == 200
+        data = r.json()
+        assert "token" in data
+        assert data["user"]["email"] == "login@example.com"
+
+    def test_login_wrong_password(self):
+        client.post("/api/auth/signup", json={
+            "email": "wrong@example.com",
+            "password": "correctpassword",
+            "name": "Wrong",
+        })
+        r = client.post("/api/auth/login", json={
+            "email": "wrong@example.com",
+            "password": "incorrectpassword",
+        })
+        assert r.status_code == 401
+
+    def test_jwt_auth_on_protected_endpoint(self):
+        signup_resp = client.post("/api/auth/signup", json={
+            "email": "jwt@example.com",
+            "password": "jwtpassword123",
+            "name": "JWT User",
+        })
+        token = signup_resp.json()["token"]
+        r = client.get("/api/dashboard/stats", headers={
+            "Authorization": f"Bearer {token}",
+        })
+        assert r.status_code == 200
+
+    def test_get_me(self):
+        signup_resp = client.post("/api/auth/signup", json={
+            "email": "me@example.com",
+            "password": "mepassword123",
+            "name": "Me User",
+        })
+        token = signup_resp.json()["token"]
+        r = client.get("/api/auth/me", headers={
+            "Authorization": f"Bearer {token}",
+        })
+        assert r.status_code == 200
+        assert r.json()["email"] == "me@example.com"
+
+    def test_self_service_api_key(self):
+        signup_resp = client.post("/api/auth/signup", json={
+            "email": "keys@example.com",
+            "password": "keyspassword123",
+            "name": "Keys User",
+        })
+        token = signup_resp.json()["token"]
+        r = client.post("/api/keys", headers={
+            "Authorization": f"Bearer {token}",
+        })
+        assert r.status_code == 200
+        assert r.json()["api_key"].startswith("as_")
+
+        r2 = client.get("/api/keys", headers={
+            "Authorization": f"Bearer {token}",
+        })
+        assert r2.status_code == 200
+        assert r2.json()["total"] >= 1

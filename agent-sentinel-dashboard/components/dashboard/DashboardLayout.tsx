@@ -65,7 +65,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           </nav>
 
           <div className="flex items-center space-x-4">
-            <span className="text-gray-300">Welcome, {user.fullName}</span>
+            <span className="text-gray-300">Welcome, {user.name}</span>
             <Button onClick={handleLogout} variant="ghost" size="sm" className="text-red-400 hover:text-red-300">
               <LogOut className="h-4 w-4 mr-2" />
               Logout

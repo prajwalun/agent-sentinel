@@ -7,76 +7,108 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Checkbox } from "@/components/ui/checkbox"
+import { useAuth } from "@/contexts/AuthContext"
 import { AuthLayout } from "./AuthLayout"
 
 export function SignUpForm() {
   const [formData, setFormData] = useState({
-    fullName: "",
-    company: "",
+    name: "",
     email: "",
     password: "",
     confirmPassword: "",
-    termsAccepted: false,
-    marketingAccepted: false,
   })
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [apiKey, setApiKey] = useState<string | null>(null)
+  const { signup, loading, error } = useAuth()
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
-    setError(null)
 
     if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match")
-      setLoading(false)
       return
     }
 
-    // Simulate signup process
-    setTimeout(() => {
-      setLoading(false)
-      router.push("/auth/verify-email")
-    }, 1000)
+    try {
+      const result = await signup(formData.email, formData.password, formData.name)
+      setApiKey(result.apiKey)
+    } catch {
+      // Error is surfaced via context
+    }
   }
 
-  const handleChange = (field: string, value: string | boolean) => {
+  const handleChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
+  const passwordMismatch =
+    formData.confirmPassword.length > 0 &&
+    formData.password !== formData.confirmPassword
+
+  if (apiKey) {
+    return (
+      <AuthLayout
+        title="Account Created"
+        subtitle="Save your API key — you will need it to connect the SDK"
+      >
+        <div className="space-y-4">
+          <div className="bg-green-900/20 border border-green-600 text-green-400 px-4 py-3 rounded">
+            Your account has been created successfully.
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-white">Your API Key</Label>
+            <div className="bg-gray-900 border border-gray-700 rounded p-3 font-mono text-sm text-green-400 break-all select-all">
+              {apiKey}
+            </div>
+            <p className="text-xs text-gray-500">
+              Copy this key now. It will not be shown again. Use it to configure the Agent
+              Sentinel SDK.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-white">Quick Start</Label>
+            <pre className="bg-gray-900 border border-gray-700 rounded p-3 text-xs text-gray-300 overflow-x-auto">
+{`export SENTINEL_API_KEY="${apiKey}"
+export SENTINEL_API_URL="http://localhost:8001"
+pip install agent-sentinel`}
+            </pre>
+          </div>
+
+          <Button
+            onClick={() => router.push("/dashboard")}
+            className="w-full btn-primary"
+          >
+            Go to Dashboard
+          </Button>
+        </div>
+      </AuthLayout>
+    )
+  }
+
   return (
-    <AuthLayout title="Create Your Account" subtitle="Join Agent Sentinel to monitor your AI agents securely">
+    <AuthLayout
+      title="Create Your Account"
+      subtitle="Join Agent Sentinel to monitor your AI agents securely"
+    >
       <form onSubmit={handleSubmit} className="space-y-4">
-        {error && <div className="bg-red-900/20 border border-red-600 text-red-400 px-4 py-3 rounded">{error}</div>}
+        {error && (
+          <div className="bg-red-900/20 border border-red-600 text-red-400 px-4 py-3 rounded">
+            {error}
+          </div>
+        )}
 
         <div className="space-y-2">
-          <Label htmlFor="fullName" className="text-white">
+          <Label htmlFor="name" className="text-white">
             Full Name
           </Label>
           <Input
-            id="fullName"
+            id="name"
             type="text"
-            value={formData.fullName}
-            onChange={(e) => handleChange("fullName", e.target.value)}
+            value={formData.name}
+            onChange={(e) => handleChange("name", e.target.value)}
             className="input-dark"
             placeholder="Enter your full name"
-            required
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="company" className="text-white">
-            Company/Organization
-          </Label>
-          <Input
-            id="company"
-            type="text"
-            value={formData.company}
-            onChange={(e) => handleChange("company", e.target.value)}
-            className="input-dark"
-            placeholder="Enter your company name"
             required
           />
         </div>
@@ -106,7 +138,8 @@ export function SignUpForm() {
             value={formData.password}
             onChange={(e) => handleChange("password", e.target.value)}
             className="input-dark"
-            placeholder="Create a strong password"
+            placeholder="Create a strong password (min 8 chars)"
+            minLength={8}
             required
           />
         </div>
@@ -124,43 +157,25 @@ export function SignUpForm() {
             placeholder="Confirm your password"
             required
           />
+          {passwordMismatch && (
+            <p className="text-red-400 text-xs">Passwords do not match</p>
+          )}
         </div>
 
-        <div className="space-y-3">
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="terms"
-              checked={formData.termsAccepted}
-              onCheckedChange={(checked) => handleChange("termsAccepted", checked as boolean)}
-              required
-            />
-            <Label htmlFor="terms" className="text-gray-300 text-sm">
-              I agree to the{" "}
-              <Link href="/terms" className="text-red-400 hover:text-red-300 underline">
-                Terms of Service
-              </Link>
-            </Label>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="marketing"
-              checked={formData.marketingAccepted}
-              onCheckedChange={(checked) => handleChange("marketingAccepted", checked as boolean)}
-            />
-            <Label htmlFor="marketing" className="text-gray-300 text-sm">
-              I want to receive security updates and newsletters
-            </Label>
-          </div>
-        </div>
-
-        <Button type="submit" className="w-full btn-primary" disabled={loading || !formData.termsAccepted}>
+        <Button
+          type="submit"
+          className="w-full btn-primary"
+          disabled={loading || passwordMismatch}
+        >
           {loading ? "Creating Account..." : "Create Account"}
         </Button>
 
         <div className="text-center text-sm text-gray-400">
           Already have an account?{" "}
-          <Link href="/auth/login" className="text-red-400 hover:text-red-300 underline">
+          <Link
+            href="/auth/login"
+            className="text-red-400 hover:text-red-300 underline"
+          >
             Sign In
           </Link>
         </div>
