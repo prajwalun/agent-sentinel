@@ -110,70 +110,83 @@ class SecurityAnalysisWorkflow:
         return graph
     
     def _supervisor_router(self, state: AgentState) -> str:
-        """Route from supervisor to next agent. Use strict phase-based workflow to prevent loops."""
-        # Get current phase from state, default to 'analyzer' if not set
+        """
+        Route from supervisor to the next agent.
+
+        Phase progression:
+          analyzer -> (researcher if needed) -> reporter -> validator
+        After a validator rejection, the phase is reset to 'analyzer'
+        so the cycle can repeat with the validator's feedback injected
+        into the message history.
+        """
         current_phase = state.get("phase", "analyzer")
         research_done = state.get("research_done", False)
-        
-        logger.info(f"Supervisor routing: current_phase={current_phase}, research_done={research_done}")
-        
-        # Strict phase progression to prevent loops
+
+        logger.info("Supervisor routing: phase=%s, research_done=%s", current_phase, research_done)
+
         if current_phase == "analyzer":
-            # After analysis, determine if research is needed
             messages = state.get("messages", [])
             needs_research = False
-            
             if messages:
-                last_message = messages[-1]
-                if hasattr(last_message, 'content') and last_message.content:
-                    content = last_message.content.lower()
-                    # Check for keywords that indicate research is needed
-                    research_keywords = [
-                        "novel", "unknown", "cve", "research", "intelligence", 
-                        "high risk", "complex", "sophisticated", "advanced",
-                        "zero-day", "apt", "campaign", "threat actor"
-                    ]
-                    needs_research = any(keyword in content for keyword in research_keywords)
-            
+                last = messages[-1]
+                content = getattr(last, "content", "").lower()
+                research_keywords = [
+                    "novel", "unknown", "cve", "research", "intelligence",
+                    "high risk", "complex", "sophisticated", "advanced",
+                    "zero-day", "apt", "campaign", "threat actor",
+                ]
+                needs_research = any(kw in content for kw in research_keywords)
+
             if needs_research and not research_done:
                 state["phase"] = "researcher"
-                logger.info("Routing to researcher for additional intelligence")
                 return "researcher"
-            else:
-                state["phase"] = "reporter"
-                logger.info("Routing to reporter to generate final report")
-                return "reporter"
-                
-        elif current_phase == "researcher":
-            # After research, always go to reporter
+
+            state["phase"] = "reporter"
+            return "reporter"
+
+        if current_phase == "researcher":
             state["phase"] = "reporter"
             state["research_done"] = True
-            logger.info("Research completed, routing to reporter")
             return "reporter"
-            
-        elif current_phase == "reporter":
-            # After reporting, always go to validator
+
+        if current_phase == "reporter":
             state["phase"] = "validator"
-            logger.info("Report generated, routing to validator")
             return "validator"
-            
-        elif current_phase == "validator":
-            # After validation, always finish
+
+        if current_phase == "validator":
             state["phase"] = "completed"
-            logger.info("Validation completed, workflow finished")
             return "__end__"
-            
-        else:
-            # Fallback for unknown phases
-            logger.warning(f"Unknown phase '{current_phase}', defaulting to analyzer")
-            state["phase"] = "analyzer"
-            return "analyzer"
+
+        logger.warning("Unknown phase '%s', defaulting to analyzer", current_phase)
+        state["phase"] = "analyzer"
+        return "analyzer"
 
     def _validator_router(self, state: AgentState) -> str:
-        """Route from validator to next step. Always finish after validator to prevent loops."""
-        # Validator always completes the workflow
+        """
+        Route from validator: finish if quality passes or max iterations
+        reached, otherwise loop back to supervisor for refinement.
+        """
+        iteration = state.get("iteration_count", 0) + 1
+        state["iteration_count"] = iteration
+
+        if iteration >= self.max_iterations:
+            state["phase"] = "completed"
+            logger.info("Max iterations reached (%d), finishing workflow", iteration)
+            return "__end__"
+
+        messages = state.get("messages", [])
+        if messages:
+            last = messages[-1]
+            content = getattr(last, "content", "")
+            next_step = state.get("next", "")
+            if next_step == "supervisor" or "supervisor" in content.lower()[:50]:
+                state["phase"] = "analyzer"
+                state["validator_feedback"] = content
+                logger.info("Validator requested revision (iteration %d), routing back to supervisor", iteration)
+                return "supervisor"
+
         state["phase"] = "completed"
-        logger.info("Validator completed, ending workflow")
+        logger.info("Validation passed (iteration %d), workflow complete", iteration)
         return "__end__"
     
     def execute(self, initial_prompt: str = None, report_data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:

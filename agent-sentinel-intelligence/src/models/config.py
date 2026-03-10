@@ -124,15 +124,19 @@ class IntelligenceConfig(BaseModel):
 
     @model_validator(mode="after")
     def resolve_env_keys(self) -> "IntelligenceConfig":
-        """Fill API keys from environment when not provided explicitly."""
+        """Fill API keys from environment when not provided explicitly.
+
+        Use object.__setattr__ to avoid triggering Pydantic's validate_assignment
+        which would re-invoke this validator and cause infinite recursion.
+        """
         if not self.openai_api_key:
-            self.openai_api_key = os.getenv("OPENAI_API_KEY")
+            object.__setattr__(self, "openai_api_key", os.getenv("OPENAI_API_KEY"))
         if not self.google_api_key:
-            self.google_api_key = os.getenv("GOOGLE_API_KEY")
+            object.__setattr__(self, "google_api_key", os.getenv("GOOGLE_API_KEY"))
         if not self.exa_api_key:
-            self.exa_api_key = os.getenv("EXA_API_KEY")
+            object.__setattr__(self, "exa_api_key", os.getenv("EXA_API_KEY"))
         if not self.wandb_api_key:
-            self.wandb_api_key = os.getenv("WANDB_API_KEY")
+            object.__setattr__(self, "wandb_api_key", os.getenv("WANDB_API_KEY"))
 
         if self.llm.provider == "openai" and not self.openai_api_key:
             logger.warning("OpenAI provider selected but OPENAI_API_KEY is not set")

@@ -511,7 +511,115 @@ async def list_reports(
 
 
 # ---------------------------------------------------------------------------
-# Analysis endpoints (LLM-powered)
+# Async analysis — background processing with status polling
+# ---------------------------------------------------------------------------
+
+_running_analyses: Dict[str, Dict[str, Any]] = {}
+
+
+class AsyncAnalysisRequest(BaseModel):
+    report_content: str = Field(..., min_length=1, max_length=1_000_000)
+    analysis_type: str = "comprehensive"
+    agent_id: Optional[str] = None
+
+
+@app.post("/api/analysis/start", status_code=202)
+async def start_analysis(
+    body: AsyncAnalysisRequest, user_info: Dict[str, Any] = Depends(require_auth)
+):
+    """
+    Kick off an LLM analysis in the background and return a run_id
+    that the client can poll for status.
+    """
+    if not workflow_instance:
+        raise HTTPException(status_code=503, detail="Analysis workflow not available")
+
+    agent_id = body.agent_id or "unknown"
+    if not repo.get_agent(agent_id):
+        repo.upsert_agent(agent_id, agent_id, "analysis")
+
+    input_hash = hashlib.sha256(body.report_content.encode()).hexdigest()[:16]
+    run_id = repo.create_analysis_run(agent_id, input_hash)
+
+    _running_analyses[run_id] = {"status": "running", "phase": "initializing"}
+
+    import threading
+
+    def _background_analyze():
+        start = time.monotonic()
+        try:
+            _running_analyses[run_id]["phase"] = "analyzing"
+            result = workflow_instance.run_analysis(
+                report_content=body.report_content,
+                analysis_type=body.analysis_type,
+            )
+            duration_ms = int((time.monotonic() - start) * 1000)
+
+            security_events = _extract_security_events(body.report_content)
+            report = _build_report(result, agent_id, security_events, duration_ms)
+
+            for evt in security_events:
+                repo.insert_event(
+                    agent_id=agent_id,
+                    threat_type=evt["threat_type"],
+                    severity=evt["severity"],
+                    confidence=evt["confidence"],
+                    message=evt["message"],
+                    context=evt.get("details"),
+                    detection_method="report_analysis",
+                )
+
+            risk_level = report["summary"]["status"]
+            repo.complete_analysis_run(run_id, risk_level, report, duration_ms)
+            _running_analyses[run_id] = {
+                "status": "completed",
+                "phase": "done",
+                "result": report,
+            }
+        except Exception as exc:
+            duration_ms = int((time.monotonic() - start) * 1000)
+            repo.fail_analysis_run(run_id, str(exc))
+            _running_analyses[run_id] = {
+                "status": "failed",
+                "phase": "error",
+                "error": str(exc),
+            }
+
+    threading.Thread(target=_background_analyze, daemon=True).start()
+
+    return {"run_id": run_id, "status": "running", "message": "Analysis started in background"}
+
+
+@app.get("/api/analysis/{run_id}/status")
+async def get_analysis_status(
+    run_id: str, user_info: Dict[str, Any] = Depends(require_auth)
+):
+    """Poll the current status of a background analysis run."""
+    info = _running_analyses.get(run_id)
+    if info:
+        resp: Dict[str, Any] = {"run_id": run_id, "status": info["status"], "phase": info.get("phase")}
+        if info["status"] == "completed":
+            resp["result"] = info.get("result")
+        elif info["status"] == "failed":
+            resp["error"] = info.get("error")
+        return resp
+
+    # Fallback to database if not in memory (e.g. after restart)
+    rows = repo.list_analysis_runs(limit=1)
+    for row in rows:
+        if row.get("id") == run_id:
+            return {
+                "run_id": run_id,
+                "status": row.get("status", "unknown"),
+                "phase": "done" if row.get("status") == "completed" else row.get("status"),
+                "result": json.loads(row["result_json"]) if row.get("result_json") else None,
+            }
+
+    raise HTTPException(status_code=404, detail="Analysis run not found")
+
+
+# ---------------------------------------------------------------------------
+# Analysis endpoints (LLM-powered, synchronous)
 # ---------------------------------------------------------------------------
 
 
@@ -694,6 +802,53 @@ def _get_highest_severity(events: List[Dict[str, Any]]) -> str:
     return "LOW"
 
 
+def _extract_prose_insights(
+    workflow_result: Dict[str, Any],
+) -> tuple:
+    """
+    The reporter agent serialises the full UnifiedReport JSON into the
+    HumanMessage content, so ``workflow_result["enhanced_analysis"]`` is a
+    JSON string rather than plain prose.  Parse it and pull the actual
+    narrative fields out of ``intelligence_insights``.
+
+    Returns (enhanced_prose, threat_intel_prose, recommendations).
+    """
+    raw = workflow_result.get("enhanced_analysis", "")
+    if raw and raw.strip().startswith("{"):
+        try:
+            parsed = json.loads(raw)
+            if isinstance(parsed, dict):
+                ii = parsed.get("intelligence_insights", {}) or {}
+                return (
+                    ii.get("enhanced_analysis", "") or "",
+                    ii.get("threat_intelligence", "") or "",
+                    parsed.get("recommendations", []),
+                )
+        except (json.JSONDecodeError, ValueError):
+            pass
+    # Already plain prose (or empty)
+    return raw, workflow_result.get("threat_intelligence", ""), []
+
+
+def _safe_insight_text(value: str) -> str:
+    """
+    Return the value only if it looks like prose/markdown from the LLM.
+    If it parses as JSON, it means we accidentally stored structured data
+    instead of the LLM's narrative output — return empty string so the
+    frontend shows a sensible fallback rather than raw JSON.
+    """
+    if not value or not value.strip():
+        return ""
+    stripped = value.strip()
+    if stripped.startswith(("{", "[")):
+        try:
+            json.loads(stripped)
+            return ""  # it's valid JSON, not LLM prose
+        except json.JSONDecodeError:
+            pass
+    return value
+
+
 def _build_report(
     workflow_result: Dict[str, Any],
     agent_id: str,
@@ -714,8 +869,11 @@ def _build_report(
     )
     most_common = max(threat_breakdown, key=threat_breakdown.get) if threat_breakdown else "none"
 
+    # Extract prose insight strings from the reporter's JSON-encoded output.
+    enhanced_prose, threat_intel_prose, parsed_recs = _extract_prose_insights(workflow_result)
+
     # Pull recommendations from workflow or use sensible defaults
-    recs = workflow_result.get("recommendations", [])
+    recs = parsed_recs or workflow_result.get("recommendations", [])
     if isinstance(recs, str):
         recs = [recs]
     if not recs:
@@ -760,20 +918,21 @@ def _build_report(
             "next_actions": recs[:3],
         },
         "intelligence_insights": {
-            "enhanced_analysis": workflow_result.get("enhanced_analysis", ""),
-            "threat_intelligence": workflow_result.get("threat_intelligence", ""),
+            "enhanced_analysis": _safe_insight_text(enhanced_prose),
+            "threat_intelligence": _safe_insight_text(threat_intel_prose),
         },
     }
 
 
 def _extract_insights(workflow_result: Dict[str, Any]) -> List[str]:
     """Pull key insights from the LLM workflow output."""
+    # Use the prose helper so we don't accidentally scan a raw JSON blob.
+    prose, _, _ = _extract_prose_insights(workflow_result)
     insights: List[str] = []
-    analysis = workflow_result.get("enhanced_analysis", "")
-    if analysis:
-        for line in analysis.split("\n"):
-            stripped = line.strip().lstrip("- *")
-            if stripped and len(stripped) > 20:
+    if prose:
+        for line in prose.split("\n"):
+            stripped = line.strip().lstrip("- *#")
+            if stripped and len(stripped) > 20 and not stripped.startswith("{"):
                 insights.append(stripped)
             if len(insights) >= 5:
                 break

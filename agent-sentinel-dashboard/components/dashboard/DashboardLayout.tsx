@@ -13,19 +13,25 @@ interface DashboardLayoutProps {
 }
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
-  const { user, logout } = useAuth()
+  const { user, logout, loading } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
-    if (!user) {
+    // Only redirect after the auth context has finished reading from localStorage.
+    // Without this check, the layout redirects on every page reload before the
+    // stored token has been restored, logging the user out unexpectedly.
+    if (!loading && !user) {
       router.push("/auth/login")
     }
-  }, [user, router])
+  }, [user, loading, router])
 
-  if (!user) {
+  if (loading || !user) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-white">Loading...</div>
+        <div className="flex items-center gap-3 text-gray-400">
+          <div className="w-5 h-5 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
+          Loading...
+        </div>
       </div>
     )
   }

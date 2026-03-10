@@ -310,6 +310,32 @@ class ApiService {
   }> {
     return this.request("/api/keys")
   }
+
+  async startAnalysis(
+    reportContent: string,
+    agentId?: string
+  ): Promise<{ run_id: string; status: string }> {
+    return this.request("/api/analysis/start", {
+      method: "POST",
+      body: JSON.stringify({
+        report_content: reportContent,
+        analysis_type: "comprehensive",
+        agent_id: agentId || "unknown",
+      }),
+    })
+  }
+
+  async getAnalysisStatus(
+    runId: string
+  ): Promise<{
+    run_id: string
+    status: string
+    phase: string
+    result?: EnhancedIntelligenceReport
+    error?: string
+  }> {
+    return this.request(`/api/analysis/${runId}/status`)
+  }
 }
 
 export const apiService = new ApiService()

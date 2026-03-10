@@ -1,71 +1,127 @@
 "use client"
 
 import type React from "react"
-
-import { useState, useRef } from "react"
+import { useState, useRef, useCallback, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Upload, FileText, AlertCircle, Loader2, CheckCircle } from "lucide-react"
+import {
+  Upload,
+  FileText,
+  AlertCircle,
+  Loader2,
+  Terminal,
+} from "lucide-react"
 import { apiService, type EnhancedIntelligenceReport } from "@/lib/api"
 
 interface ReportUploadProps {
   onReportSelect: (report: EnhancedIntelligenceReport) => void
 }
 
+type AnalysisStage = "idle" | "uploading" | "analyzing" | "polling" | "error"
+
+const STAGE_LABELS: Record<AnalysisStage, string> = {
+  idle: "",
+  uploading: "Reading file...",
+  analyzing: "Starting AI analysis...",
+  polling: "AI agents working — this takes a few minutes...",
+  error: "Analysis failed",
+}
+
 export function ReportUpload({ onReportSelect }: ReportUploadProps) {
   const [dragActive, setDragActive] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [processingStage, setProcessingStage] = useState<string>("")
+  const [stage, setStage] = useState<AnalysisStage>("idle")
+  const [runId, setRunId] = useState<string | null>(null)
+  const [selectedFile, setSelectedFile] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  const stopPolling = useCallback(() => {
+    if (pollingRef.current) {
+      clearInterval(pollingRef.current)
+      pollingRef.current = null
+    }
+  }, [])
+
+  useEffect(() => () => stopPolling(), [stopPolling])
+
+  const startPolling = useCallback(
+    (id: string) => {
+      setStage("polling")
+      setRunId(id)
+      pollingRef.current = setInterval(async () => {
+        try {
+          const status = await apiService.getAnalysisStatus(id)
+          if (status.status === "completed" && status.result) {
+            stopPolling()
+            onReportSelect(status.result)
+          } else if (status.status === "failed") {
+            stopPolling()
+            setStage("error")
+            setError(status.error || "Analysis failed")
+          }
+        } catch {
+          // keep polling on transient network error
+        }
+      }, 3000)
+    },
+    [onReportSelect, stopPolling]
+  )
+
+  const analyzeContent = useCallback(
+    async (content: string, agentId?: string) => {
+      setError(null)
+      setStage("analyzing")
+      try {
+        const { run_id } = await apiService.startAnalysis(content, agentId)
+        startPolling(run_id)
+      } catch {
+        // Fallback: synchronous analysis
+        try {
+          const report = await apiService.enhanceSecurityReport(content, agentId)
+          onReportSelect(report)
+        } catch (err) {
+          setStage("error")
+          setError(err instanceof Error ? err.message : "Analysis failed")
+        }
+      }
+    },
+    [onReportSelect, startPolling]
+  )
 
   const handleFiles = async (files: FileList | null) => {
     if (!files || files.length === 0) return
 
     const file = files[0]
-    
-    // Validate file type
-    const allowedTypes = ['.json', '.txt', '.log', '.csv']
-    const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase()
-    
-    if (!allowedTypes.includes(fileExtension)) {
-      setError(`Unsupported file type. Please upload: ${allowedTypes.join(', ')} files`)
+    const allowed = [".json", ".txt", ".log", ".csv", ".md"]
+    const ext = "." + (file.name.split(".").pop()?.toLowerCase() || "")
+
+    if (!allowed.includes(ext)) {
+      setError(`Unsupported file type. Allowed: ${allowed.join(", ")}`)
       return
     }
-
-    // Validate file size (max 10MB)
     if (file.size > 10 * 1024 * 1024) {
-      setError("File size must be less than 10MB")
+      setError("File size must be less than 10 MB")
       return
     }
 
+    setSelectedFile(file.name)
+    setStage("uploading")
     setError(null)
-    setLoading(true)
-    setProcessingStage("Uploading file...")
 
     try {
-      // Upload and analyze the file
-      setProcessingStage("Analyzing with AI intelligence...")
-      const enhancedReport = await apiService.uploadReportFile(file)
-      
-      setProcessingStage("Report ready!")
-      onReportSelect(enhancedReport)
+      const content = await file.text()
+      const agentId = file.name.replace(/\.[^.]+$/, "")
+      await analyzeContent(content, agentId)
     } catch (err) {
-      console.error("Error processing file:", err)
-      setError(err instanceof Error ? err.message : "Failed to process file")
-    } finally {
-      setLoading(false)
-      setProcessingStage("")
+      setStage("error")
+      setError(err instanceof Error ? err.message : "Failed to read file")
     }
   }
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    if (e.type === "dragenter" || e.type === "dragover") {
-      setDragActive(true)
-    } else if (e.type === "dragleave") {
-      setDragActive(false)
-    }
+    setDragActive(e.type === "dragenter" || e.type === "dragover")
   }
 
   const handleDrop = (e: React.DragEvent) => {
@@ -75,18 +131,17 @@ export function ReportUpload({ onReportSelect }: ReportUploadProps) {
     handleFiles(e.dataTransfer.files)
   }
 
-  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    handleFiles(e.target.files)
-  }
+  const isProcessing =
+    stage === "uploading" || stage === "analyzing" || stage === "polling"
 
   return (
     <div className="space-y-6">
-      {/* File Upload Area */}
+      {/* Drop zone */}
       <div
-        className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-          dragActive 
-            ? "border-red-500 bg-red-500/10" 
-            : "border-gray-600 hover:border-gray-500"
+        className={`border-2 border-dashed rounded-lg p-10 text-center transition-colors ${
+          dragActive
+            ? "border-red-500 bg-red-500/10"
+            : "border-gray-700 hover:border-gray-500"
         }`}
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}
@@ -94,29 +149,33 @@ export function ReportUpload({ onReportSelect }: ReportUploadProps) {
         onDrop={handleDrop}
       >
         <div className="space-y-4">
-          <div className="mx-auto w-12 h-12 bg-gray-800 rounded-full flex items-center justify-center">
-            <Upload className="w-6 h-6 text-gray-400" />
+          <div className="mx-auto w-14 h-14 bg-gray-800 rounded-full flex items-center justify-center">
+            <Upload className="w-7 h-7 text-gray-400" />
           </div>
-          
+
           <div>
-            <h3 className="text-lg font-semibold text-white mb-2">Upload Security Report</h3>
-            <p className="text-gray-400 mb-4">
-              Drag and drop your security report or click to browse
+            <h3 className="text-lg font-semibold text-white mb-1">
+              {selectedFile && isProcessing
+                ? selectedFile
+                : "Upload a Security Report"}
+            </h3>
+            <p className="text-gray-400 text-sm mb-1">
+              Drag and drop, or click to browse
             </p>
-            <p className="text-sm text-gray-500 mb-4">
-              Supported formats: JSON, TXT, LOG, CSV (max 10MB)
+            <p className="text-gray-600 text-xs">
+              JSON, TXT, LOG, CSV, MD — max 10 MB
             </p>
           </div>
 
           <Button
             onClick={() => fileInputRef.current?.click()}
-            disabled={loading}
+            disabled={isProcessing}
             className="bg-red-600 hover:bg-red-700 text-white"
           >
-            {loading ? (
+            {isProcessing ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Processing...
+                {STAGE_LABELS[stage]}
               </>
             ) : (
               <>
@@ -129,52 +188,98 @@ export function ReportUpload({ onReportSelect }: ReportUploadProps) {
           <input
             ref={fileInputRef}
             type="file"
-            accept=".json,.txt,.log,.csv"
-            onChange={handleFileInput}
+            accept=".json,.txt,.log,.csv,.md"
+            onChange={(e) => handleFiles(e.target.files)}
             className="hidden"
           />
         </div>
       </div>
 
-      {/* Processing Status */}
-      {loading && processingStage && (
-        <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4">
-          <div className="flex items-center space-x-3">
-            <Loader2 className="w-5 h-5 text-blue-400 animate-spin" />
-            <span className="text-blue-400 font-medium">{processingStage}</span>
+      {/* Background analysis notice */}
+      {stage === "polling" && (
+        <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4 space-y-2">
+          <div className="flex items-center gap-3">
+            <Loader2 className="w-5 h-5 text-blue-400 animate-spin flex-shrink-0" />
+            <span className="text-blue-400 font-medium">
+              Multi-agent analysis running in background
+            </span>
           </div>
+          <p className="text-blue-300 text-sm pl-8">
+            The AI is working through threat detection, risk assessment, and
+            intelligence research. Feel free to navigate the rest of the site —
+            check the <strong>Analysis History</strong> tab for results when
+            done.
+          </p>
+          {runId && (
+            <p className="text-gray-600 text-xs pl-8 font-mono">
+              Run ID: {runId}
+            </p>
+          )}
         </div>
       )}
 
-      {/* Error Display */}
+      {/* Error */}
       {error && (
-        <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-4">
-          <div className="flex items-center space-x-3">
-            <AlertCircle className="w-5 h-5 text-red-400" />
-            <span className="text-red-400">{error}</span>
-          </div>
+        <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-4 flex items-center gap-3">
+          <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
+          <span className="text-red-400">{error}</span>
         </div>
       )}
 
-      {/* Instructions */}
-      <div className="bg-gray-900/50 rounded-lg p-6 border border-gray-800">
-        <h3 className="text-lg font-semibold text-white mb-3">How it works</h3>
-        <ol className="text-gray-300 space-y-2 text-sm">
-          <li className="flex items-start">
-            <span className="bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs mr-3 mt-0.5">1</span>
-            Upload your security report in JSON, TXT, LOG, or CSV format
-          </li>
-          <li className="flex items-start">
-            <span className="bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs mr-3 mt-0.5">2</span>
-            Our AI intelligence engine analyzes the report for threats and patterns
-          </li>
-          <li className="flex items-start">
-            <span className="bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs mr-3 mt-0.5">3</span>
-            Get enhanced insights, threat analysis, and actionable recommendations
-          </li>
-        </ol>
+      {/* Where to get a report */}
+      <div className="bg-gray-900/60 border border-gray-800 rounded-lg p-6 space-y-4">
+        <h3 className="text-white font-semibold flex items-center gap-2">
+          <Terminal className="h-4 w-4 text-red-500" />
+          Where do I get a report file?
+        </h3>
+
+        <p className="text-gray-400 text-sm">
+          The Agent Sentinel SDK generates a local JSON report every time your
+          agent runs. You can also trigger one manually:
+        </p>
+
+        <div className="bg-black rounded-lg p-4 font-mono text-sm text-gray-300 space-y-1">
+          <p className="text-gray-500"># In your Python project</p>
+          <p>
+            <span className="text-red-400">from</span> agent_sentinel{" "}
+            <span className="text-red-400">import</span> AgentSentinel
+          </p>
+          <p>sentinel = AgentSentinel()</p>
+          <p className="text-gray-500 mt-2"># After your agent runs...</p>
+          <p>
+            report_path = sentinel.generate_unified_report()
+          </p>
+          <p className="text-gray-500"># Upload the file at report_path here</p>
+        </div>
+
+        <p className="text-gray-500 text-xs">
+          Reports are also saved automatically to the{" "}
+          <code className="text-gray-400">logs/</code> folder in your working
+          directory. Alternatively, trigger analysis directly from the{" "}
+          <strong className="text-gray-300">Agents</strong> page for any agent
+          that has already pushed events to this dashboard.
+        </p>
+      </div>
+
+      {/* How analysis works */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {[
+          { step: 1, label: "Upload", desc: "Submit your SDK-generated report" },
+          { step: 2, label: "Detect", desc: "AI scans for threats and patterns" },
+          { step: 3, label: "Research", desc: "Enriched with threat intelligence" },
+          { step: 4, label: "Report", desc: "Actionable recommendations" },
+        ].map(({ step, label, desc }) => (
+          <div key={step} className="flex items-start gap-3">
+            <span className="bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs flex-shrink-0 mt-0.5">
+              {step}
+            </span>
+            <div>
+              <p className="text-white text-sm font-medium">{label}</p>
+              <p className="text-gray-500 text-xs">{desc}</p>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   )
 }
-

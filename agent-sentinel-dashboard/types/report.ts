@@ -16,15 +16,15 @@ export interface SecurityEvent {
 }
 
 export interface PerformanceMetrics {
-  total_function_calls: number
-  average_response_time_ms: number
-  memory_usage_mb: number
-  cpu_usage_percent: number
-  success_rate: number
-  error_rate: number
   security_events_count: number
   session_duration_seconds: number
-  throughput_requests_per_minute: number
+  total_function_calls?: number
+  average_response_time_ms?: number
+  memory_usage_mb?: number
+  cpu_usage_percent?: number
+  success_rate?: number
+  error_rate?: number
+  throughput_requests_per_minute?: number
 }
 
 export interface ThreatAnalysis {
@@ -34,7 +34,7 @@ export interface ThreatAnalysis {
   confidence_analysis: {
     average_confidence: number
     high_confidence_threats: number
-    confidence_distribution: Record<string, number>
+    confidence_distribution?: Record<string, number>
   }
   risk_score: number
   most_common_threat: string
