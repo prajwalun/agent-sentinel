@@ -83,7 +83,7 @@ export SENTINEL_API_KEY=<key from dashboard settings>
 
 Any `@monitor`-decorated function now streams events to the backend. Open the dashboard to see them come in.
 
-The SDK also works standalone: no backend needed for local threat detection and report generation.
+The SDK also works standalone: no backend needed for local threat detection and report generation. See [agent-sentinel-sdk/README.md](agent-sentinel-sdk/README.md#standalone-usage) for how to use it without the backend and generate local reports.
 
 ---
 
