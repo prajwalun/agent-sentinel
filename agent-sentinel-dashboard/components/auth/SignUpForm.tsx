@@ -4,6 +4,7 @@ import type React from "react"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import { Copy, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -18,8 +19,15 @@ export function SignUpForm() {
     confirmPassword: "",
   })
   const [apiKey, setApiKey] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
   const { signup, clearError, loading, error } = useAuth()
   const router = useRouter()
+
+  const handleCopy = (text: string) => {
+    navigator.clipboard.writeText(text)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -58,8 +66,22 @@ export function SignUpForm() {
 
           <div className="space-y-2">
             <Label className="text-white">Your API Key</Label>
-            <div className="bg-gray-900 border border-gray-700 rounded p-3 font-mono text-sm text-green-400 break-all select-all">
-              {apiKey}
+            <div className="flex items-center gap-2 bg-gray-900 border border-gray-700 rounded p-3">
+              <code className="flex-1 font-mono text-sm text-green-400 break-all select-all">
+                {apiKey}
+              </code>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="shrink-0 text-gray-400 hover:text-white"
+                onClick={() => handleCopy(apiKey!)}
+              >
+                {copied ? (
+                  <Check className="h-4 w-4 text-green-400" />
+                ) : (
+                  <Copy className="h-4 w-4" />
+                )}
+              </Button>
             </div>
             <p className="text-xs text-gray-500">
               Copy this key now. It will not be shown again. Use it to configure the Agent
@@ -70,11 +92,29 @@ export function SignUpForm() {
           <div className="space-y-2">
             <Label className="text-white">Quick Start</Label>
             <p className="text-xs text-gray-500">In a new terminal, run:</p>
-            <pre className="bg-gray-900 border border-gray-700 rounded p-3 text-xs text-gray-300 overflow-x-auto">
+            <div className="relative">
+              <pre className="bg-gray-900 border border-gray-700 rounded p-3 pr-12 text-xs text-gray-300 overflow-x-auto">
 {`pip install agent-sentinel
 export SENTINEL_API_URL="http://localhost:8001"
 export SENTINEL_API_KEY="${apiKey}"`}
-            </pre>
+              </pre>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="absolute top-2 right-2 h-8 w-8 p-0 text-gray-400 hover:text-white"
+                onClick={() =>
+                  handleCopy(`pip install agent-sentinel
+export SENTINEL_API_URL="http://localhost:8001"
+export SENTINEL_API_KEY="${apiKey}"`)
+                }
+              >
+                {copied ? (
+                  <Check className="h-4 w-4 text-green-400" />
+                ) : (
+                  <Copy className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
           </div>
 
           <Button
