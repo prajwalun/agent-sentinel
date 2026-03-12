@@ -410,7 +410,7 @@ class TestThreatReportGenerator:
                 report_file=report_file,
             )
 
-            # Inject a real SecurityEvent
+            # Inject a SecurityEvent instance
             event = SecurityEvent(
                 threat_type=ThreatType.SQL_INJECTION,
                 severity=SeverityLevel.HIGH,

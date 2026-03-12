@@ -51,7 +51,7 @@ def _count_threats() -> int:
 # =====================================================================
 
 def test_a2a_math_agent_safe():
-    """Run the real MathAgent with clean arithmetic queries."""
+    """Run the A2A MathAgent with clean arithmetic queries."""
     _reset()
     math = MathAgent()
 
@@ -78,7 +78,7 @@ def test_a2a_math_agent_safe():
 # =====================================================================
 
 def test_a2a_weather_agent_safe():
-    """Run the real WeatherAgent with clean city lookups."""
+    """Run the A2A WeatherAgent with clean city lookups."""
     _reset()
     weather = WeatherAgent()
 
@@ -105,7 +105,7 @@ def test_a2a_weather_agent_safe():
 # =====================================================================
 
 def test_a2a_malicious_agent():
-    """Run the real MaliciousAgent that simulates XSS, SQL injection, etc."""
+    """Run the A2A MaliciousAgent that simulates XSS, SQL injection, etc."""
     _reset()
     mal = MaliciousAgent()
 
@@ -134,7 +134,7 @@ def test_a2a_malicious_agent():
 
 def test_a2a_multi_agent_pipeline():
     """
-    Chain real A2A agents: MathAgent computes a result, then
+    Chain A2A framework agents: MathAgent computes a result, then
     TranslationAgent translates it. Injects prompt injection
     in the coordinator to test cross-agent threat detection.
     """
@@ -224,7 +224,7 @@ def test_a2a_multi_agent_compromised():
 
 def test_a2a_mcp_tool_server():
     """
-    Wrap real A2A agent skills as MCP tools monitored by the SDK.
+    Wrap A2A agent skills as MCP tools monitored by the SDK.
     Runs safe math/weather tools, then malicious tool calls.
     """
     _reset()
@@ -287,7 +287,7 @@ def test_a2a_mcp_tool_server():
 
 def test_hackernews_researcher():
     """
-    Uses the real HackerNews researcher pattern from awesome-llm-apps.
+    Uses the HackerNews researcher pattern from awesome-llm-apps.
     Creates Agno Agent instances with HackerNewsTools, wraps the
     orchestration call with @monitor, and tests with both safe
     and malicious queries.
@@ -436,10 +436,10 @@ def test_report_generation():
 
 def main():
     print("=" * 65)
-    print("Agent Sentinel SDK — Real Agent E2E Test Suite")
+    print("Agent Sentinel SDK — Integration E2E Test Suite")
     print("=" * 65)
     print()
-    print("Testing SDK integration with real agents from extra/ folder")
+    print("Testing SDK integration with A2A and Agno agents from extra/")
     print()
 
     loop = asyncio.new_event_loop()

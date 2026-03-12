@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
-Comprehensive test for Agent Sentinel SDK improvements
-Tests thread safety, memory management, error handling, and configuration validation
+Tests for AgentWrapper: configuration validation, thread safety,
+error handling, memory management, class and MCP monitoring,
+serialization safety, and metrics collection.
 """
 
 import asyncio
@@ -22,10 +23,10 @@ from agent_sentinel.wrappers.agent_wrapper import AgentWrapper
 from agent_sentinel.core.exceptions import AgentSentinelError
 from agent_sentinel.infrastructure.monitoring.metrics import MetricsCollector
 
-class TestAgent:
-    """Test agent class for monitoring"""
-    
-    def __init__(self, name: str = "TestAgent"):
+class MockAgent:
+    """Mock agent for monitoring tests."""
+
+    def __init__(self, name: str = "MockAgent"):
         self.name = name
         self.counter = 0
         self._lock = threading.Lock()
@@ -67,11 +68,11 @@ class TestAgent:
         print(f"Shutting down {self.name}")
         return "shutdown_complete"
 
-class MCPTestAgent:
+class MCPMockAgent:
     """Test MCP-style agent"""
     
     def __init__(self):
-        self.name = "MCPTestAgent"
+        self.name = "MCPMockAgent"
         self.resources = ["file_system", "database", "api"]
     
     def list_resources(self) -> List[str]:
@@ -97,7 +98,7 @@ def test_configuration_validation():
     # Test with valid configuration
     try:
         wrapper = AgentWrapper(
-            agent_id="TestAgent",
+            agent_id="MockAgent",
             max_session_duration=300,
             max_concurrent_sessions=10,
             session_cleanup_interval=60,
@@ -115,7 +116,7 @@ def test_configuration_validation():
     # Test with invalid configuration
     try:
         wrapper = AgentWrapper(
-            agent_id="TestAgent",
+            agent_id="MockAgent",
             max_session_duration=0,  # Invalid zero value
             memory_threshold_mb=-1   # Invalid negative value
         )
@@ -130,7 +131,7 @@ def test_thread_safety():
     """Test thread safety improvements"""
     print("\n=== Testing Thread Safety ===")
     
-    agent = TestAgent("ThreadSafeAgent")
+    agent = MockAgent("ThreadSafeAgent")
     wrapper = AgentWrapper(
         agent_id="ThreadSafeAgent",
         enable_input_validation=True,
@@ -167,9 +168,9 @@ def test_error_handling():
     """Test enhanced error handling"""
     print("\n=== Testing Error Handling ===")
     
-    agent = TestAgent("ErrorTestAgent")
+    agent = MockAgent("ErrorMockAgent")
     wrapper = AgentWrapper(
-        agent_id="ErrorTestAgent",
+        agent_id="ErrorMockAgent",
         enable_input_validation=True,
         enable_behavior_analysis=True,
         enable_performance_monitoring=True,
@@ -198,9 +199,9 @@ def test_memory_management():
     """Test memory management improvements"""
     print("\n=== Testing Memory Management ===")
     
-    agent = TestAgent("MemoryTestAgent")
+    agent = MockAgent("MemoryMockAgent")
     wrapper = AgentWrapper(
-        agent_id="MemoryTestAgent",
+        agent_id="MemoryMockAgent",
         memory_threshold_mb=50,
         enable_input_validation=True,
         enable_behavior_analysis=True,
@@ -229,9 +230,9 @@ def test_class_monitoring():
     """Test class monitoring capabilities (method-level only)"""
     print("\n=== Testing Class Monitoring ===")
     
-    agent = TestAgent("ClassTestAgent")
+    agent = MockAgent("ClassMockAgent")
     wrapper = AgentWrapper(
-        agent_id="ClassTestAgent",
+        agent_id="ClassMockAgent",
         enable_input_validation=True,
         enable_behavior_analysis=True,
         enable_performance_monitoring=True,
@@ -269,9 +270,9 @@ def test_mcp_monitoring():
     """Test MCP agent monitoring (method-level only)"""
     print("\n=== Testing MCP Agent Monitoring ===")
     
-    mcp_agent = MCPTestAgent()
+    mcp_agent = MCPMockAgent()
     wrapper = AgentWrapper(
-        agent_id="MCPTestAgent",
+        agent_id="MCPMockAgent",
         enable_input_validation=True,
         enable_behavior_analysis=True,
         enable_performance_monitoring=True,
@@ -306,7 +307,7 @@ async def test_concurrent_sessions():
     
     async def async_worker(session_id: int):
         """Async worker for session testing"""
-        agent = TestAgent(f"SessionAgent_{session_id}")
+        agent = MockAgent(f"SessionAgent_{session_id}")
         wrapper = AgentWrapper(
             agent_id=f"SessionAgent_{session_id}",
             enable_input_validation=True,
@@ -338,9 +339,9 @@ def test_serialization_safety():
     """Test serialization safety improvements"""
     print("\n=== Testing Serialization Safety ===")
     
-    agent = TestAgent("SerializationTestAgent")
+    agent = MockAgent("SerializationMockAgent")
     wrapper = AgentWrapper(
-        agent_id="SerializationTestAgent",
+        agent_id="SerializationMockAgent",
         enable_input_validation=True,
         enable_behavior_analysis=True,
         enable_performance_monitoring=True,
@@ -381,9 +382,9 @@ def test_metrics_collection():
     """Test metrics collection"""
     print("\n=== Testing Metrics Collection ===")
     
-    agent = TestAgent("MetricsTestAgent")
+    agent = MockAgent("MetricsMockAgent")
     wrapper = AgentWrapper(
-        agent_id="MetricsTestAgent",
+        agent_id="MetricsMockAgent",
         enable_input_validation=True,
         enable_behavior_analysis=True,
         enable_performance_monitoring=True,
@@ -411,7 +412,7 @@ def test_metrics_collection():
 
 def main():
     """Run all tests"""
-    print("🚀 Starting Agent Sentinel SDK Improvement Tests")
+    print("🚀 Starting AgentWrapper tests")
     print("=" * 60)
     
     tests = [
@@ -452,7 +453,7 @@ def main():
     print(f"📊 Test Results: {passed}/{total} tests passed")
     
     if passed == total:
-        print("🎉 All tests passed! SDK improvements are working correctly.")
+        print("🎉 All tests passed.")
         return 0
     else:
         print("⚠️  Some tests failed. Please review the issues above.")

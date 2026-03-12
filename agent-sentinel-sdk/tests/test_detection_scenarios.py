@@ -1,9 +1,8 @@
 """
-Real-world agent monitoring scenarios.
-
-These tests simulate actual AI agent usage patterns — LLM agents,
-multi-agent pipelines, MCP tool servers — and verify the SDK catches
-threats, generates events, and produces usable reports.
+Threat detection across agent patterns: single LLM, multi-agent pipeline,
+MCP tool server. Verifies the SDK catches prompt injection, SQL injection,
+XSS, command injection, etc. when decorators wrap different agent types.
+Agents are defined inline (no external frameworks).
 """
 
 import json
