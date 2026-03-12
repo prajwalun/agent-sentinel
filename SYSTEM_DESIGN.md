@@ -1,5 +1,8 @@
 # Agent Sentinel - System Design
 
+> **[README](./README.md)** — getting started, quick start, tests, config  
+> **This file** — architecture, API reference, database schema, data flows, design decisions
+
 ## Overview
 
 Agent Sentinel is a security monitoring platform for AI agents. It consists of three components that work independently or together:
@@ -142,9 +145,44 @@ All endpoints are prefixed with `/api/`. Authentication is either JWT (for dashb
 | GET | `/api/reports` | JWT | List analysis runs |
 | GET | `/api/dashboard/stats` | JWT | Aggregate dashboard stats |
 
-### Database (SQLite)
+#### Key request/response examples
 
-Tables: `users`, `agents`, `security_events`, `api_keys`, `request_log`, `analysis_runs`
+```http
+POST /api/auth/login
+{"email": "user@example.com", "password": "..."}
+
+→ {"token": "<jwt>", "user": {"id": "...", "email": "...", "name": "..."}}
+```
+
+```http
+POST /api/events
+Authorization: Bearer <api-key>
+
+{
+  "agent_id": "my_agent",
+  "threat_type": "sql_injection",
+  "severity": "HIGH",
+  "confidence": 0.95,
+  "message": "UNION SELECT detected in query parameter",
+  "context": {"method": "search", "arg": "' UNION SELECT ..."}
+}
+
+→ {"status": "ok", "event_id": "my_agent_1234567890"}
+```
+
+```http
+POST /api/analysis/start
+Authorization: Bearer <jwt>
+Content-Type: multipart/form-data  (report file)
+
+→ {"run_id": "abc123", "status": "pending"}
+
+GET /api/analysis/abc123/status
+→ {"status": "running"}   (poll until complete)
+→ {"status": "complete", "result": { ...UnifiedReport... }}
+```
+
+### Database (SQLite)
 
 Key design decisions:
 - Foreign keys enforced (`PRAGMA foreign_keys=ON`)
@@ -152,6 +190,88 @@ Key design decisions:
 - Indexes on query-hot columns (agent+time, severity, status, created_at)
 - API key hashes stored (never raw keys)
 - In-memory shared connection for `:memory:` testing
+
+#### Schema
+
+```sql
+-- Users created via /api/auth/signup
+users (
+    id            TEXT PRIMARY KEY,
+    email         TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,          -- bcrypt
+    name          TEXT NOT NULL DEFAULT '',
+    created_at    TEXT NOT NULL,
+    is_active     INTEGER NOT NULL DEFAULT 1
+)
+
+-- Agents registered by the SDK on first event
+agents (
+    id          TEXT PRIMARY KEY,         -- matches agent_id from decorator
+    name        TEXT NOT NULL,
+    type        TEXT NOT NULL DEFAULT 'generic',
+    status      TEXT NOT NULL DEFAULT 'active',
+    created_at  TEXT NOT NULL,
+    last_seen   TEXT                      -- updated on every event
+)
+
+-- One row per detected threat
+security_events (
+    id               TEXT PRIMARY KEY,
+    agent_id         TEXT NOT NULL REFERENCES agents(id),
+    threat_type      TEXT NOT NULL,
+    severity         TEXT NOT NULL CHECK (severity IN ('LOW','MEDIUM','HIGH','CRITICAL')),
+    confidence       REAL NOT NULL CHECK (confidence BETWEEN 0.0 AND 1.0),
+    message          TEXT NOT NULL,
+    context_json     TEXT,               -- full call context as JSON
+    detection_method TEXT,
+    detected_at      TEXT NOT NULL
+)
+
+-- API keys for SDK → backend authentication
+api_keys (
+    id          TEXT PRIMARY KEY,
+    key_hash    TEXT NOT NULL UNIQUE,    -- SHA-256; raw key shown once on creation
+    user_id     TEXT NOT NULL REFERENCES users(id),
+    description TEXT NOT NULL DEFAULT '',
+    created_at  TEXT NOT NULL,
+    last_used   TEXT,
+    call_count  INTEGER NOT NULL DEFAULT 0,
+    is_active   INTEGER NOT NULL DEFAULT 1
+)
+
+-- Rolling window for per-user rate limiting (100 req/hr)
+request_log (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id      TEXT NOT NULL REFERENCES users(id),
+    requested_at TEXT NOT NULL
+)
+
+-- One row per AI analysis run (async background job)
+analysis_runs (
+    id           TEXT PRIMARY KEY,
+    agent_id     TEXT NOT NULL REFERENCES agents(id),
+    input_hash   TEXT NOT NULL,          -- dedup identical reports
+    status       TEXT NOT NULL DEFAULT 'pending',  -- pending|running|complete|failed
+    risk_level   TEXT,
+    result_json  TEXT,                   -- full UnifiedReport JSON on completion
+    created_at   TEXT NOT NULL,
+    completed_at TEXT,
+    duration_ms  INTEGER
+)
+```
+
+Indexes: `idx_events_agent_time`, `idx_events_severity`, `idx_events_threat_type`, `idx_runs_status`, `idx_runs_created_at`, `idx_reqlog_user_time`, `idx_agents_last_seen`, `idx_keys_hash`
+
+### Failure modes
+
+| Condition | Behavior |
+|-----------|----------|
+| `OPENAI_API_KEY` not set | Backend starts normally; `POST /api/analysis/start` returns 503 |
+| `EXA_API_KEY` not set | Researcher agent skips web lookup; report still generated |
+| Database file missing | Created automatically on first startup |
+| Rate limit exceeded (100 req/hr) | 429 returned; window resets on the hour |
+| Analysis run evicted from memory | Status polled from `analysis_runs` table as fallback |
+| JWT expired | 401 returned; client must re-authenticate |
 
 ### LangGraph Workflow
 
