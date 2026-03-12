@@ -618,15 +618,18 @@ class SecurityAnalysisWorkflow:
             raise Exception(f"PDF generation failed: {e}")
 
 
-def create_workflow_from_env() -> SecurityAnalysisWorkflow:
-    """Create workflow from environment configuration."""
+def create_workflow_from_env() -> Optional[SecurityAnalysisWorkflow]:
+    """Create workflow from environment configuration. Returns None if OPENAI_API_KEY is not set."""
     load_dotenv()
-    
+
+    if not os.getenv("OPENAI_API_KEY"):
+        return None
+
     config = IntelligenceConfig(
         openai_api_key=os.getenv("OPENAI_API_KEY"),
         google_api_key=os.getenv("GOOGLE_API_KEY"),
         exa_api_key=os.getenv("EXA_API_KEY"),
         wandb_api_key=os.getenv("WANDB_API_KEY")
     )
-    
+
     return SecurityAnalysisWorkflow(config) 

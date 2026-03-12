@@ -106,9 +106,20 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         from workflow import create_workflow_from_env
 
         workflow_instance = create_workflow_from_env()
-        logger.info("LangGraph workflow initialised")
-    except Exception:
-        logger.warning("Workflow init failed — analysis endpoints will return 503", exc_info=True)
+        if workflow_instance:
+            logger.info("LangGraph workflow initialised — AI analysis enabled")
+        else:
+            logger.info(
+                "AI analysis disabled (no OPENAI_API_KEY). "
+                "Event detection, dashboard, and API keys work normally. "
+                "Add OPENAI_API_KEY to .env to enable report analysis."
+            )
+    except Exception as e:
+        logger.warning(
+            "Workflow init failed — analysis endpoints will return 503: %s",
+            e,
+            exc_info=False,
+        )
 
     yield  # application runs
 
