@@ -18,7 +18,7 @@ export function SignUpForm() {
     confirmPassword: "",
   })
   const [apiKey, setApiKey] = useState<string | null>(null)
-  const { signup, loading, error } = useAuth()
+  const { signup, clearError, loading, error } = useAuth()
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -38,6 +38,7 @@ export function SignUpForm() {
 
   const handleChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
+    if (error) clearError()
   }
 
   const passwordMismatch =

@@ -18,6 +18,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>
   signup: (email: string, password: string, name: string) => Promise<{ apiKey: string }>
   logout: () => void
+  clearError: () => void
   loading: boolean
   error: string | null
 }
@@ -114,8 +115,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem("sentinel_user")
   }, [])
 
+  const clearError = useCallback(() => {
+    setError(null)
+  }, [])
+
   return (
-    <AuthContext.Provider value={{ user, token, login, signup, logout, loading, error }}>
+    <AuthContext.Provider value={{ user, token, login, signup, logout, clearError, loading, error }}>
       {children}
     </AuthContext.Provider>
   )

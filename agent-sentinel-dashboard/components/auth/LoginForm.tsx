@@ -13,7 +13,7 @@ import { AuthLayout } from "./AuthLayout"
 export function LoginForm() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const { login, loading, error } = useAuth()
+  const { login, clearError, loading, error } = useAuth()
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -61,7 +61,10 @@ export function LoginForm() {
             id="password"
             type="password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) => {
+              setPassword(e.target.value)
+              if (error) clearError()
+            }}
             className="input-dark"
             placeholder="Enter your password"
             required
