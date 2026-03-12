@@ -2,9 +2,9 @@
 
 Security monitoring for AI agents. Add a decorator, get threat detection.
 
-As AI agents got popular, people were vibe coding them and shipping fast. The AI-generated code had vulnerabilities, and people were putting agents on GitHub for others to use—those could have attacked users. Traditional security tools don't understand agent-level threats, and the ones that did required restructuring your agent around their framework.
+As AI agents got popular, people were vibe coding them and shipping fast. The AI-generated code had vulnerabilities, and people were putting agents on GitHub for others to use, those could have attacked users. Traditional security tools don't understand agent-level threats, and the ones that did required restructuring your agent around their framework.
 
-I built this to identify and flag these threats, and to make it easy for devs to use in their code: one decorator, zero code changes, you're monitored. The detection engine uses compiled regex patterns today—fast, deterministic, zero cost per call—and the architecture is designed for pluggable detectors so ML classifiers or LLM-as-a-judge evaluators can be layered on top without touching the decorator code.
+I built this to identify and flag these threats, and to make it easy for devs to use in their code: one decorator, zero code changes, you're monitored. The detection engine uses compiled regex patterns today: fast, deterministic, zero cost per call, and the architecture is designed for pluggable detectors so ML classifiers or LLM-as-a-judge evaluators can be layered on top without touching the decorator code.
 
 ```bash
 pip install agent-sentinel
