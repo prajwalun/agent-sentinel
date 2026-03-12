@@ -46,7 +46,7 @@ class ExaSearchResult:
 
 class ExaThreatIntelligence:
     """
-    Enterprise-grade threat intelligence service using Exa search
+    Threat intelligence service using Exa search.
     
     Provides real-time threat intelligence for security event enrichment
     with structured data extraction and caching capabilities.
@@ -130,7 +130,7 @@ class ExaThreatIntelligence:
     
     async def get_threat_intelligence(self, threat_type: str, context: Optional[Dict[str, Any]] = None) -> ThreatIntelligence:
         """
-        Get comprehensive threat intelligence for a security event
+        Get threat intelligence for a security event
         
         Args:
             threat_type: Type of threat (sql_injection, xss, etc.)
@@ -159,7 +159,7 @@ class ExaThreatIntelligence:
             all_results = []
             for query in search_queries:
                 try:
-                    # Use search_and_contents for comprehensive results
+                    # Use search_and_contents for full results
                     search_response = await self._search_with_contents(query)
                     all_results.extend(search_response)
                 except Exception as e:
@@ -194,7 +194,7 @@ class ExaThreatIntelligence:
             List of ExaSearchResult objects
         """
         try:
-            # Use Exa's search_and_contents for comprehensive results
+            # Use Exa's search_and_contents for full results with text
             search_response = self.exa_client.search_and_contents(
                 query,
                 num_results=self.max_results_per_query,
@@ -245,7 +245,7 @@ class ExaThreatIntelligence:
         # Calculate confidence score
         confidence_score = self._calculate_confidence_score(results)
         
-        # Create comprehensive intelligence object
+        # Create intelligence object from extracted data
         intelligence = ThreatIntelligence(
             threat_type=threat_type,
             confidence_score=confidence_score,

@@ -1,19 +1,17 @@
 """
-End-to-end test agents for Agent Sentinel SDK validation.
+Synthetic E2E tests — agents defined inline to exercise the SDK's
+threat detection in isolation (no backend, no external frameworks).
 
-Exercises 6 agent scenarios against the SDK:
-  1. Safe single agent (research assistant)     → expects CLEAN report
-  2. Malicious single agent (data exfiltrator)  → expects threat detection
-  3. Safe multi-agent pipeline (coordinator)     → expects CLEAN report
-  4. Compromised multi-agent pipeline           → expects threat detection
-  5. Safe MCP tool server                        → expects CLEAN report
-  6. Malicious MCP tool server                   → expects threat detection
+Scenarios:
+  1. Safe single agent          → zero threats
+  2. Malicious single agent     → SQL injection, prompt injection detected
+  3. Safe multi-agent pipeline  → zero threats
+  4. Compromised multi-agent    → threats detected on outputs
+  5. Safe MCP tool server       → zero threats
+  6. Malicious MCP tool server  → path traversal, command injection detected
 
-Run:
-    python tests/test_agents_e2e.py
-
-Requires: agent-sentinel SDK installed (pip install -e agent-sentinel-sdk)
-Does NOT require a running backend — all detection is local.
+Usage:
+    python tests/test_e2e_synthetic.py
 """
 
 import json

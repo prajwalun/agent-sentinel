@@ -1,7 +1,7 @@
 """
 Communication Wrapper for AgentSentinel
 
-Enterprise-grade wrapper for monitoring and securing agent-to-agent communications,
+Wrapper for monitoring and securing agent-to-agent communications,
 including message validation, encryption, and audit trails.
 """
 
@@ -56,10 +56,10 @@ class CommunicationSession:
 
 class CommunicationWrapper:
     """
-    Enterprise-grade communication wrapper for agent-to-agent messaging
+    Communication wrapper for agent-to-agent messaging.
     
-    Provides comprehensive monitoring, validation, and security features
-    for inter-agent communications in production environments.
+    Provides monitoring, validation, and security features
+    for inter-agent communications.
     """
     
     def __init__(
@@ -83,7 +83,7 @@ class CommunicationWrapper:
             enable_message_validation: Enable message content validation
             enable_encryption: Enable message encryption
             enable_rate_limiting: Enable rate limiting
-            enable_audit_logging: Enable comprehensive audit logging
+            enable_audit_logging: Enable audit logging
             max_message_size: Maximum allowed message size in bytes
             rate_limit_per_minute: Rate limit for messages per minute
             strict_validation: Use strict validation mode
@@ -206,7 +206,7 @@ class CommunicationWrapper:
         validate_content: bool,
         encrypt: Optional[bool]
     ) -> Any:
-        """Execute send function with comprehensive monitoring"""
+        """Execute send function with monitoring."""
         method_name = func.__name__
         start_time = time.time()
         
@@ -253,7 +253,7 @@ class CommunicationWrapper:
         validate_content: bool,
         encrypt: Optional[bool]
     ) -> Any:
-        """Execute async send function with comprehensive monitoring"""
+        """Execute async send function with monitoring."""
         method_name = func.__name__
         start_time = time.time()
         
@@ -300,7 +300,7 @@ class CommunicationWrapper:
         validate_content: bool,
         decrypt: Optional[bool]
     ) -> Any:
-        """Execute receive function with comprehensive monitoring"""
+        """Execute receive function with monitoring."""
         method_name = func.__name__
         start_time = time.time()
         
@@ -339,7 +339,7 @@ class CommunicationWrapper:
         validate_content: bool,
         decrypt: Optional[bool]
     ) -> Any:
-        """Execute async receive function with comprehensive monitoring"""
+        """Execute async receive function with monitoring."""
         method_name = func.__name__
         start_time = time.time()
         
@@ -723,7 +723,7 @@ class CommunicationWrapper:
             self.stats['total_sessions'] += 1
 
     def get_communication_stats(self) -> Dict[str, Any]:
-        """Get comprehensive communication statistics"""
+        """Get communication statistics."""
         return {
             'agent_id': self.agent_id,
             'active_sessions': len(self.active_sessions),

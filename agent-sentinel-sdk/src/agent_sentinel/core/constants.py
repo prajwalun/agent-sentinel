@@ -26,7 +26,7 @@ class ThreatType(Enum):
     BEHAVIORAL_ANOMALY = "behavioral_anomaly"
     COMMUNICATION_TAMPERING = "communication_tampering"
     
-    # Advanced threat types for enterprise-grade detection
+    # Advanced threat types
     PRIVILEGE_ESCALATION = "privilege_escalation"
     SUSPICIOUS_TOOL_USAGE = "suspicious_tool_usage"
     UNUSUAL_DATA_ACCESS = "unusual_data_access"

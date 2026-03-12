@@ -1,18 +1,17 @@
 """
-Enterprise-Grade Threat Detectors for Agent Sentinel
+Threat Detectors for Agent Sentinel
 
-This module implements comprehensive threat detection capabilities for all types
-of AI agents including A2A (Agent-to-Agent), MCP (Model Context Protocol),
-autonomous agents, and other specialized agent architectures.
+Threat detection for all types of AI agents including A2A (Agent-to-Agent),
+MCP (Model Context Protocol), autonomous agents, and other agent architectures.
 
-Enterprise features:
-- Comprehensive threat coverage for all agent types
-- Advanced pattern recognition and ML-based detection
+Capabilities:
+- Threat coverage for all agent types
+- Pattern recognition and ML-based detection
 - Real-time threat intelligence integration
 - Cross-agent attack detection
 - Protocol-specific vulnerability detection
 - Behavioral anomaly detection
-- Zero-day threat detection capabilities
+- Zero-day threat detection
 - Compliance and regulatory threat detection
 """
 
@@ -69,7 +68,7 @@ class AttackVector(Enum):
 
 @dataclass
 class EnterpriseDetectionContext:
-    """Enhanced detection context for enterprise-grade detection."""
+    """Enhanced detection context with agent-specific fields."""
     agent_id: str
     agent_type: AgentType
     method_name: str
@@ -126,14 +125,14 @@ class EnterpriseDetectionContext:
 
 
 class EnterpriseBaseDetector(BaseDetector):
-    """Enhanced base detector for enterprise-grade detection."""
+    """Enhanced base detector with agent-type-specific detection."""
     
     def __init__(self, config, detector_name: str):
         super().__init__(detector_name)  # BaseDetector takes (name, enabled=True)
         
         self.config = config
         
-        # Enterprise features
+        # Detection features
         self.threat_intelligence_enabled = True
         self.ml_detection_enabled = True
         self.behavioral_analysis_enabled = True
@@ -146,11 +145,11 @@ class EnterpriseBaseDetector(BaseDetector):
         self.compiled_patterns: Dict[str, Pattern] = {}
         self.detection_cache: Dict[str, Any] = {}
         
-        # Load enterprise patterns
+        # Load detection patterns
         self._load_enterprise_patterns()
     
     def _load_enterprise_patterns(self) -> None:
-        """Load enterprise-specific detection patterns."""
+        """Load detection patterns from configuration."""
         # This would load from configuration files or threat intelligence feeds
         pass
     
@@ -188,19 +187,19 @@ class EnterpriseBaseDetector(BaseDetector):
         if base_result:
             results.append(base_result)
         
-        # Run enterprise-specific detection
+        # Run additional detection
         enterprise_results = self._detect_enterprise_threats(context)
         results.extend(enterprise_results)
         
         return results
     
     def _detect_enterprise_threats(self, context: EnterpriseDetectionContext) -> List[DetectionResult]:
-        """Detect enterprise-specific threats."""
+        """Detect additional threats based on context."""
         # Override in subclasses
         return []
     
     def _context_to_text(self, context: EnterpriseDetectionContext) -> str:
-        """Convert enterprise context to text for pattern matching."""
+        """Convert detection context to text for pattern matching."""
         text_parts = []
         
         # Add method name
@@ -1489,11 +1488,10 @@ class CrossAgentAttackDetector(EnterpriseBaseDetector):
 
 class EnterpriseDetectionEngine:
     """
-    Enterprise-grade detection engine that coordinates all specialized detectors.
+    Detection engine that coordinates all specialized detectors.
     
-    This engine provides comprehensive threat detection for all agent types
-    with advanced pattern recognition, ML-based detection, and real-time
-    threat intelligence integration.
+    Provides threat detection for all agent types with pattern recognition,
+    ML-based detection, and real-time threat intelligence integration.
     """
     
     def __init__(self, config, logger: Optional[SecurityLogger] = None):

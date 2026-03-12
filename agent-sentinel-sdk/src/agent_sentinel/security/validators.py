@@ -1,7 +1,7 @@
 """
 Security Input Validators
 
-Enterprise-grade input validation to prevent injection attacks and 
+Input validation to prevent injection attacks and
 ensure data integrity in AI agent interactions.
 """
 
@@ -27,7 +27,7 @@ class ValidationResult(Enum):
 
 @dataclass
 class ValidationResponse:
-    """Comprehensive validation response"""
+    """Validation response with threat details."""
     result: ValidationResult
     is_safe: bool
     confidence_score: float
@@ -90,11 +90,11 @@ class BaseValidator(ABC):
 
 class InputValidator(BaseValidator):
     """
-    Comprehensive input validator that checks for multiple threat types
+    Input validator that checks for multiple threat types.
     """
     
     def __init__(self, *args, **kwargs):
-        """Initialize comprehensive input validator"""
+        """Initialize input validator with all threat-type sub-validators."""
         super().__init__(*args, **kwargs)
         
         # Initialize specialized validators
@@ -116,13 +116,13 @@ class InputValidator(BaseValidator):
 
     def validate(self, input_data: str) -> ValidationResponse:
         """
-        Comprehensive validation against all threat types
+        Validate input against all threat types.
         
         Args:
             input_data: Input string to validate
             
         Returns:
-            ValidationResponse with comprehensive analysis
+            ValidationResponse with analysis results
         """
         if not isinstance(input_data, str):
             input_data = str(input_data)

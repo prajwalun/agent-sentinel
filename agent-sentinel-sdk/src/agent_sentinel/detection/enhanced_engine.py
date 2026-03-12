@@ -1,7 +1,7 @@
 """
-Enhanced World-Class Detection Engine for Agent Sentinel
+Enhanced Detection Engine for Agent Sentinel
 
-This module provides enterprise-grade threat detection with advanced capabilities:
+This module provides multi-layer threat detection with advanced capabilities:
 - Real-time behavioral analysis
 - Multi-layer threat detection
 - Advanced pattern recognition
@@ -10,7 +10,7 @@ This module provides enterprise-grade threat detection with advanced capabilitie
 - Zero-day threat detection
 - Compliance monitoring
 
-Maintains simple @monitor interface while providing enterprise-grade security.
+Maintains simple @monitor interface while providing production-ready security.
 """
 
 import asyncio
@@ -432,7 +432,7 @@ class EnhancedDetectionEngine:
         # Initialize behavioral analysis engine
         self.behavioral_engine = BehavioralAnalysisEngine(config)
         
-        # Initialize enterprise detectors
+        # Initialize specialized detectors
         self.enterprise_detectors = {
             "prompt_injection": AdvancedPromptInjectionDetector(config),
             "a2a_agent": A2AAgentDetector(config),
@@ -460,7 +460,7 @@ class EnhancedDetectionEngine:
         """Detect threats using all six layers of protection."""
         all_results = []
         
-        # Convert to enterprise context
+        # Convert to extended detection context
         enterprise_context = self._convert_to_enterprise_context(context)
         
         # Layer 1: Pattern Matching (Legacy engine)
@@ -483,7 +483,7 @@ class EnhancedDetectionEngine:
         except Exception as e:
             self.logger.error(f"Behavioral analysis layer failed: {e}")
         
-        # Layer 3: Anomaly Detection (Enterprise detectors)
+        # Layer 3: Anomaly Detection (specialized detectors)
         try:
             for detector_name, detector in self.enterprise_detectors.items():
                 enterprise_results = detector.detect_with_context(enterprise_context)
@@ -508,7 +508,7 @@ class EnhancedDetectionEngine:
         return all_results
     
     def _convert_to_enterprise_context(self, context: DetectionContext) -> EnterpriseDetectionContext:
-        """Convert legacy context to enterprise context."""
+        """Convert legacy context to extended detection context."""
         # Detect agent type from method name and inputs
         agent_type = self._detect_agent_type(context)
         
@@ -547,7 +547,7 @@ class EnhancedDetectionEngine:
         return AgentType.UNKNOWN
     
     def get_metrics(self) -> Dict[str, Any]:
-        """Get comprehensive detection metrics."""
+        """Get detection metrics across all layers."""
         return {
             **self.metrics,
             "behavioral_metrics": self.behavioral_engine.get_metrics(),

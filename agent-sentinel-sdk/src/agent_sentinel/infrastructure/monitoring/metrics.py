@@ -1,7 +1,7 @@
 """
 Metrics Collection for Detection Engine
 
-Enterprise-grade metrics collection with Prometheus support,
+Metrics collection with Prometheus support,
 following industry standards for observability and monitoring.
 """
 
@@ -75,9 +75,9 @@ class MetricSeries:
 
 class MetricsCollector:
     """
-    Enterprise-grade metrics collection for detection operations.
+    Metrics collection for detection operations.
     
-    Provides comprehensive metrics collection with optional Prometheus
+    Provides metrics collection with optional Prometheus
     integration for production monitoring.
     """
     
@@ -290,7 +290,7 @@ class MetricsCollector:
             ).set(state_value)
     
     def get_metrics_summary(self) -> Dict[str, Any]:
-        """Get comprehensive metrics summary."""
+        """Get full metrics summary."""
         if not self.enabled:
             return {"enabled": False}
         

@@ -1,8 +1,5 @@
 """
-Enterprise Monitoring and Health Check System for Agent Sentinel Intelligence Layer.
-
-Provides comprehensive monitoring, health checks, metrics collection, and alerting
-for enterprise-grade observability and system reliability.
+Health checks and metrics collection for the intelligence backend.
 """
 
 import time

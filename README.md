@@ -14,39 +14,54 @@ def my_agent(query: str) -> str:
     return llm.invoke(query)
 ```
 
-That's it. Every call to `my_agent` is now validated against 60+ compiled regex patterns for SQL injection, XSS, prompt injection, command injection, path traversal, and data exfiltration. Threats produce a `SecurityEvent` with type, severity, and confidence score. No changes to your agent code.
+Every call to `my_agent` is now validated against 60+ compiled regex patterns for SQL injection, XSS, prompt injection, command injection, path traversal, and data exfiltration. Threats produce a `SecurityEvent` with type, severity, and confidence score. No changes to your agent code.
 
 Works with single functions (`@monitor`), entire classes (`@sentinel`), and MCP tool servers (`@monitor_mcp`). All events flow into a thread-safe global registry for unified reporting across multi-agent pipelines.
 
 ---
 
-## Getting Started
+## Getting started
 
-You need **Python 3.9+**, **Node.js 18+**, and an **OpenAI API key** (for AI analysis).
+### Prerequisites
 
-### Docker (fastest)
+- [Python 3.9+](https://www.python.org/downloads/)
+- [Node.js 18+](https://nodejs.org/) (for the dashboard)
+- [Docker](https://docs.docker.com/get-docker/) (optional, but recommended)
+
+### Quick start with Docker
 
 ```bash
 git clone https://github.com/prajwalun/agent-sentinel.git
 cd agent-sentinel
-cp .env.example .env   # add your OPENAI_API_KEY
 docker-compose up --build
 ```
 
-Backend runs at `http://localhost:8001`, dashboard at `http://localhost:3000`.
+That's it. Backend starts at `http://localhost:8001`, dashboard at `http://localhost:3000`. Open the dashboard, create an account, and you're in.
 
-### Manual setup
+> **AI analysis (optional):** To enable the AI-powered report analysis, create a `.env` file in the project root and add your OpenAI key. You can get one at [platform.openai.com/api-keys](https://platform.openai.com/api-keys).
+>
+> ```bash
+> cp .env.example .env
+> # open .env and set OPENAI_API_KEY=sk-...
+> ```
+>
+> Without it, everything else works — event detection, the dashboard, SSE streaming, API keys — just the LangGraph analysis feature is disabled.
 
-**Backend:**
+### Manual setup (without Docker)
+
+**1. Start the backend**
 
 ```bash
 cd agent-sentinel-intelligence
 pip install -r requirements.txt
-cp ../.env.example ../.env   # add your OPENAI_API_KEY, JWT_SECRET, ADMIN_SECRET
 python -m uvicorn api_server:app --host 0.0.0.0 --port 8001
 ```
 
-**Dashboard:**
+Check it's running: `curl http://localhost:8001/health`
+
+To enable AI analysis, set `OPENAI_API_KEY` in a `.env` file (see `.env.example`).
+
+**2. Start the dashboard**
 
 ```bash
 cd agent-sentinel-dashboard
@@ -55,16 +70,16 @@ echo 'NEXT_PUBLIC_API_URL=http://localhost:8001' > .env.local
 npm run dev
 ```
 
-Open `http://localhost:3000`, create an account, grab an API key from Settings.
+Open `http://localhost:3000`, create an account, and go to **Settings** to generate an API key.
 
-**Connect the SDK:**
+**3. Connect the SDK**
 
 ```bash
 export SENTINEL_API_URL=http://localhost:8001
-export SENTINEL_API_KEY=<key from dashboard>
+export SENTINEL_API_KEY=<key from dashboard settings>
 ```
 
-Now any `@monitor`-decorated function streams events to the backend in real time. Open the dashboard to watch them come in.
+Any `@monitor`-decorated function now streams events to the backend. Open the dashboard to see them come in.
 
 The SDK also works standalone — no backend needed for local threat detection and report generation.
 
@@ -96,7 +111,7 @@ On every call, the SDK:
 4. Records a `SecurityEvent` if a threat is found (type, severity, confidence, context)
 5. Pushes the event to the backend via `BackendEventSink` (if connected)
 
-The backend stores events in SQLite, streams them to the dashboard via SSE, and runs AI-powered analysis using a LangGraph workflow with 5 agents (Analyzer, Supervisor, Researcher, Reporter, Validator) that can iteratively refine reports up to 3 times.
+The backend stores events in SQLite, streams them to the dashboard via SSE, and runs AI-powered analysis using a LangGraph workflow with 5 specialized agents that can iteratively refine reports up to 3 times.
 
 ---
 
@@ -109,7 +124,7 @@ agent-sentinel-dashboard/      Next.js dashboard — real-time events, reports, 
 tests/                         E2E tests with synthetic and real agents
 ```
 
-For architecture details, data flows, API reference, and database schema, see [SYSTEM_DESIGN.md](./SYSTEM_DESIGN.md).
+For architecture diagrams, data flows, API reference, and database schema, see [SYSTEM_DESIGN.md](./SYSTEM_DESIGN.md).
 
 ---
 
@@ -120,27 +135,29 @@ For architecture details, data flows, API reference, and database schema, see [S
 ```bash
 cd agent-sentinel-sdk && python -m pytest tests/ -v            # 52 SDK tests
 cd agent-sentinel-intelligence && python -m pytest tests/ -v   # 39 API tests
-python tests/test_agents_e2e.py                                # 6 synthetic E2E
-python tests/test_real_agents_e2e.py                           # 8 real agent E2E
+python tests/test_e2e_synthetic.py                              # 6 synthetic E2E
+python tests/test_e2e_integration.py                           # 8 integration E2E
 ```
 
-The E2E tests run safe and malicious agents (single, multi-agent, MCP) and verify that threats are detected while clean agents produce zero false positives. Real agent tests use the A2A protocol and Agno/OpenAI frameworks.
+Synthetic tests define agents inline to exercise detection in isolation. Integration tests run the SDK against agents built with A2A and Agno/OpenAI to verify it works on real agent architectures.
 
-CI runs three jobs on every push via GitHub Actions.
+CI runs SDK, backend, and E2E tests on every push via GitHub Actions.
 
 ---
 
-## Environment variables
+## Configuration
 
-| Variable | Required | Used by | Purpose |
-|----------|----------|---------|---------|
-| `OPENAI_API_KEY` | Yes | Backend | LangGraph AI analysis (GPT-4o) |
-| `JWT_SECRET` | Recommended | Backend | JWT signing secret |
-| `ADMIN_SECRET` | Recommended | Backend | Admin API key generation |
-| `EXA_API_KEY` | No | Backend | External threat intelligence (Exa.ai) |
-| `SENTINEL_API_URL` | No | SDK | Backend URL for event streaming |
-| `SENTINEL_API_KEY` | No | SDK | API key for SDK-to-backend auth |
-| `NEXT_PUBLIC_API_URL` | No | Dashboard | Backend URL (default `http://localhost:8001`) |
+All config is through environment variables. Copy `.env.example` to `.env` and fill in what you need:
+
+| Variable | Required | What it does |
+|----------|----------|--------------|
+| `OPENAI_API_KEY` | For AI analysis | Powers the LangGraph report analysis (GPT-4o) |
+| `JWT_SECRET` | No (auto-generated) | Signs JWT tokens for dashboard auth |
+| `ADMIN_SECRET` | No (has default) | Admin-level API key generation |
+| `EXA_API_KEY` | No | External threat intelligence via Exa.ai |
+| `SENTINEL_API_URL` | No | Tell the SDK where the backend is |
+| `SENTINEL_API_KEY` | No | SDK-to-backend authentication |
+| `NEXT_PUBLIC_API_URL` | No | Dashboard's backend URL (defaults to `http://localhost:8001`) |
 
 ---
 

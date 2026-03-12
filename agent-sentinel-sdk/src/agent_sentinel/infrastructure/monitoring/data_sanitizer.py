@@ -1,7 +1,7 @@
 """
 Data Sanitization for Weave Integration
 
-Enterprise-grade data sanitization to protect sensitive information
+Data sanitization to protect sensitive information
 before sending traces to external services.
 """
 
@@ -32,9 +32,9 @@ class SanitizationConfig:
 
 class DataSanitizer:
     """
-    Enterprise-grade data sanitizer for protecting sensitive information.
+    Data sanitizer for protecting sensitive information.
     
-    Provides comprehensive PII and sensitive data redaction before
+    Provides PII and sensitive data redaction before
     sending traces to external monitoring services.
     """
     

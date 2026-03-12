@@ -1,7 +1,7 @@
 """
 Real-time Threat Intelligence Integration for Agent Sentinel
 
-This module provides enterprise-grade threat intelligence capabilities
+This module provides threat intelligence capabilities
 similar to those found in Datadog Security, Snyk, and Wiz.
 """
 
@@ -73,7 +73,7 @@ class ThreatIndicator:
 
 
 class ThreatIntelligenceEngine:
-    """Enterprise-grade threat intelligence engine."""
+    """Threat intelligence engine with real-time indicator matching."""
     
     def __init__(self, config: Dict[str, Any], logger: Optional[SecurityLogger] = None):
         self.config = config

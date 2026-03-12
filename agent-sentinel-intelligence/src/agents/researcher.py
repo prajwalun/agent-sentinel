@@ -201,7 +201,7 @@ class WebResearcherAgent:
                 logger.warning("⚠️  Analysis content too short for meaningful research")
                 return self._fallback_to_supervisor("Analysis content insufficient for research")
             
-            # Perform web research based on analysis with comprehensive error handling
+            # Query Exa.ai for external threat intelligence
             try:
                 research_results = self._perform_research(content)
             except Exception as e:

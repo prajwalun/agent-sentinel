@@ -1,11 +1,11 @@
 """
 Advanced Behavioral Analysis System for Agent Sentinel
 
-This module implements sophisticated behavioral analysis capabilities for AI agents,
+This module implements behavioral analysis capabilities for AI agents,
 including agent fingerprinting, usage pattern analysis, anomaly detection, and
 behavioral threat identification.
 
-Enterprise-grade features:
+Features:
 - Agent fingerprinting and profiling
 - Usage pattern analysis and baseline establishment
 - Behavioral anomaly detection with ML-based scoring
@@ -174,7 +174,7 @@ class BehavioralAnalyzer:
     """
     Advanced behavioral analysis system for AI agents.
     
-    This system provides comprehensive behavioral monitoring and analysis,
+    This system provides behavioral monitoring and analysis,
     including agent fingerprinting, pattern recognition, and anomaly detection.
     
     Key Features:
@@ -304,7 +304,7 @@ class BehavioralAnalyzer:
     
     def create_agent_fingerprint(self, context: Dict[str, Any]) -> AgentFingerprint:
         """
-        Create a comprehensive fingerprint for the agent.
+        Create a fingerprint for the agent.
         
         Args:
             context: Context information about the agent
@@ -592,7 +592,7 @@ class BehavioralAnalyzer:
         # Check against known patterns
         sequence_str = " -> ".join(recent_sequence)
         
-        # Simple pattern matching - in production, use more sophisticated sequence analysis
+        # Simple pattern matching - in production, use n-gram or Markov chain analysis
         known_patterns = self._get_known_sequences()
         
         if sequence_str not in known_patterns and len(recent_sequence) >= 3:
@@ -971,7 +971,7 @@ class BehavioralAnalyzer:
         
         sequence_str = " -> ".join(sequence)
         
-        # Simple similarity calculation - in production, use more sophisticated methods
+        # Simple similarity calculation - in production, use edit distance or embedding-based methods
         max_similarity = 0.0
         for pattern in known_patterns:
             # Calculate Jaccard similarity

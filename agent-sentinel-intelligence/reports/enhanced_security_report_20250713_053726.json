@@ -1,0 +1,34 @@
+{
+  "metadata": {
+    "generated_at": "2025-07-13T05:37:26.889125",
+    "workflow_version": "2.0.0",
+    "execution_time": 0,
+    "total_steps": 0,
+    "config": {
+      "llm": {
+        "provider": "auto",
+        "model": "gemini-1.5-flash",
+        "temperature": 0.1,
+        "max_tokens": 4096,
+        "timeout": 60,
+        "max_retries": 3
+      },
+      "tracing": {
+        "enabled": true,
+        "provider": "weave",
+        "project_name": "agent-sentinel-intelligence",
+        "capture_code": true,
+        "capture_system_info": true
+      },
+      "research": {
+        "enabled": true,
+        "max_research_queries": 5,
+        "research_timeout": 30,
+        "max_results_per_query": 5,
+        "enable_caching": true
+      },
+      "output": {
+        "generate_text": true,
+        "generate_pdf": true,
+        "generate_json": true,
+        "output_directory": 

@@ -1,8 +1,5 @@
 """
-Input Validation and Sanitization Utilities for Agent Sentinel Intelligence Layer.
-
-Provides comprehensive input validation, sanitization, and security checks
-for enterprise-grade security applications.
+Input validation and sanitization utilities.
 """
 
 import re

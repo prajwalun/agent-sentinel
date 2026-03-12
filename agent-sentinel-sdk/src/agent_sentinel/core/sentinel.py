@@ -86,7 +86,6 @@ class AgentSentinel:
         except Exception as e:
             raise ConfigurationError(f"Failed to initialize configuration: {e}")
         
-        # Initialize core components
         self.agent_id = self.config.agent_id
         self.environment = self.config.environment
         self.is_running = False
@@ -97,7 +96,6 @@ class AgentSentinel:
         self.event_lock = threading.Lock()
         self.event_handlers: List[Callable[[SecurityEvent], None]] = []
         
-        # Connect to global event registry
         self.global_registry = get_global_registry()
         
         # Session tracking
@@ -113,20 +111,16 @@ class AgentSentinel:
             "processing_time": 0.0,
         }
         
-        # Initialize logging
         self._setup_logging()
         
-        # Initialize Weave service
         self.weave_service = WeaveService(self.config.weave)
         
-        # Initialize circuit breaker for resilience
         self.circuit_breaker = CircuitBreaker(
             failure_threshold=5,
             recovery_timeout=30,
             expected_exception=SecurityError
         )
         
-        # Initialize detection engine
         from ..detection.engine import DetectionEngine
         self.detection_engine = DetectionEngine({
             "detection": {
@@ -135,7 +129,6 @@ class AgentSentinel:
             }
         })
         
-        # Initialize threat intelligence engine if enabled
         self.threat_intelligence = None
         if enable_threat_intelligence:
             try:
@@ -160,7 +153,6 @@ class AgentSentinel:
         self.logger.info("Agent Sentinel initialized for core security monitoring")
         self.logger.info("For AI-powered analysis, export events to external enrichment service")
         
-        # Initialize unified report generator
         self.report_generator = UnifiedReportGenerator(
             agent_id=self.agent_id,
             log_file=self.config.logging.file
@@ -174,18 +166,14 @@ class AgentSentinel:
         """Set up logging configuration."""
         log_config = self.config.logging
         
-        # Create logs directory if it doesn't exist
         log_path = Path(log_config.file)
         log_path.parent.mkdir(parents=True, exist_ok=True)
         
-        # Configure logger
         self.logger = logging.getLogger(f"agent_sentinel.{self.agent_id}")
         self.logger.setLevel(getattr(logging, log_config.level.upper()))
         
-        # Create file handler
         handler = logging.FileHandler(log_config.file)
         
-        # Create formatter
         if log_config.format == "json":
             formatter = logging.Formatter(
                 '{"timestamp": "%(asctime)s", "level": "%(levelname)s", "agent_id": "' + 
@@ -938,7 +926,7 @@ class AgentSentinel:
     
     async def health_check(self) -> Dict[str, Any]:
         """
-        Perform comprehensive health check of all services.
+        Perform health check of all services.
         
         Returns:
             Health check results
@@ -1008,7 +996,7 @@ class AgentSentinel:
 
     def export_for_llm_analysis(self, file_path: Optional[str] = None) -> Dict[str, Any]:
         """
-        Export comprehensive security data for LLM agentic analysis.
+        Export security data for LLM agentic analysis.
         
         This method consolidates all security information into a single structure
         that can be easily sent to external LLM enrichment services.
@@ -1024,7 +1012,6 @@ class AgentSentinel:
         # Get all current events
         events = self.get_events()
         
-        # Get comprehensive metrics
         metrics = self.get_metrics()
         
         # Get events summary
@@ -1047,7 +1034,6 @@ class AgentSentinel:
         except FileNotFoundError:
             log_entries = []
         
-        # Create comprehensive export
         llm_export = {
             "export_metadata": {
                 "agent_id": self.agent_id,
@@ -1095,7 +1081,6 @@ class AgentSentinel:
         if file_path is None:
             file_path = "logs/consolidated_security_logs.json"
         
-        # Ensure logs directory exists
         import os
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
         
@@ -1151,7 +1136,7 @@ class AgentSentinel:
     
     def generate_security_report(self, file_path: Optional[str] = None) -> str:
         """
-        Generate a comprehensive security report.
+        Generate a security report.
         
         Args:
             file_path: Optional file path to save the report
@@ -1182,12 +1167,12 @@ class AgentSentinel:
         """
         Generate a unified monitoring report combining logs, events, and analysis.
         
-        This creates a single comprehensive file with:
-        - Real-time session logs
+        This creates a single file combining:
+        - Session logs
         - Security events and analysis
         - Performance metrics
         - Threat intelligence insights
-        - Actionable recommendations
+        - Recommendations
         
         Args:
             file_path: Optional file path to save the report

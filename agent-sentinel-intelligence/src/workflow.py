@@ -1,8 +1,8 @@
 """
-Enterprise Security Analysis Workflow for Agent Sentinel Intelligence Layer.
+Security analysis workflow.
 
-Orchestrates a sophisticated multi-agent system for comprehensive security report analysis
-using LangGraph and advanced LLM orchestration with enterprise-grade features.
+Multi-agent pipeline built on LangGraph: Analyzer → Supervisor → Researcher →
+Reporter → Validator, with iterative refinement (up to 3 loops).
 """
 
 import logging
@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 
 
 class SecurityAnalysisWorkflow:
-    """Enterprise workflow for security analysis using multi-agent system."""
+    """LangGraph workflow for multi-agent security analysis."""
     
     def __init__(self, config: IntelligenceConfig, max_iterations: int = 3):
         self.config = config
@@ -220,7 +220,7 @@ class SecurityAnalysisWorkflow:
             ]
         }
         
-        logger.info("Starting Enterprise Security Analysis Workflow...")
+        logger.info("Starting security analysis workflow...")
         results = []
         final_report = ""
         error_occurred = False
@@ -228,7 +228,7 @@ class SecurityAnalysisWorkflow:
         
         try:
             if self.tracing_service.is_enabled():
-                with self.tracing_service.trace("enterprise-security-analysis") as trace:
+                with self.tracing_service.trace("security-analysis") as trace:
                     if trace:
                         try:
                             # Log workflow start event
@@ -314,7 +314,7 @@ class SecurityAnalysisWorkflow:
                         iteration_count += 1
             
             self.end_time = datetime.now()
-            logger.info("Enterprise Security Analysis Workflow completed successfully")
+            logger.info("Security analysis workflow completed successfully")
             
             return {
                 "success": True,
@@ -330,7 +330,7 @@ class SecurityAnalysisWorkflow:
         except Exception as e:
             self.end_time = datetime.now()
             error_occurred = True
-            logger.error(f"❌ Enterprise workflow execution failed: {e}")
+            logger.error(f"Workflow execution failed: {e}")
             
             return {
                 "success": False,

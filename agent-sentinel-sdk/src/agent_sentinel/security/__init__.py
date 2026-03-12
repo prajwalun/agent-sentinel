@@ -2,7 +2,7 @@
 AgentSentinel Security Utilities
 
 Core security building blocks including validators, rate limiters, sanitizers,
-and cryptographic utilities for enterprise-grade security.
+and cryptographic utilities.
 """
 
 from . import validators

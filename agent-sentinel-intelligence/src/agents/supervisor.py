@@ -1,8 +1,8 @@
 """
-Enterprise Supervisor Agent for Agent Sentinel Intelligence Layer.
+Supervisor agent.
 
-Orchestrates the workflow by selecting the most appropriate next agent
-based on the current state and needs of the task.
+Routes the workflow to the next agent based on current state — decides
+whether more research is needed or the report is ready for validation.
 """
 
 import logging
@@ -38,7 +38,7 @@ class EnhancedSupervisor(BaseModel):
 
 
 class SupervisorAgent:
-    """Enterprise supervisor agent that orchestrates the workflow."""
+    """Supervisor agent that orchestrates the analysis workflow."""
     
     def __init__(self, llm_service: LLMService, tracing_service: TracingService):
         self.llm_service = llm_service

@@ -1,8 +1,7 @@
 """
-Enterprise Logging Configuration for Agent Sentinel Intelligence Layer.
+Logging configuration.
 
-Provides structured logging with proper formatting, rotation, security filtering,
-and enterprise-grade logging standards.
+Structured JSON logging with rotation and sensitive-data filtering.
 """
 
 import os
@@ -116,7 +115,7 @@ class HumanReadableFormatter(logging.Formatter):
 
 
 class LoggingConfig:
-    """Enterprise logging configuration manager."""
+    """Logging configuration manager."""
     
     def __init__(
         self,

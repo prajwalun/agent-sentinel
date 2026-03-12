@@ -1,8 +1,8 @@
 """
-Agent Sentinel - Enterprise Security Monitoring SDK
+Agent Sentinel - Security Monitoring SDK
 
-A comprehensive security monitoring solution for AI agents with real-time threat detection,
-behavioral analysis, and enterprise-grade reporting capabilities.
+Security monitoring for AI agents with real-time threat detection,
+behavioral analysis, and reporting.
 """
 
 from .core.sentinel import AgentSentinel

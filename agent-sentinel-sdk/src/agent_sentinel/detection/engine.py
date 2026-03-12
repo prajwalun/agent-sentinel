@@ -1,8 +1,8 @@
 """
-Enterprise-grade detection engine with modular plugin architecture.
+Detection engine with modular plugin architecture.
 
-This module implements a robust, extensible runtime security framework
-similar to enterprise security tools like Datadog Security, Snyk, and Wiz.
+This module implements an extensible runtime security framework
+similar to security tools like Datadog Security, Snyk, and Wiz.
 """
 
 import asyncio
@@ -370,7 +370,7 @@ class AnomalyDetector(BaseDetector):
 
 
 class DetectionEngine:
-    """Enterprise-grade detection engine with modular pipeline."""
+    """Detection engine with modular pipeline."""
     
     def __init__(self, config: Dict[str, Any]):
         self.config = config

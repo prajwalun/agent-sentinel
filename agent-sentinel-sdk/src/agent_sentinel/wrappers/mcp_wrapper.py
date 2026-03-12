@@ -1,8 +1,8 @@
 """
 MCP Wrapper for AgentSentinel
 
-Enterprise-grade wrapper for monitoring and securing MCP (Model Context Protocol) tools,
-including input validation, output sanitization, and comprehensive audit trails.
+Wrapper for monitoring and securing MCP (Model Context Protocol) tools,
+including input validation, output sanitization, and audit trails.
 """
 
 import asyncio
@@ -54,10 +54,10 @@ class MCPSession:
 
 class MCPWrapper:
     """
-    Enterprise-grade MCP wrapper for tool monitoring and security
+    MCP wrapper for tool monitoring and security.
     
-    Provides comprehensive monitoring, validation, and security features
-    for MCP tool interactions in production environments.
+    Provides monitoring, validation, and security features
+    for MCP tool interactions.
     """
     
     def __init__(
@@ -84,7 +84,7 @@ class MCPWrapper:
             enable_output_validation: Enable output validation
             enable_rate_limiting: Enable rate limiting
             enable_performance_monitoring: Enable performance monitoring
-            enable_audit_logging: Enable comprehensive audit logging
+            enable_audit_logging: Enable audit logging
             max_input_size: Maximum allowed input size in bytes
             max_output_size: Maximum allowed output size in bytes
             rate_limit_per_minute: Rate limit for tool calls per minute
@@ -188,7 +188,7 @@ class MCPWrapper:
         validate_inputs: bool,
         validate_outputs: bool
     ) -> Any:
-        """Execute MCP tool with comprehensive monitoring"""
+        """Execute MCP tool with monitoring."""
         tool_name = func.__name__
         start_time = time.time()
         
@@ -259,7 +259,7 @@ class MCPWrapper:
         validate_inputs: bool,
         validate_outputs: bool
     ) -> Any:
-        """Execute async MCP tool with comprehensive monitoring"""
+        """Execute async MCP tool with monitoring."""
         tool_name = func.__name__
         start_time = time.time()
         
@@ -677,7 +677,7 @@ class MCPWrapper:
             self.stats['total_sessions'] += 1
 
     def get_mcp_stats(self) -> Dict[str, Any]:
-        """Get comprehensive MCP statistics"""
+        """Get MCP statistics."""
         return {
             'agent_id': self.agent_id,
             'active_sessions': len(self.active_sessions),
@@ -717,7 +717,6 @@ def secure_mcp_method(
             pass
     """
     def decorator(func):
-        # Robustly extract module and name for agent_id
         func_module = getattr(func, "__module__", None) or "unknown_module"
         func_name = getattr(func, "__name__", None) or "unknown_function"
         safe_agent_id = agent_id or f"{func_module}.{func_name}"

@@ -90,7 +90,7 @@ def my_func(query):
 | Path traversal | 8 | HIGH | `../`, `..\`, URL-encoded variants, `/etc/passwd` |
 | Data exfiltration | Token analysis | CRITICAL | API key patterns, base64 credentials, suspicious outbound URLs |
 
-The SDK defines 21 total `ThreatType` classifications. The 6 above are regex-detected on every call; the remaining 15 (privilege escalation, behavioral anomaly, cross-agent attack, timing attack, etc.) are used by the enterprise detection engine, risk scoring, and report enrichment.
+The SDK defines 21 total `ThreatType` classifications. The 6 above are regex-detected on every call; the remaining 15 (privilege escalation, behavioral anomaly, cross-agent attack, timing attack, etc.) are used for risk scoring and report enrichment.
 
 Each detection produces a `SecurityEvent` with `threat_type`, `severity` (LOW/MEDIUM/HIGH/CRITICAL), `confidence` (0.0–1.0), and full context.
 
@@ -222,7 +222,7 @@ A Next.js web application that provides real-time visibility into agent security
 - Threat breakdown by type and severity
 - AI Intelligence Insights (markdown prose from LLM)
 - Recommendations list
-- Export to PDF (`window.print()` with print stylesheet) and Share (clipboard)
+- Export to PDF (`window.print()` with print stylesheet) and JSON
 
 ### Key Files
 
@@ -232,7 +232,7 @@ A Next.js web application that provides real-time visibility into agent security
 | `lib/api.ts` | `apiService` - typed HTTP client for all backend calls |
 | `hooks/useLiveEvents.ts` | SSE hook for real-time event streaming |
 | `components/dashboard/DashboardView.tsx` | Main dashboard layout |
-| `components/reports/ReportVisualization.tsx` | Report renderer with PDF/share |
+| `components/reports/ReportVisualization.tsx` | Report renderer with PDF/JSON export |
 | `components/settings/SettingsView.tsx` | Key management, preferences |
 | `middleware.ts` | Security headers (X-Frame-Options, Referrer-Policy) |
 
@@ -278,8 +278,8 @@ Agent call → @monitor detects threat → SecurityEvent
 |-------|----------|-------|----------------|
 | Backend API | `agent-sentinel-intelligence/tests/test_api.py` | 39 | Auth, CRUD, key lifecycle, SSE, pagination, analysis |
 | SDK unit | `agent-sentinel-sdk/tests/` | 52 | Core SDK, decorators, validators, wrappers |
-| SDK E2E (synthetic) | `tests/test_agents_e2e.py` | 6 | Synthetic agents: single/multi/MCP, safe/malicious |
-| Real agent E2E | `tests/test_real_agents_e2e.py` | 8 | A2A protocol agents, Agno HackerNews researcher |
+| E2E synthetic | `tests/test_e2e_synthetic.py` | 6 | Inline agents: single/multi/MCP, safe and malicious |
+| E2E integration | `tests/test_e2e_integration.py` | 8 | A2A protocol agents, Agno/OpenAI researcher |
 
 ### Running Tests
 
@@ -291,8 +291,8 @@ cd agent-sentinel-intelligence && python -m pytest tests/ -v
 cd agent-sentinel-sdk && python -m pytest tests/ -v
 
 # E2E agent tests (from repo root)
-python tests/test_agents_e2e.py
-python tests/test_real_agents_e2e.py
+python tests/test_e2e_synthetic.py
+python tests/test_e2e_integration.py
 ```
 
 ---

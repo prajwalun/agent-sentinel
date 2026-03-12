@@ -66,7 +66,7 @@ class ConfigurationValidation:
 
 class AgentWrapper:
     """
-    Enterprise-grade agent wrapper for comprehensive monitoring
+    Agent wrapper for security monitoring.
     
     Provides decorators and context managers for monitoring AI agent behavior,
     detecting security threats, and analyzing performance patterns.
@@ -120,12 +120,10 @@ class AgentWrapper:
         self.session_cleanup_interval = session_cleanup_interval
         self.memory_threshold_mb = memory_threshold_mb
         
-        # Validate configuration
         config_validation = self._validate_configuration()
         if not config_validation.is_valid:
             raise ValueError(f"Invalid configuration: {config_validation.issues}")
         
-        # Configure log file path
         log_file = f"logs/agent_sentinel_{agent_id}.log"
         
         self.logger = logger or SecurityLogger(
@@ -135,7 +133,6 @@ class AgentWrapper:
             log_file=log_file
         )
         
-        # Initialize separate log and threat report generators
         self.enable_separate_logs = enable_separate_logs
         self.enable_threat_reports = enable_threat_reports
         self.log_format = log_format
@@ -163,13 +160,11 @@ class AgentWrapper:
         else:
             self.threat_report_generator = None
         
-        # Initialize validators
         if self.enable_input_validation:
             self.input_validator = InputValidator(strict_mode=strict_validation)
         else:
             self.input_validator = None
         
-        # Connect to global event registry
         self.global_registry = get_global_registry()
         
         # Active sessions tracking with thread safety
@@ -200,7 +195,6 @@ class AgentWrapper:
             'other_errors': 0
         }
         
-        # Start cleanup thread
         self._cleanup_thread = None
         self._cleanup_running = False
         self._start_cleanup_thread()
@@ -445,7 +439,7 @@ class AgentWrapper:
         validate_inputs: bool,
         validate_outputs: bool
     ) -> Any:
-        """Execute function with comprehensive monitoring and error handling"""
+        """Execute function with monitoring and error handling."""
         method_name = func.__name__
         call_info = MethodCallInfo(
             method_name=method_name,
@@ -525,7 +519,7 @@ class AgentWrapper:
         validate_inputs: bool,
         validate_outputs: bool
     ) -> Any:
-        """Execute async function with comprehensive monitoring and error handling"""
+        """Execute async function with monitoring and error handling."""
         method_name = func.__name__
         call_info = MethodCallInfo(
             method_name=method_name,
@@ -799,10 +793,7 @@ class AgentWrapper:
         """Record method call with thread safety"""
         with self._lock:
             try:
-                # Update global stats
                 self.stats['total_method_calls'] += 1
-                
-                # Update average call duration
                 total_calls = self.stats['total_method_calls']
                 current_avg = self.stats['average_call_duration']
                 if call_info.duration is not None:
@@ -945,7 +936,6 @@ class AgentWrapper:
             metadata={'session_name': session_name}
         )
         
-        # Check concurrent session limit
         with self._session_lock:
             if len(self.active_sessions) >= self.max_concurrent_sessions:
                 raise RuntimeError(f"Maximum concurrent sessions ({self.max_concurrent_sessions}) exceeded")
@@ -966,7 +956,7 @@ class AgentWrapper:
                     self.current_session = None
 
     def get_agent_stats(self) -> Dict[str, Any]:
-        """Get comprehensive agent statistics with thread safety"""
+        """Get agent statistics with thread safety."""
         with self._lock:
             stats_copy = self.stats.copy()
             stats_copy['error_stats'] = self.error_stats.copy()

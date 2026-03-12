@@ -1,7 +1,7 @@
 """
 Circuit Breaker Pattern Implementation
 
-Enterprise-grade circuit breaker for resilient detection operations,
+Circuit breaker for resilient detection operations,
 following industry standards for fault tolerance and reliability.
 """
 
@@ -23,7 +23,7 @@ class CircuitBreakerState(Enum):
 
 class CircuitBreaker:
     """
-    Enterprise-grade circuit breaker implementation.
+    Circuit breaker implementation.
     
     Provides fault tolerance for detection operations by automatically
     failing fast when error rates exceed thresholds.

@@ -1,8 +1,8 @@
 """
-Enterprise Report Generator Agent for Agent Sentinel Intelligence Layer.
+Report generator agent.
 
-Generates comprehensive, actionable security intelligence reports with advanced
-formatting, executive summaries, and enterprise-grade presentation.
+Produces structured security reports with executive summary, threat
+breakdown, recommendations, and next actions as JSON.
 """
 
 import logging
@@ -28,8 +28,8 @@ class ReportSection:
         self.priority = priority
 
 
-class EnterpriseReportGenerator:
-    """Enterprise report generator with advanced formatting."""
+class ReportFormatter:
+    """Formats raw analysis output into structured report sections."""
     
     def __init__(self):
         self.sections = []
@@ -77,7 +77,7 @@ class EnterpriseReportGenerator:
 
 
 class ReportGeneratorAgent:
-    """Enterprise report generator agent that creates comprehensive security reports."""
+    """Generates structured security intelligence reports."""
     
     def __init__(self, llm_service: LLMService, tracing_service: TracingService):
         """
@@ -148,8 +148,7 @@ class ReportGeneratorAgent:
                 logger.warning("⚠️  No workflow content found for report generation")
                 return self._fallback_to_validator("No content available for report generation")
             
-            # Generate comprehensive report
-            report = self._generate_comprehensive_report(workflow_content)
+            report = self._generate_structured_report(workflow_content)
             
             # Validate report quality
             if not report or (isinstance(report, dict) and len(json.dumps(report)) < 100):
@@ -157,7 +156,7 @@ class ReportGeneratorAgent:
                 return self._fallback_to_validator("Report generation failed - insufficient content")
             
             # Log report generation
-            logger.info(f"Enterprise security report generated - {len(report)} characters")
+            logger.info(f"Security report generated - {len(report)} characters")
             
             # Trace the report generation
             if self.tracing_service.is_enabled():
@@ -210,7 +209,7 @@ class ReportGeneratorAgent:
         
         return "\n".join(content_sections)
     
-    def _generate_comprehensive_report(self, workflow_content: str) -> dict:
+    def _generate_structured_report(self, workflow_content: str) -> dict:
         """
         Generate comprehensive security report as structured JSON.
         

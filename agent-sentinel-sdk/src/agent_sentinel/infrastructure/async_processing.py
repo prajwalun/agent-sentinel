@@ -1,10 +1,10 @@
 """
-Production-Grade Async Processing Pipeline for Agent Sentinel
+Async Processing Pipeline for Agent Sentinel
 
-This module implements a sophisticated async processing system for high-performance
+This module implements an async processing system for high-performance
 threat detection and security monitoring in AI agents.
 
-Enterprise-grade features:
+Features:
 - High-performance async processing with worker pools
 - Distributed task queues with priority handling
 - Circuit breakers for fault tolerance

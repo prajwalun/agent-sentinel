@@ -1,8 +1,8 @@
 """
-Enterprise Security Analyzer Agent for Agent Sentinel Intelligence Layer.
+Security analyzer agent.
 
-Performs comprehensive security analysis with advanced threat detection,
-pattern recognition, and risk assessment capabilities.
+Extracts threats, classifies severity, and produces structured
+ThreatAnalysis output from raw security event data.
 """
 
 import logging
@@ -35,7 +35,7 @@ class ThreatAnalysis:
 
 
 class SecurityAnalyzerAgent:
-    """Enterprise security analyzer agent with advanced threat detection."""
+    """Analyzes security events and extracts threat classifications."""
     
     def __init__(self, llm_service: LLMService, tracing_service: TracingService):
         """
@@ -177,7 +177,7 @@ class SecurityAnalyzerAgent:
                 logger.error("❌ Invalid state type provided to analyzer")
                 return self._fallback_to_supervisor("Invalid state type provided")
             
-            # Extract input content with comprehensive validation
+            # Extract input content
             input_content = self._extract_input_content(state)
             if not input_content or not input_content.strip():
                 logger.warning("⚠️  No input content found for analysis")
@@ -188,9 +188,9 @@ class SecurityAnalyzerAgent:
                 logger.warning("⚠️  Input content too large, truncating")
                 input_content = input_content[:100000] + "...[TRUNCATED]"
             
-            # Perform comprehensive analysis with error handling
+            # Run threat analysis
             try:
-                analysis_result = self._perform_comprehensive_analysis(input_content)
+                analysis_result = self._perform_threat_analysis(input_content)
             except Exception as e:
                 logger.error(f"❌ Comprehensive analysis failed: {e}")
                 # Continue with basic analysis
@@ -308,14 +308,14 @@ class SecurityAnalyzerAgent:
             logger.error(f"❌ Failed to extract input content: {e}")
             return ""
     
-    def _perform_comprehensive_analysis(self, content: str) -> ThreatAnalysis:
+    def _perform_threat_analysis(self, content: str) -> ThreatAnalysis:
         """Perform structured threat analysis."""
         try:
             analysis = ThreatAnalysis()
             
             # Validate content
             if not content or not isinstance(content, str):
-                logger.warning("⚠️  Invalid content for comprehensive analysis")
+                logger.warning("Invalid content for analysis")
                 return analysis
             
             # Extract threats using regex patterns with error handling

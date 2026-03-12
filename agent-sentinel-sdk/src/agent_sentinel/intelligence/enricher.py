@@ -83,7 +83,7 @@ class EnrichedSecurityEvent:
 
 class ThreatIntelligenceEnricher:
     """
-    Enterprise-grade threat intelligence enricher with LLM orchestration
+    Threat intelligence enricher with LLM orchestration.
     
     Features:
     1. LLM Orchestrator: Analyzes security events and generates intelligent search strategies
@@ -291,7 +291,7 @@ class ThreatIntelligenceEnricher:
 
     async def generate_orchestrated_intelligence_report(self, enriched_event: EnrichedSecurityEvent) -> str:
         """
-        Generate comprehensive intelligence report using LLM synthesis
+        Generate intelligence report using LLM synthesis
         
         Args:
             enriched_event: Enriched security event with orchestration and intelligence
@@ -315,7 +315,7 @@ Your report should:
 
 Format in markdown with proper headers and structure."""
 
-            # Prepare comprehensive context
+            # Prepare report context
             context = self._prepare_orchestrated_context(enriched_event)
             
             user_prompt = f"""
@@ -370,7 +370,7 @@ Generate a professional, executive-ready threat intelligence report that provide
 
     def _prepare_orchestrated_context(self, enriched_event: EnrichedSecurityEvent) -> Dict[str, str]:
         """
-        Prepare comprehensive context for orchestrated report generation
+        Prepare context for orchestrated report generation
         
         Args:
             enriched_event: Enriched security event
@@ -582,7 +582,7 @@ Generate a professional, executive-ready threat intelligence report that provide
         intelligence = enriched_event.threat_intelligence
         event = enriched_event.original_event
         
-        # Build comprehensive report
+        # Build report
         report_sections = []
         
         # Header

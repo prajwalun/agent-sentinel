@@ -1,7 +1,7 @@
 """
 Structured Security Logger
 
-Enterprise-grade structured logging with security-focused features, audit trails,
+Structured logging with security-focused features, audit trails,
 and threat detection integration.
 """
 
@@ -74,7 +74,7 @@ class SecurityLogEntry:
 
 class StructuredLogger:
     """
-    Enterprise-grade structured logger with security features
+    Structured logger with security features.
     
     Provides structured logging with JSON formatting, security context,
     and performance monitoring capabilities.

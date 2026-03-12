@@ -27,7 +27,7 @@ class DetectionStatus(Enum):
 
 
 class ThreatLevel(Enum):
-    """Standardized threat levels for enterprise reporting."""
+    """Standardized threat levels for reporting."""
     
     INFORMATIONAL = 0
     LOW = 1
@@ -40,10 +40,10 @@ class ThreatLevel(Enum):
 @dataclass
 class DetectionContext:
     """
-    Enterprise-grade detection context with full observability.
+    Detection context with full observability.
     
-    This class provides comprehensive context for threat detection
-    with correlation IDs, tracing, and enterprise metadata.
+    This class provides context for threat detection
+    with correlation IDs, tracing, and structured metadata.
     """
     
     correlation_id: str = field(default_factory=lambda: str(uuid.uuid4()))
@@ -92,9 +92,9 @@ class DetectionContext:
 @dataclass
 class DetectionResult:
     """
-    Enterprise-grade detection result with comprehensive metadata.
+    Detection result with detailed metadata.
     
-    This class provides detailed detection results with enterprise features
+    This class provides detection results with features
     like compliance reporting, risk scoring, and audit trails.
     """
     
@@ -112,7 +112,7 @@ class DetectionResult:
     detection_method: str
     processing_time_ms: float
     
-    # Enterprise metadata
+    # Tracking metadata
     correlation_id: str
     detection_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
@@ -178,7 +178,7 @@ class DetectionResult:
             "detection_method": self.detection_method,
             "processing_time_ms": self.processing_time_ms,
             
-            # Enterprise metadata
+            # Tracking metadata
             "correlation_id": self.correlation_id,
             "detection_id": self.detection_id,
             "timestamp": self.timestamp.isoformat(),

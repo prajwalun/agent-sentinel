@@ -1,8 +1,8 @@
 """
 Weave Service for Agent Sentinel
 
-Enterprise-grade Weave integration for LLM tracing and monitoring.
-Provides robust error handling, retry logic, and performance monitoring.
+Weave integration for LLM tracing and monitoring.
+Provides error handling, retry logic, and performance monitoring.
 """
 
 import asyncio
@@ -86,10 +86,10 @@ class WeaveMetrics:
 
 class WeaveService:
     """
-    Enterprise-grade Weave service for LLM tracing and monitoring.
+    Weave service for LLM tracing and monitoring.
     
     Features:
-    - Robust initialization with fallback handling
+    - Initialization with fallback handling
     - Automatic retry logic for failed operations
     - Performance monitoring and metrics collection
     - Thread-safe operations
@@ -230,7 +230,7 @@ class WeaveService:
     
     def create_op_decorator(self, name: Optional[str] = None) -> Callable:
         """
-        Create a Weave operation decorator with enterprise features.
+        Create a Weave operation decorator.
         
         Args:
             name: Optional name for the operation
@@ -315,7 +315,7 @@ class WeaveService:
         error: Optional[str] = None
     ) -> None:
         """
-        Log LLM call with comprehensive metadata.
+        Log an LLM call with metadata.
         
         Args:
             model: Model name

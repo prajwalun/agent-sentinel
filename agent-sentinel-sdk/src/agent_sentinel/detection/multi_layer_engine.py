@@ -1,8 +1,7 @@
 """
 Multi-Layer Detection Engine for Agent Sentinel
 
-This module implements a sophisticated 6-layer defense system for comprehensive
-threat detection in AI agents, following enterprise security best practices.
+Implements a 6-layer defense system for threat detection in AI agents.
 
 The 6-layer architecture:
 1. Signature Matching Layer - Known attack patterns and signatures
@@ -10,14 +9,14 @@ The 6-layer architecture:
 3. Behavioral Analysis Layer - Agent behavior and anomaly detection
 4. ML-Based Detection Layer - Machine learning threat classification
 5. Threat Intelligence Layer - External threat feeds and IOCs
-6. Risk Scoring Layer - Comprehensive risk assessment and prioritization
+6. Risk Scoring Layer - Risk assessment and prioritization
 
-Enterprise features:
+Features:
 - Defense in depth with multiple detection mechanisms
 - Adaptive threat detection with machine learning
 - Real-time threat intelligence integration
 - Cross-layer correlation and analysis
-- Advanced risk scoring and prioritization
+- Risk scoring and prioritization
 - Support for all agent types (A2A, MCP, autonomous)
 """
 
@@ -924,7 +923,6 @@ class RiskScoringLayer(DetectionLayerBase):
             if not previous_results:
                 return results
             
-            # Calculate comprehensive risk score
             risk_score = self._calculate_risk_score(previous_results, context)
             
             # Determine overall threat level
@@ -962,7 +960,7 @@ class RiskScoringLayer(DetectionLayerBase):
         return context.get_layer_context(DetectionLayer.RISK_SCORING).get("previous_results", [])
     
     def _calculate_risk_score(self, results: List[LayerResult], context: DetectionContext) -> float:
-        """Calculate comprehensive risk score."""
+        """Calculate aggregate risk score from layer results."""
         if not results:
             return 0.0
         
@@ -1085,8 +1083,7 @@ class MultiLayerDetectionEngine:
     """
     Multi-layer detection engine coordinating all detection layers.
     
-    This engine implements a sophisticated 6-layer defense system for
-    comprehensive threat detection in AI agents.
+    Runs inputs through all 6 detection layers and correlates results.
     """
     
     def __init__(

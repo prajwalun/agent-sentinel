@@ -1,10 +1,10 @@
 """
 Advanced Risk Scoring System for Agent Sentinel
 
-This module implements a sophisticated risk scoring system that provides
-comprehensive threat assessment and prioritization for AI agents.
+This module implements a multi-factor risk scoring system that provides
+threat assessment and prioritization for AI agents.
 
-Enterprise-grade features:
+Features:
 - Multi-dimensional risk assessment
 - Dynamic risk scoring based on context and behavior
 - Threat prioritization and escalation
@@ -129,7 +129,7 @@ class RiskContext:
 
 @dataclass
 class RiskScore:
-    """Comprehensive risk score result."""
+    """Risk score result with detailed breakdown."""
     overall_score: float  # 0.0 to 1.0
     risk_level: RiskLevel
     category_scores: Dict[RiskCategory, float]
@@ -221,9 +221,9 @@ class RiskTrend:
 
 class RiskScoringEngine:
     """
-    Advanced risk scoring engine for comprehensive threat assessment.
+    Advanced risk scoring engine for threat assessment.
     
-    This engine provides sophisticated risk scoring capabilities including:
+    This engine provides multi-factor risk scoring including:
     - Multi-dimensional risk assessment
     - Dynamic contextual scoring
     - Threat prioritization and escalation
@@ -287,7 +287,7 @@ class RiskScoringEngine:
     
     async def calculate_risk_score(self, context: RiskContext) -> RiskScore:
         """
-        Calculate comprehensive risk score for given context.
+        Calculate risk score for given context.
         
         Args:
             context: Risk assessment context
@@ -804,7 +804,7 @@ class RiskScoringEngine:
     # Assessment helper methods
     def _assess_availability_impact(self, context: RiskContext) -> float:
         """Assess availability impact."""
-        # Simplified assessment - in production, this would be more sophisticated
+        # Simplified assessment - would use detailed impact modeling in production
         if context.impact_scope == "global":
             return 0.4
         elif context.impact_scope == "regional":
@@ -1348,7 +1348,7 @@ class RiskScoringEngine:
     ) -> Tuple[float, float]:
         """Calculate confidence interval for risk score."""
         # Simplified confidence interval calculation
-        # In production, this would use more sophisticated statistical methods
+        # In production, this would use bootstrapping or Bayesian intervals
         
         # Base confidence on data quality and completeness
         confidence_factors = [
@@ -1664,7 +1664,7 @@ class RiskScoringEngine:
             return []
         
         # Simple pattern change detection
-        # In production, this would use more sophisticated change point detection
+        # In production, this would use PELT or Bayesian change point detection
         
         scores = [score for _, score in historical_data]
         timestamps = [ts for ts, _ in historical_data]
@@ -1698,7 +1698,7 @@ class RiskScoringEngine:
         scores = [score for _, score in historical_data]
         
         # Simple linear prediction
-        # In production, this would use more sophisticated ML models
+        # In production, this would use time-series forecasting models
         
         # Calculate trend
         recent_scores = scores[-5:]
