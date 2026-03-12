@@ -394,13 +394,13 @@ Agent call → @monitor detects threat → SecurityEvent
 
 ### Test Suites
 
-| Suite | Location | Count | What it covers |
-|-------|----------|-------|----------------|
-| Backend API | `agent-sentinel-intelligence/tests/test_api.py` | 39 | Auth, CRUD, key lifecycle, SSE, pagination, analysis |
-| SDK unit | `agent-sentinel-sdk/tests/` | 52 | Core SDK, decorators, validators, wrappers |
-| Dashboard | `agent-sentinel-dashboard/__tests__/` | 21 | API service layer, auth context, localStorage handling |
-| E2E synthetic | `tests/test_e2e_synthetic.py` | 6 | Inline agents: single/multi/MCP, safe and malicious |
-| E2E integration | `tests/test_e2e_integration.py` | 8 | A2A protocol agents, Agno/OpenAI researcher |
+| Suite | Location | What it covers |
+|-------|----------|----------------|
+| Backend API | `agent-sentinel-intelligence/tests/test_api.py` | Auth, CRUD, key lifecycle, SSE, pagination, analysis |
+| SDK unit | `agent-sentinel-sdk/tests/` | Core SDK, decorators, validators, wrappers |
+| Dashboard | `agent-sentinel-dashboard/__tests__/` | API service layer, auth context, localStorage handling |
+| E2E synthetic | `tests/test_e2e_synthetic.py` | Inline agents: single/multi/MCP, safe and malicious |
+| E2E integration | `tests/test_e2e_integration.py` | A2A protocol agents, Agno/OpenAI researcher |
 
 ### Running Tests
 
