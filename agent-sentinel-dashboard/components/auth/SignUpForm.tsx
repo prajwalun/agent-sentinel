@@ -91,7 +91,10 @@ export function SignUpForm() {
 
           <div className="space-y-2">
             <Label className="text-white">Quick Start</Label>
-            <p className="text-xs text-gray-500">In a new terminal, run:</p>
+            <p className="text-xs text-gray-500">
+              In a new terminal, run. If pip install fails (e.g. on macOS), use a venv:{" "}
+              <code className="text-gray-400">python3 -m venv venv && source venv/bin/activate</code>
+            </p>
             <div className="relative">
               <pre className="bg-gray-900 border border-gray-700 rounded p-3 pr-12 text-xs text-gray-300 overflow-x-auto">
 {`pip install agent-sentinel

@@ -54,6 +54,12 @@ export SENTINEL_API_URL=http://localhost:8001
 export SENTINEL_API_KEY=<your-key-from-dashboard>
 ```
 
+> **macOS:** If you see `externally-managed-environment`, use a virtual environment:
+> ```bash
+> python3 -m venv venv && source venv/bin/activate
+> pip install agent-sentinel
+> ```
+
 Then use `@monitor` in your agent code. Events stream to the backend and appear in the dashboard.
 
 > **AI analysis (optional):** To enable AI-powered report analysis, create a `.env` file in the project root and add your OpenAI key. You can get one at [platform.openai.com/api-keys](https://platform.openai.com/api-keys).
@@ -101,6 +107,12 @@ pip install agent-sentinel
 export SENTINEL_API_URL=http://localhost:8001
 export SENTINEL_API_KEY=<your-key-from-dashboard>
 ```
+
+> **macOS:** If you see `externally-managed-environment`, use a virtual environment:
+> ```bash
+> python3 -m venv venv && source venv/bin/activate
+> pip install agent-sentinel
+> ```
 
 Any `@monitor`-decorated function streams events to the backend. Open the dashboard to see them.
 
