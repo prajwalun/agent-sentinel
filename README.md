@@ -44,13 +44,17 @@ All events flow into a thread-safe global registry for unified reporting across 
 git clone https://github.com/prajwalun/agent-sentinel.git
 cd agent-sentinel
 cp .env.example .env
-# Edit .env and set the keys you need:
-#   OPENAI_API_KEY=sk-...     — required for AI-powered report analysis
-#   EXA_API_KEY=...           — optional: web research / threat intelligence
-#   WANDB_API_KEY=...         — optional: Weights & Biases tracing
 ```
 
-The stack runs without these; they enable extra features. Without `OPENAI_API_KEY`, event detection, the dashboard, and API keys work; only the LangGraph analysis feature is disabled. See [Configuration](#configuration) for the full variable list.
+Edit `.env` and set what you need. Minimal setup: leave placeholders. Add keys as you use features:
+
+| Variable | When to set | Purpose |
+|----------|-------------|---------|
+| `OPENAI_API_KEY` | Before using AI analysis on dashboard | Powers report analysis (LangGraph) |
+| `SENTINEL_API_URL` | Default is fine for local | Backend URL (`http://localhost:8001`) |
+| `SENTINEL_API_KEY` | **After signup** — copy from dashboard | Lets your agent send events to the backend |
+| `EXA_API_KEY` | Optional | Threat intelligence / web research |
+| `WANDB_API_KEY` | Optional | Tracing / observability |
 
 **2. Start the stack**
 
@@ -58,32 +62,40 @@ The stack runs without these; they enable extra features. Without `OPENAI_API_KE
 docker-compose up --build
 ```
 
-Backend runs at `http://localhost:8001`, dashboard at `http://localhost:3000`.
+Backend: `http://localhost:8001` · Dashboard: `http://localhost:3000`
 
-**3. Create an account and get an API key**
+**3. Sign up and get your API key**
 
-Open `http://localhost:3000`, sign up, and copy the API key shown on signup (it won't be shown again). To create more keys later, go to **Settings**.
+1. Open `http://localhost:3000` and sign up
+2. Copy the API key (shown once)
+3. Add it to `.env`: `SENTINEL_API_KEY=as_your_key_here`
+4. To create more keys later: **Settings** in the dashboard
 
 **4. Connect your agent**
 
-In a new terminal, create a virtual environment, install the SDK, and set the backend URL and API key:
+In a **new terminal**, from the project root:
 
 ```bash
+cd agent-sentinel
 python3 -m venv venv && source venv/bin/activate   # Windows: venv\Scripts\activate
 pip install agent-sentinel
-export SENTINEL_API_URL=http://localhost:8001
-export SENTINEL_API_KEY=<your-key-from-dashboard>
+set -a && source .env && set +a   # Loads vars from .env (macOS/Linux)
+python scripts/test_docker_quick.py
 ```
+
+`set -a && source .env && set +a` loads all variables from `.env` into the shell so the SDK can connect. No separate `export` commands — everything lives in `.env`.
+
+**Windows (PowerShell):** Use `$env:SENTINEL_API_URL="http://localhost:8001"` and `$env:SENTINEL_API_KEY="<your-key>"` before running the script, or run in Git Bash with the commands above.
 
 Then use `@monitor` (functions), `@sentinel` (classes), or `@monitor_mcp` (MCP tools) in your agent code. Events stream to the backend and appear in the dashboard. See [What it does](#what-it-does) for examples.
 
 ### Manual setup (without Docker)
 
-**1. Create `.env` (optional but recommended)**
+**1. Create `.env`**
 
 ```bash
 cp .env.example .env
-# Edit .env: OPENAI_API_KEY (AI analysis), EXA_API_KEY (threat intel), WANDB_API_KEY (tracing)
+# Edit .env: OPENAI_API_KEY (AI analysis), SENTINEL_API_KEY (after signup), etc.
 ```
 
 Place `.env` at the project root (parent of `agent-sentinel-intelligence`). The backend loads it automatically.
@@ -109,18 +121,20 @@ npm run dev
 
 If `npm install` fails with peer dependency conflicts, use `npm install --legacy-peer-deps`.
 
-Open `http://localhost:3000`, create an account, and copy the API key shown on signup (it won't be shown again). To create more keys later, go to **Settings**.
+Open `http://localhost:3000`, sign up, copy the API key, and add it to `.env` as `SENTINEL_API_KEY=as_your_key_here`. To create more keys later: **Settings**.
 
 **4. Connect the SDK**
 
-In a new terminal, create a virtual environment, install the SDK, and set the backend URL and API key:
+In a new terminal, from the project root:
 
 ```bash
 python3 -m venv venv && source venv/bin/activate   # Windows: venv\Scripts\activate
 pip install agent-sentinel
-export SENTINEL_API_URL=http://localhost:8001
-export SENTINEL_API_KEY=<your-key-from-dashboard>
+set -a && source .env && set +a   # Loads vars from .env (macOS/Linux)
+python scripts/test_docker_quick.py
 ```
+
+**Windows (PowerShell):** Use `$env:SENTINEL_API_URL` and `$env:SENTINEL_API_KEY`, or run in Git Bash.
 
 Use `@monitor`, `@sentinel`, or `@monitor_mcp` in your agent code. Events stream to the backend. Open the dashboard to see them. See [What it does](#what-it-does) for examples.
 

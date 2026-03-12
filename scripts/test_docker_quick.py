@@ -2,11 +2,10 @@
 """
 Quick test for Docker stack. Run this after docker-compose up.
 
-Requires:
-  export SENTINEL_API_URL=http://localhost:8001
-  export SENTINEL_API_KEY=<your-key-from-dashboard>
+Requires SENTINEL_API_URL and SENTINEL_API_KEY in the environment.
+Add SENTINEL_API_KEY to .env (from dashboard signup), then run:
 
-Usage:
+  set -a && source .env && set +a   # macOS/Linux
   python scripts/test_docker_quick.py
 """
 
@@ -14,7 +13,11 @@ import os
 from agent_sentinel import monitor
 
 if not os.getenv("SENTINEL_API_KEY") or not os.getenv("SENTINEL_API_URL"):
-    print("Set SENTINEL_API_URL and SENTINEL_API_KEY first:")
+    print("Add SENTINEL_API_KEY to .env (from dashboard signup), then run:")
+    print("  set -a && source .env && set +a   # macOS/Linux")
+    print("  python scripts/test_docker_quick.py")
+    print("")
+    print("Or export manually:")
     print("  export SENTINEL_API_URL=http://localhost:8001")
     print("  export SENTINEL_API_KEY=<your-key-from-dashboard>")
     exit(1)
