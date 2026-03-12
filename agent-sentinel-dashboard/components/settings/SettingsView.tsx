@@ -410,7 +410,8 @@ export function SettingsView() {
             monitoring your AI agents for security threats.
           </p>
           <pre className="bg-gray-900 border border-gray-700 rounded p-4 text-sm text-gray-300 overflow-x-auto">
-{`# Install the SDK
+{`# Create venv and install SDK
+python3 -m venv venv && source venv/bin/activate
 pip install agent-sentinel
 
 # Set environment variables

@@ -94,7 +94,8 @@ export function SignUpForm() {
             <p className="text-xs text-gray-500">In a new terminal, run:</p>
             <div className="relative">
               <pre className="bg-gray-900 border border-gray-700 rounded p-3 pr-12 text-xs text-gray-300 overflow-x-auto">
-{`pip install agent-sentinel
+{`python3 -m venv venv && source venv/bin/activate
+pip install agent-sentinel
 export SENTINEL_API_URL="http://localhost:8001"
 export SENTINEL_API_KEY="${apiKey}"`}
               </pre>
@@ -103,7 +104,8 @@ export SENTINEL_API_KEY="${apiKey}"`}
                 size="sm"
                 className="absolute top-2 right-2 h-8 w-8 p-0 text-gray-400 hover:text-white"
                 onClick={() =>
-                  handleCopy(`pip install agent-sentinel
+                  handleCopy(`python3 -m venv venv && source venv/bin/activate
+pip install agent-sentinel
 export SENTINEL_API_URL="http://localhost:8001"
 export SENTINEL_API_KEY="${apiKey}"`)
                 }

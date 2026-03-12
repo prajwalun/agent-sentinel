@@ -46,19 +46,14 @@ Open `http://localhost:3000`, sign up, and copy the API key shown on signup (it 
 
 **3. Connect your agent**
 
-In a new terminal, install the SDK and set the backend URL and API key:
+In a new terminal, create a virtual environment, install the SDK, and set the backend URL and API key:
 
 ```bash
+python3 -m venv venv && source venv/bin/activate   # Windows: venv\Scripts\activate
 pip install agent-sentinel
 export SENTINEL_API_URL=http://localhost:8001
 export SENTINEL_API_KEY=<your-key-from-dashboard>
 ```
-
-> **macOS:** If you see `externally-managed-environment`, use a virtual environment:
-> ```bash
-> python3 -m venv venv && source venv/bin/activate
-> pip install agent-sentinel
-> ```
 
 Then use `@monitor` in your agent code. Events stream to the backend and appear in the dashboard.
 
@@ -100,19 +95,14 @@ Open `http://localhost:3000`, create an account, and copy the API key shown on s
 
 **3. Connect the SDK**
 
-In a new terminal, install the SDK and set the backend URL and API key:
+In a new terminal, create a virtual environment, install the SDK, and set the backend URL and API key:
 
 ```bash
+python3 -m venv venv && source venv/bin/activate   # Windows: venv\Scripts\activate
 pip install agent-sentinel
 export SENTINEL_API_URL=http://localhost:8001
 export SENTINEL_API_KEY=<your-key-from-dashboard>
 ```
-
-> **macOS:** If you see `externally-managed-environment`, use a virtual environment:
-> ```bash
-> python3 -m venv venv && source venv/bin/activate
-> pip install agent-sentinel
-> ```
 
 Any `@monitor`-decorated function streams events to the backend. Open the dashboard to see them.
 
