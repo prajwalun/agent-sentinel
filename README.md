@@ -7,16 +7,20 @@ pip install agent-sentinel
 ```
 
 ```python
-from agent_sentinel import monitor
+from agent_sentinel import monitor, sentinel, monitor_mcp
 
 @monitor
 def my_agent(query: str) -> str:
     return llm.invoke(query)
 ```
 
-Every call to `my_agent` is now validated against 60+ compiled regex patterns for SQL injection, XSS, prompt injection, command injection, path traversal, and data exfiltration. Threats produce a `SecurityEvent` with type, severity, and confidence score. No changes to your agent code.
+Every call is validated against 60+ compiled regex patterns for SQL injection, XSS, prompt injection, command injection, path traversal, and data exfiltration. Threats produce a `SecurityEvent` with type, severity, and confidence score. No changes to your agent code.
 
-Works with single functions (`@monitor`), entire classes (`@sentinel`), and MCP tool servers (`@monitor_mcp`). All events flow into a thread-safe global registry for unified reporting across multi-agent pipelines.
+- `@monitor` — single functions
+- `@sentinel` — entire classes (wraps all public methods)
+- `@monitor_mcp` — MCP tool servers
+
+All events flow into a thread-safe global registry for unified reporting across multi-agent pipelines.
 
 ---
 
@@ -55,7 +59,7 @@ export SENTINEL_API_URL=http://localhost:8001
 export SENTINEL_API_KEY=<your-key-from-dashboard>
 ```
 
-Then use `@monitor` in your agent code. Events stream to the backend and appear in the dashboard.
+Then use `@monitor` (functions), `@sentinel` (classes), or `@monitor_mcp` (MCP tools) in your agent code. Events stream to the backend and appear in the dashboard. See [What it does](#what-it-does) for examples.
 
 > **AI analysis (optional):** To enable AI-powered report analysis, create a `.env` file in the project root and add your OpenAI key. You can get one at [platform.openai.com/api-keys](https://platform.openai.com/api-keys).
 >
@@ -104,7 +108,7 @@ export SENTINEL_API_URL=http://localhost:8001
 export SENTINEL_API_KEY=<your-key-from-dashboard>
 ```
 
-Any `@monitor`-decorated function streams events to the backend. Open the dashboard to see them.
+Use `@monitor`, `@sentinel`, or `@monitor_mcp` in your agent code. Events stream to the backend. Open the dashboard to see them. See [What it does](#what-it-does) for examples.
 
 The SDK also works standalone: no backend needed for local threat detection and report generation. See [agent-sentinel-sdk/README.md](agent-sentinel-sdk/README.md#standalone-usage) for how to use it without the backend and generate local reports.
 
@@ -128,6 +132,8 @@ class Pipeline:
 @monitor_mcp(agent_id="tools")   # MCP tool server
 def search(query): ...
 ```
+
+For decorator internals and API details, see [agent-sentinel-sdk/README.md](agent-sentinel-sdk/README.md) and [SYSTEM_DESIGN.md](SYSTEM_DESIGN.md).
 
 On every call, the SDK:
 1. Validates inputs against compiled regex patterns (SQL injection, XSS, prompt injection, command injection, path traversal, data exfiltration)
