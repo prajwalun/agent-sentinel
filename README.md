@@ -2,9 +2,9 @@
 
 Security monitoring for AI agents. Add a decorator, get threat detection.
 
-As AI agents got popular, people were vibe coding them and shipping fast. The AI-generated code had vulnerabilities, and people were putting agents on GitHub for others to use, those could have put users at risk. Traditional security tools don't understand agent-level threats, and many of the ones that did required restructuring your agent around their framework.
+As AI agents grew in popularity, developers were building and deploying them quickly, often with AI-generated code that introduced vulnerabilities. Agents shared publicly on platforms like GitHub could have been used to compromise users who ran them. Traditional security tools don't address agent-level threats, and many of the ones that do require restructuring your agent around their framework.
 
-I built this to identify and flag these threats, and to make it easy for devs to use in their code: one decorator, zero code changes, you're monitored. The detection engine uses compiled regex patterns today: fast, deterministic, zero cost per call, and the architecture is designed for pluggable detectors so ML classifiers or LLM-as-a-judge evaluators can be layered on top without touching the decorator code.
+This project identifies and flags these threats while keeping integration minimal: one decorator, zero code changes, and you're monitored. The detection engine uses compiled regex patterns today (fast, deterministic, zero cost per call), and the architecture supports pluggable detectors so ML classifiers or LLM-as-a-judge evaluators can be layered on top without changing the decorator interface.
 
 ```bash
 pip install agent-sentinel
@@ -81,7 +81,7 @@ cd agent-sentinel
 cp .env.example .env
 ```
 
-Edit `.env` — add `SENTINEL_API_KEY` after signup (step 3). See [Configuration](#configuration) for other variables.
+Edit `.env` and add `SENTINEL_API_KEY` after signup (step 3). See [Configuration](#configuration) for other variables.
 
 **2. Start the stack**
 
