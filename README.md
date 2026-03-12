@@ -24,11 +24,13 @@ Works with single functions (`@monitor`), entire classes (`@sentinel`), and MCP 
 
 ### Prerequisites
 
-- [Python 3.9+](https://www.python.org/downloads/)
-- [Node.js 18+](https://nodejs.org/) (for the dashboard)
-- [Docker](https://docs.docker.com/get-docker/) (optional, but recommended)
+- [Docker](https://docs.docker.com/get-docker/) (recommended for quick start)
+- [Python 3.9+](https://www.python.org/downloads/) (for the SDK and manual setup)
+- [Node.js 18+](https://nodejs.org/) (for manual dashboard setup only)
 
 ### Quick start with Docker
+
+**1. Start the stack**
 
 ```bash
 git clone https://github.com/prajwalun/agent-sentinel.git
@@ -36,16 +38,32 @@ cd agent-sentinel
 docker-compose up --build
 ```
 
-That's it. Backend starts at `http://localhost:8001`, dashboard at `http://localhost:3000`. Open the dashboard, create an account, and copy the API key shown on signup (it won't be shown again). To create more keys later, go to Settings.
+Backend runs at `http://localhost:8001`, dashboard at `http://localhost:3000`.
 
-> **AI analysis (optional):** To enable the AI-powered report analysis, create a `.env` file in the project root and add your OpenAI key. You can get one at [platform.openai.com/api-keys](https://platform.openai.com/api-keys).
+**2. Create an account and get an API key**
+
+Open `http://localhost:3000`, sign up, and copy the API key shown on signup (it won't be shown again). To create more keys later, go to **Settings**.
+
+**3. Connect your agent**
+
+Install the SDK and set the backend URL and API key:
+
+```bash
+pip install agent-sentinel
+export SENTINEL_API_URL=http://localhost:8001
+export SENTINEL_API_KEY=<your-key-from-dashboard>
+```
+
+Then use `@monitor` in your agent code. Events stream to the backend and appear in the dashboard.
+
+> **AI analysis (optional):** To enable AI-powered report analysis, create a `.env` file in the project root and add your OpenAI key. You can get one at [platform.openai.com/api-keys](https://platform.openai.com/api-keys).
 >
 > ```bash
 > cp .env.example .env
 > # open .env and set OPENAI_API_KEY=sk-...
 > ```
 >
-> Without it, everything else works: event detection, the dashboard, SSE streaming, API keys. Only the LangGraph analysis feature is disabled.
+> Without it, event detection, the dashboard, SSE streaming, and API keys all work. Only the LangGraph analysis feature is disabled.
 
 ### Manual setup (without Docker)
 
@@ -77,11 +95,12 @@ Open `http://localhost:3000`, create an account, and copy the API key shown on s
 **3. Connect the SDK**
 
 ```bash
+pip install agent-sentinel
 export SENTINEL_API_URL=http://localhost:8001
-export SENTINEL_API_KEY=<key from dashboard settings>
+export SENTINEL_API_KEY=<your-key-from-dashboard>
 ```
 
-Any `@monitor`-decorated function now streams events to the backend. Open the dashboard to see them come in.
+Any `@monitor`-decorated function streams events to the backend. Open the dashboard to see them.
 
 The SDK also works standalone: no backend needed for local threat detection and report generation. See [agent-sentinel-sdk/README.md](agent-sentinel-sdk/README.md#standalone-usage) for how to use it without the backend and generate local reports.
 
