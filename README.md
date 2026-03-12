@@ -130,18 +130,19 @@ For architecture diagrams, data flows, API reference, and database schema, see [
 
 ## Tests
 
-97+ tests across four suites:
+118+ tests across five suites:
 
 ```bash
 cd agent-sentinel-sdk && python -m pytest tests/ -v            # 52 SDK tests
 cd agent-sentinel-intelligence && python -m pytest tests/ -v   # 39 API tests
 python tests/test_e2e_synthetic.py                              # 6 synthetic E2E
 python tests/test_e2e_integration.py                           # 8 integration E2E
+cd agent-sentinel-dashboard && npm test                         # 21 dashboard tests
 ```
 
-Synthetic tests define agents inline to exercise detection in isolation. Integration tests run the SDK against agents built with A2A and Agno/OpenAI to verify it works on real agent architectures.
+Synthetic tests define agents inline to exercise detection in isolation. Integration tests run the SDK against agents built with A2A and Agno/OpenAI to verify it works on real agent architectures. Dashboard tests cover the API service layer and authentication context.
 
-CI runs SDK, backend, and E2E tests on every push via GitHub Actions.
+CI runs all five suites on every push via GitHub Actions.
 
 ---
 

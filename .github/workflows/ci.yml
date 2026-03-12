@@ -30,6 +30,21 @@ jobs:
       - run: pip install pytest
       - run: python -m pytest agent-sentinel-intelligence/tests/ -v --tb=short
 
+  dashboard-tests:
+    name: Dashboard Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: agent-sentinel-dashboard/package-lock.json
+      - run: npm ci --legacy-peer-deps
+        working-directory: agent-sentinel-dashboard
+      - run: npm test
+        working-directory: agent-sentinel-dashboard
+
   e2e-tests:
     name: E2E Agent Tests
     runs-on: ubuntu-latest
