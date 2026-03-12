@@ -38,21 +38,33 @@ All events flow into a thread-safe global registry for unified reporting across 
 
 ### Quick start with Docker
 
-**1. Start the stack**
+**1. Clone and create `.env`**
 
 ```bash
 git clone https://github.com/prajwalun/agent-sentinel.git
 cd agent-sentinel
+cp .env.example .env
+# Edit .env and set the keys you need:
+#   OPENAI_API_KEY=sk-...     — required for AI-powered report analysis
+#   EXA_API_KEY=...           — optional: web research / threat intelligence
+#   WANDB_API_KEY=...         — optional: Weights & Biases tracing
+```
+
+The stack runs without these; they enable extra features. Without `OPENAI_API_KEY`, event detection, the dashboard, and API keys work; only the LangGraph analysis feature is disabled. See [Configuration](#configuration) for the full variable list.
+
+**2. Start the stack**
+
+```bash
 docker-compose up --build
 ```
 
 Backend runs at `http://localhost:8001`, dashboard at `http://localhost:3000`.
 
-**2. Create an account and get an API key**
+**3. Create an account and get an API key**
 
 Open `http://localhost:3000`, sign up, and copy the API key shown on signup (it won't be shown again). To create more keys later, go to **Settings**.
 
-**3. Connect your agent**
+**4. Connect your agent**
 
 In a new terminal, create a virtual environment, install the SDK, and set the backend URL and API key:
 
@@ -65,18 +77,18 @@ export SENTINEL_API_KEY=<your-key-from-dashboard>
 
 Then use `@monitor` (functions), `@sentinel` (classes), or `@monitor_mcp` (MCP tools) in your agent code. Events stream to the backend and appear in the dashboard. See [What it does](#what-it-does) for examples.
 
-> **AI analysis (optional):** To enable AI-powered report analysis, create a `.env` file in the project root and add your OpenAI key. You can get one at [platform.openai.com/api-keys](https://platform.openai.com/api-keys).
->
-> ```bash
-> cp .env.example .env
-> # open .env and set OPENAI_API_KEY=sk-...
-> ```
->
-> Without it, event detection, the dashboard, SSE streaming, and API keys all work. Only the LangGraph analysis feature is disabled.
-
 ### Manual setup (without Docker)
 
-**1. Start the backend**
+**1. Create `.env` (optional but recommended)**
+
+```bash
+cp .env.example .env
+# Edit .env: OPENAI_API_KEY (AI analysis), EXA_API_KEY (threat intel), WANDB_API_KEY (tracing)
+```
+
+Place `.env` at the project root (parent of `agent-sentinel-intelligence`). The backend loads it automatically.
+
+**2. Start the backend**
 
 ```bash
 cd agent-sentinel-intelligence
@@ -86,9 +98,7 @@ python -m uvicorn api_server:app --host 0.0.0.0 --port 8001
 
 Check it's running: `curl http://localhost:8001/health`
 
-To enable AI analysis, create `.env` at the project root (parent of `agent-sentinel-intelligence`), e.g. `cp .env.example .env`, add your `OPENAI_API_KEY`. The backend loads it automatically.
-
-**2. Start the dashboard**
+**3. Start the dashboard**
 
 ```bash
 cd agent-sentinel-dashboard
@@ -101,7 +111,7 @@ If `npm install` fails with peer dependency conflicts, use `npm install --legacy
 
 Open `http://localhost:3000`, create an account, and copy the API key shown on signup (it won't be shown again). To create more keys later, go to **Settings**.
 
-**3. Connect the SDK**
+**4. Connect the SDK**
 
 In a new terminal, create a virtual environment, install the SDK, and set the backend URL and API key:
 
@@ -187,9 +197,10 @@ All config is through environment variables. Copy `.env.example` to `.env` and f
 | Variable | Required | What it does |
 |----------|----------|--------------|
 | `OPENAI_API_KEY` | For AI analysis | Powers the LangGraph report analysis (GPT-4o) |
+| `EXA_API_KEY` | No | External threat intelligence via Exa.ai |
+| `WANDB_API_KEY` | No | Weights & Biases tracing for observability |
 | `JWT_SECRET` | No (auto-generated) | Signs JWT tokens for dashboard auth |
 | `ADMIN_SECRET` | No (has default) | Admin-level API key generation |
-| `EXA_API_KEY` | No | External threat intelligence via Exa.ai |
 | `SENTINEL_API_URL` | No | Tell the SDK where the backend is |
 | `SENTINEL_API_KEY` | No | SDK-to-backend authentication |
 | `NEXT_PUBLIC_API_URL` | No | Dashboard's backend URL (defaults to `http://localhost:8001`) |
