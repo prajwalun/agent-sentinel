@@ -25,6 +25,7 @@ import pytest
 from agent_sentinel import (
     AgentSentinel,
     Sentinel,
+    default_sentinel,
     get_all_events,
     monitor,
     monitor_mcp,
@@ -351,6 +352,57 @@ class TestAgentSentinel:
         ) as s:
             assert s.is_running
         assert not s.is_running
+
+
+# ---------------------------------------------------------------------------
+# 5b. Standalone usage (@monitor + default_sentinel) — matches README docs
+# ---------------------------------------------------------------------------
+
+class TestStandaloneUsage:
+    """Verify standalone flow from README: @monitor + default_sentinel, reports and logs."""
+
+    def setup_method(self):
+        _clear_registry()
+
+    def test_standalone_events_and_reports(self):
+        """@monitor + default_sentinel: events captured, reports generated, logs exist."""
+        @monitor(agent_id="standalone_agent")
+        def my_agent(query: str) -> str:
+            return query.upper()
+
+        my_agent("normal input")
+        try:
+            my_agent("'; DROP TABLE users; --")
+        except Exception:
+            pass
+
+        events = default_sentinel.get_events(include_all_agents=True)
+        assert len(events) >= 1, "Malicious input should produce at least one event"
+
+        with tempfile.TemporaryDirectory() as d:
+            md_path = default_sentinel.generate_security_report(
+                file_path=os.path.join(d, "report.md")
+            )
+            assert Path(md_path).exists()
+            content = Path(md_path).read_text()
+            assert "Agent Sentinel Security Report" in content
+
+        json_path = default_sentinel.generate_unified_report()
+        assert Path(json_path).exists()
+        data = json.loads(Path(json_path).read_text())
+        assert "agent_id" in data or "summary" in data
+
+    def test_standalone_logs_directory_created(self):
+        """Logs are written to logs/ directory (created automatically)."""
+        @monitor(agent_id="log_test_agent")
+        def agent_fn(x: str) -> str:
+            return x
+
+        agent_fn("test")
+        json_path = default_sentinel.generate_unified_report()
+        assert Path(json_path).exists()
+        assert json_path.startswith("logs/") or "logs" in json_path
+        assert Path(json_path).parent.exists()
 
 
 # ---------------------------------------------------------------------------
