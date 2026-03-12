@@ -2,6 +2,10 @@
 
 Security monitoring for AI agents. Add a decorator, get threat detection.
 
+As AI agents got popular, people were vibe coding them and shipping fast. The AI-generated code had vulnerabilities, and people were putting agents on GitHub for others to use—those could have attacked users. Traditional security tools don't understand agent-level threats, and the ones that did required restructuring your agent around their framework.
+
+I built this to identify and flag these threats, and to make it easy for devs to use in their code: one decorator, zero code changes, you're monitored. The detection engine uses compiled regex patterns today—fast, deterministic, zero cost per call—and the architecture is designed for pluggable detectors so ML classifiers or LLM-as-a-judge evaluators can be layered on top without touching the decorator code.
+
 ```bash
 pip install agent-sentinel
 ```
@@ -238,14 +242,6 @@ All config is through environment variables. Copy `.env.example` to `.env` and f
 - **Standalone or connected.** The SDK generates local JSON reports without a backend. Connect it to the Intelligence API and events stream automatically.
 - **Iterative AI analysis.** LangGraph workflow with a Validator that can reject and retry up to 3 times. Better output than a single LLM call.
 - **SQLite + WAL.** Zero-config deployment with concurrent read support. Foreign keys, indexes, and SHA-256 hashed API keys at the schema level.
-
----
-
-## Why I built this
-
-AI agents were being built fast and shipped without security review. Traditional security tools don't understand agent-level threats. The tools that did appear required restructuring your agent around their framework.
-
-I wanted to prove that developers will actually adopt a security tool if the cost is low enough: one decorator, zero code changes, you're monitored. The detection engine uses compiled regex patterns today: fast, deterministic, zero cost per call. The architecture is designed for pluggable detectors so ML classifiers or LLM-as-a-judge evaluators can be layered on top without touching the decorator code.
 
 ---
 
