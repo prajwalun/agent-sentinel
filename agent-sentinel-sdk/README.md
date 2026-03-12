@@ -55,11 +55,9 @@ events = default_sentinel.get_events(include_all_agents=True)
 
 **Outputs:** `logs/` in the current directory. Logs: `agent_sentinel_{agent_id}.log`. Reports: `{agent_id}_unified_report_{timestamp}.json`, `{agent_id}_security_report_{timestamp}.md`.
 
-## Sample output
+**Event structure:** When you call `get_events()`, each detected threat returns a `SecurityEvent`. Full structure for the main README examples:
 
-When a threat is detected, a `SecurityEvent` is created. Full event structure for both main README examples:
-
-**Research agent (prompt injection, SQL injection):**
+**Research agent** (prompt injection, SQL injection):
 
 ```json
 [
@@ -68,7 +66,7 @@ When a threat is detected, a `SecurityEvent` is created. Full event structure fo
 ]
 ```
 
-**Search handler (XSS):**
+**Search handler** (XSS):
 
 ```json
 {"threat_type": "xss_attack", "severity": "HIGH", "message": "Malicious input detected in method search_handler", "confidence": 0.9, "agent_id": "search_tool"}
@@ -77,6 +75,8 @@ When a threat is detected, a `SecurityEvent` is created. Full event structure fo
 Each event includes `threat_type`, `severity`, `message`, `confidence`, `agent_id`, `timestamp`, `context`, and more. Events stream to the dashboard when connected, or stay local for reports in standalone mode.
 
 ## Tests
+
+From the SDK directory, install in editable mode with test deps and run:
 
 ```bash
 pip install -e ".[test]"
