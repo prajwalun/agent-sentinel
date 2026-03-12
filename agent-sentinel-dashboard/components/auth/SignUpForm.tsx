@@ -70,9 +70,9 @@ export function SignUpForm() {
           <div className="space-y-2">
             <Label className="text-white">Quick Start</Label>
             <pre className="bg-gray-900 border border-gray-700 rounded p-3 text-xs text-gray-300 overflow-x-auto">
-{`export SENTINEL_API_KEY="${apiKey}"
+{`pip install agent-sentinel
 export SENTINEL_API_URL="http://localhost:8001"
-pip install agent-sentinel`}
+export SENTINEL_API_KEY="${apiKey}"`}
             </pre>
           </div>
 
