@@ -12,13 +12,17 @@ from agent_sentinel import monitor, sentinel, monitor_mcp
 @monitor
 def my_agent(query: str) -> str:
     return llm.invoke(query)
+
+@sentinel
+class Pipeline:
+    def plan(self, task): ...
+    def execute(self, plan): ...
+
+@monitor_mcp(agent_id="tools")
+def search(query): ...
 ```
 
 Every call is validated against 60+ compiled regex patterns for SQL injection, XSS, prompt injection, command injection, path traversal, and data exfiltration. Threats produce a `SecurityEvent` with type, severity, and confidence score. No changes to your agent code.
-
-- `@monitor` — single functions
-- `@sentinel` — entire classes (wraps all public methods)
-- `@monitor_mcp` — MCP tool servers
 
 All events flow into a thread-safe global registry for unified reporting across multi-agent pipelines.
 
