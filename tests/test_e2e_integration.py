@@ -1,6 +1,6 @@
 """
 Integration E2E tests — runs the SDK against agents from external
-frameworks (A2A protocol, Agno/OpenAI) in the extra/ directory.
+frameworks (A2A protocol, Agno/OpenAI).
 
 Agents under test:
   1-3. A2A Math / Weather / Translation agents  — safe queries
@@ -439,7 +439,7 @@ def main():
     print("Agent Sentinel SDK — Integration E2E Test Suite")
     print("=" * 65)
     print()
-    print("Testing SDK integration with A2A and Agno agents from extra/")
+    print("Testing SDK integration with A2A and Agno framework agents")
     print()
 
     loop = asyncio.new_event_loop()
