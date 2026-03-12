@@ -98,19 +98,9 @@ python3 -m venv venv && source venv/bin/activate   # Windows: venv\Scripts\activ
 pip install agent-sentinel
 ```
 
-Set `SENTINEL_API_URL` and `SENTINEL_API_KEY` (from `.env` or `export`), then:
+Set `SENTINEL_API_URL` and `SENTINEL_API_KEY` (from `.env` or `export`), then add `@monitor` to your code. Events stream to the dashboard. See [What it does](#what-it-does) for `@sentinel` and `@monitor_mcp`.
 
-```python
-from agent_sentinel import monitor
-
-@monitor
-def my_agent(query: str) -> str:
-    return llm.invoke(query)
-```
-
-Events stream to the dashboard. See [What it does](#what-it-does) for `@sentinel` and `@monitor_mcp`.
-
-Optional: `python scripts/test_docker_quick.py` to verify the stack.
+**Quick verify:** `python scripts/verify_stack.py` (from project root, with `.env` loaded) sends test queries; check the dashboard for events.
 
 ### Manual setup (without Docker)
 
@@ -153,7 +143,9 @@ python3 -m venv venv && source venv/bin/activate   # Windows: venv\Scripts\activ
 pip install agent-sentinel
 ```
 
-Set `SENTINEL_API_URL` and `SENTINEL_API_KEY` (from `.env` or `export`), then add `@monitor` (or `@sentinel`, `@monitor_mcp`) to your code. Events stream to the dashboard. See [What it does](#what-it-does).
+Set `SENTINEL_API_URL` and `SENTINEL_API_KEY`, then add `@monitor` (or `@sentinel`, `@monitor_mcp`) to your code. Events stream to the dashboard. See [What it does](#what-it-does).
+
+**Quick verify:** `python scripts/verify_stack.py` (with `.env` loaded).
 
 The SDK also works standalone: no backend needed for local threat detection and report generation. See [agent-sentinel-sdk/README.md](agent-sentinel-sdk/README.md#standalone-usage) for how to use it without the backend and generate local reports.
 
@@ -197,6 +189,7 @@ The backend stores events in SQLite, streams them to the dashboard via SSE, and 
 agent-sentinel-sdk/            Python SDK: decorators, validators, event registry
 agent-sentinel-intelligence/   FastAPI backend: auth, database, LangGraph analysis
 agent-sentinel-dashboard/      Next.js dashboard: real-time events, reports, settings
+scripts/verify_stack.py        Quick verify: sends test queries, check dashboard
 tests/                         E2E tests with synthetic and real agents
 ```
 
