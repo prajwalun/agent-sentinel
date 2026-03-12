@@ -65,6 +65,8 @@ See [agent-sentinel-sdk/README.md](agent-sentinel-sdk/README.md#sample-output) f
 
 ## Getting started
 
+**Prefer a video to get started?** [Setup](https://youtu.be/kvcIjTgPjTM)
+
 ### Prerequisites
 
 - [Docker](https://docs.docker.com/get-docker/) (recommended for quick start)
