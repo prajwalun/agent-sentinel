@@ -37,5 +37,5 @@ python -m pytest tests/ -v
 
 ## Docs
 
-- [Main README](../README.md) — project overview, getting started, architecture
-- [System Design](../SYSTEM_DESIGN.md) — SDK internals, threat detection details, API reference
+- [Main README](../README.md): project overview, getting started, architecture
+- [System Design](../SYSTEM_DESIGN.md): SDK internals, threat detection details, API reference

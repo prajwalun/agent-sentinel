@@ -1,7 +1,7 @@
 # Agent Sentinel - System Design
 
-> **[README](./README.md)** — getting started, quick start, tests, config  
-> **This file** — architecture, API reference, database schema, data flows, design decisions
+> **[README](./README.md)**: getting started, quick start, tests, config  
+> **This file**: architecture, API reference, database schema, data flows, design decisions
 
 ## Overview
 
@@ -52,6 +52,8 @@ Agent Sentinel is a security monitoring platform for AI agents. It consists of t
 ---
 
 ## 1. SDK (`agent-sentinel-sdk/`)
+
+See [agent-sentinel-sdk/README.md](agent-sentinel-sdk/README.md) for install and usage.
 
 ### Purpose
 
@@ -119,6 +121,8 @@ Each detection produces a `SecurityEvent` with `threat_type`, `severity` (LOW/ME
 ---
 
 ## 2. Intelligence API (`agent-sentinel-intelligence/`)
+
+See [agent-sentinel-intelligence/README.md](agent-sentinel-intelligence/README.md) for quick start.
 
 ### Purpose
 
@@ -312,6 +316,8 @@ Analyzer → Supervisor → Researcher → Reporter → Validator
 ---
 
 ## 3. Dashboard (`agent-sentinel-dashboard/`)
+
+See [agent-sentinel-dashboard/README.md](agent-sentinel-dashboard/README.md) for quick start.
 
 ### Purpose
 

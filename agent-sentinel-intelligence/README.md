@@ -31,5 +31,5 @@ python -m pytest tests/ -v
 
 ## Docs
 
-- [Main README](../README.md) — project overview, getting started
-- [System Design](../SYSTEM_DESIGN.md) — API reference, database schema, workflow details
+- [Main README](../README.md): project overview, getting started
+- [System Design](../SYSTEM_DESIGN.md): API reference, database schema, workflow details

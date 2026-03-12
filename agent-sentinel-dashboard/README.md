@@ -16,12 +16,12 @@ Requires the [Intelligence backend](../agent-sentinel-intelligence/) to be runni
 
 ## Pages
 
-- **Dashboard** — system health, severity breakdown, recent events
-- **Agents** — agent list with event counts, detail view
-- **Reports** — upload SDK reports for AI analysis, view history, export PDF/JSON
-- **Settings** — API key management (create, revoke), preferences
+- **Dashboard**: system health, severity breakdown, recent events
+- **Agents**: agent list with event counts, detail view
+- **Reports**: upload SDK reports for AI analysis, view history, export PDF/JSON
+- **Settings**: API key management (create, revoke), preferences
 
 ## Docs
 
-- [Main README](../README.md) — project overview, getting started
-- [System Design](../SYSTEM_DESIGN.md) — frontend architecture, data flows
+- [Main README](../README.md): project overview, getting started
+- [System Design](../SYSTEM_DESIGN.md): frontend architecture, data flows

@@ -36,7 +36,7 @@ cd agent-sentinel
 docker-compose up --build
 ```
 
-That's it. Backend starts at `http://localhost:8001`, dashboard at `http://localhost:3000`. Open the dashboard, create an account, and you're in.
+That's it. Backend starts at `http://localhost:8001`, dashboard at `http://localhost:3000`. Open the dashboard, create an account, and copy the API key shown on signup (it won't be shown again). To create more keys later, go to Settings.
 
 > **AI analysis (optional):** To enable the AI-powered report analysis, create a `.env` file in the project root and add your OpenAI key. You can get one at [platform.openai.com/api-keys](https://platform.openai.com/api-keys).
 >
@@ -45,7 +45,7 @@ That's it. Backend starts at `http://localhost:8001`, dashboard at `http://local
 > # open .env and set OPENAI_API_KEY=sk-...
 > ```
 >
-> Without it, everything else works — event detection, the dashboard, SSE streaming, API keys — just the LangGraph analysis feature is disabled.
+> Without it, everything else works: event detection, the dashboard, SSE streaming, API keys. Only the LangGraph analysis feature is disabled.
 
 ### Manual setup (without Docker)
 
@@ -83,7 +83,7 @@ export SENTINEL_API_KEY=<key from dashboard settings>
 
 Any `@monitor`-decorated function now streams events to the backend. Open the dashboard to see them come in.
 
-The SDK also works standalone — no backend needed for local threat detection and report generation.
+The SDK also works standalone: no backend needed for local threat detection and report generation.
 
 ---
 
@@ -97,7 +97,7 @@ from agent_sentinel import monitor, sentinel, monitor_mcp
 @monitor                          # single function
 def research(query): ...
 
-@sentinel                         # entire class — wraps all public methods
+@sentinel                         # entire class, wraps all public methods
 class Pipeline:
     def plan(self, task): ...
     def execute(self, plan): ...
@@ -120,9 +120,9 @@ The backend stores events in SQLite, streams them to the dashboard via SSE, and 
 ## Project layout
 
 ```
-agent-sentinel-sdk/            Python SDK — decorators, validators, event registry
-agent-sentinel-intelligence/   FastAPI backend — auth, database, LangGraph analysis
-agent-sentinel-dashboard/      Next.js dashboard — real-time events, reports, settings
+agent-sentinel-sdk/            Python SDK: decorators, validators, event registry
+agent-sentinel-intelligence/   FastAPI backend: auth, database, LangGraph analysis
+agent-sentinel-dashboard/      Next.js dashboard: real-time events, reports, settings
 tests/                         E2E tests with synthetic and real agents
 ```
 
@@ -165,7 +165,7 @@ All config is through environment variables. Copy `.env.example` to `.env` and f
 
 ## Design decisions
 
-- **Decorators for zero-friction adoption.** `@monitor`, `@sentinel`, `@monitor_mcp` — you don't change your agent code, you wrap it.
+- **Decorators for zero-friction adoption.** `@monitor`, `@sentinel`, `@monitor_mcp`: you don't change your agent code, you wrap it.
 - **Thread-safe global registry.** All events from all decorated agents go into one `GlobalEventRegistry` (singleton, `threading.Lock`). Multi-agent pipelines get unified reporting for free.
 - **Standalone or connected.** The SDK generates local JSON reports without a backend. Connect it to the Intelligence API and events stream automatically.
 - **Iterative AI analysis.** LangGraph workflow with a Validator that can reject and retry up to 3 times. Better output than a single LLM call.
@@ -175,17 +175,17 @@ All config is through environment variables. Copy `.env.example` to `.env` and f
 
 ## Why I built this
 
-AI agents were being vibe-coded — built fast with AI assistance and shipped without security review. Traditional security tools don't understand agent-level threats. The tools that did appear required restructuring your agent around their framework.
+AI agents were being built fast and shipped without security review. Traditional security tools don't understand agent-level threats. The tools that did appear required restructuring your agent around their framework.
 
-I wanted to prove that developers will actually adopt a security tool if the cost is low enough: one decorator, zero code changes, you're monitored. The detection engine uses compiled regex patterns today — fast, deterministic, zero cost per call. The architecture is designed for pluggable detectors so ML classifiers or LLM-as-a-judge evaluators can be layered on top without touching the decorator code.
+I wanted to prove that developers will actually adopt a security tool if the cost is low enough: one decorator, zero code changes, you're monitored. The detection engine uses compiled regex patterns today: fast, deterministic, zero cost per call. The architecture is designed for pluggable detectors so ML classifiers or LLM-as-a-judge evaluators can be layered on top without touching the decorator code.
 
 ---
 
 ## Future roadmap
 
-- **Blocking mode** — a `policy` parameter on the decorator (`log`, `warn`, `block`) to stop dangerous calls before they reach the agent
-- **Agent sandbox** — run an agent against known attack vectors in isolation, get a security scorecard before deploying
-- **Plugin architecture** — slot in ML classifiers, embedding-based detectors, or LLM-as-a-judge evaluators alongside regex patterns
+- **Blocking mode**: a `policy` parameter on the decorator (`log`, `warn`, `block`) to stop dangerous calls before they reach the agent
+- **Agent sandbox**: run an agent against known attack vectors in isolation, get a security scorecard before deploying
+- **Plugin architecture**: slot in ML classifiers, embedding-based detectors, or LLM-as-a-judge evaluators alongside regex patterns
 
 ---
 
