@@ -406,7 +406,7 @@ export function SettingsView() {
         </CardHeader>
         <CardContent>
           <p className="text-gray-400 text-sm mb-3">
-            Install the Agent Sentinel SDK and set your API key to start
+            In a new terminal, install the Agent Sentinel SDK and set your API key to start
             monitoring your AI agents for security threats.
           </p>
           <pre className="bg-gray-900 border border-gray-700 rounded p-4 text-sm text-gray-300 overflow-x-auto">
@@ -414,8 +414,8 @@ export function SettingsView() {
 pip install agent-sentinel
 
 # Set environment variables
-export SENTINEL_API_KEY="your-api-key-here"
 export SENTINEL_API_URL="http://localhost:8001"
+export SENTINEL_API_KEY="your-api-key-here"
 
 # Use in your code
 from agent_sentinel import monitor

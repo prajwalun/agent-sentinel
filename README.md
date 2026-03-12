@@ -46,7 +46,7 @@ Open `http://localhost:3000`, sign up, and copy the API key shown on signup (it 
 
 **3. Connect your agent**
 
-Install the SDK and set the backend URL and API key:
+In a new terminal, install the SDK and set the backend URL and API key:
 
 ```bash
 pip install agent-sentinel
@@ -93,6 +93,8 @@ If `npm install` fails with peer dependency conflicts, use `npm install --legacy
 Open `http://localhost:3000`, create an account, and copy the API key shown on signup (it won't be shown again). To create more keys later, go to **Settings**.
 
 **3. Connect the SDK**
+
+In a new terminal, install the SDK and set the backend URL and API key:
 
 ```bash
 pip install agent-sentinel

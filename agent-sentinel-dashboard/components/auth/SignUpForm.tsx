@@ -69,6 +69,7 @@ export function SignUpForm() {
 
           <div className="space-y-2">
             <Label className="text-white">Quick Start</Label>
+            <p className="text-xs text-gray-500">In a new terminal, run:</p>
             <pre className="bg-gray-900 border border-gray-700 rounded p-3 text-xs text-gray-300 overflow-x-auto">
 {`pip install agent-sentinel
 export SENTINEL_API_URL="http://localhost:8001"
