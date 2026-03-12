@@ -59,7 +59,7 @@ python -m uvicorn api_server:app --host 0.0.0.0 --port 8001
 
 Check it's running: `curl http://localhost:8001/health`
 
-To enable AI analysis, set `OPENAI_API_KEY` in a `.env` file (see `.env.example`).
+To enable AI analysis, create `.env` at the project root (parent of `agent-sentinel-intelligence`), e.g. `cp .env.example .env`, add your `OPENAI_API_KEY`. The backend loads it automatically.
 
 **2. Start the dashboard**
 
@@ -69,6 +69,8 @@ npm install
 echo 'NEXT_PUBLIC_API_URL=http://localhost:8001' > .env.local
 npm run dev
 ```
+
+If `npm install` fails with peer dependency conflicts, use `npm install --legacy-peer-deps`.
 
 Open `http://localhost:3000`, create an account, and go to **Settings** to generate an API key.
 
@@ -134,13 +136,14 @@ For architecture diagrams, data flows, API reference, and database schema, see [
 cd agent-sentinel-sdk && python -m pytest tests/ -v
 cd agent-sentinel-intelligence && python -m pytest tests/ -v
 python tests/test_e2e_synthetic.py
-python tests/test_e2e_integration.py
 cd agent-sentinel-dashboard && npm test
 ```
 
-SDK and backend tests cover core logic, decorators, validators, auth, CRUD, and analysis. Synthetic E2E tests define agents inline to exercise detection in isolation. Integration E2E tests run the SDK against agents built with A2A and Agno/OpenAI. Dashboard tests cover the API service layer and auth context.
+SDK and backend tests cover core logic, decorators, validators, auth, CRUD, and analysis. Synthetic E2E tests define agents inline to exercise detection in isolation. Dashboard tests cover the API service layer and auth context.
 
-CI runs all suites on every push via GitHub Actions.
+Integration E2E tests (`python tests/test_e2e_integration.py`) run the SDK against A2A and Agno framework agents; they require optional setup and are not included in CI.
+
+CI runs SDK, backend, synthetic E2E, and dashboard tests on every push via GitHub Actions.
 
 ---
 

@@ -42,6 +42,11 @@ from pydantic import BaseModel, Field
 
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
+# Load .env from project root (parent of agent-sentinel-intelligence) for manual runs
+from dotenv import load_dotenv
+_env_path = Path(__file__).resolve().parent.parent / ".env"
+load_dotenv(_env_path)
+
 from database import Repository, init_db
 from utils.logging_config import setup_enterprise_logging
 
