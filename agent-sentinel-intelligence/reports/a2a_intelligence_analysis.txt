@@ -1,4 +1,0 @@
-ENHANCED SECURITY REPORT
-============================================================
-
-Report generation failed: 'NoneType' object has no attribute 'upper'. Proceeding to validation.

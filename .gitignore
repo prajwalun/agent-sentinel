@@ -210,4 +210,5 @@ agent-sentinel-sdk/src/reports/
 # Windows
 Thumbs.db
 ehthumbs.db
-Desktop.ini
+Desktop.iniagent-sentinel-intelligence/reports/
+agent-sentinel-sdk/reports/
