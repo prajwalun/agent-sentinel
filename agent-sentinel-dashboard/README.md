@@ -10,7 +10,7 @@ echo 'NEXT_PUBLIC_API_URL=http://localhost:8001' > .env.local
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). Create an account, then go to **Settings** to generate an API key for the SDK.
+Open [http://localhost:3000](http://localhost:3000). Create an account and copy the API key shown on signup (it won't be shown again). To create more keys later, go to **Settings**.
 
 Requires the [Intelligence backend](../agent-sentinel-intelligence/) to be running.
 

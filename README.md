@@ -72,7 +72,7 @@ npm run dev
 
 If `npm install` fails with peer dependency conflicts, use `npm install --legacy-peer-deps`.
 
-Open `http://localhost:3000`, create an account, and go to **Settings** to generate an API key.
+Open `http://localhost:3000`, create an account, and copy the API key shown on signup (it won't be shown again). To create more keys later, go to **Settings**.
 
 **3. Connect the SDK**
 

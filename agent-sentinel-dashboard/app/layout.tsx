@@ -10,7 +10,6 @@ const inter = Inter({ subsets: ["latin"] })
 export const metadata: Metadata = {
   title: "Agent Sentinel - Enterprise Security Monitoring",
   description: "Professional AI agent security monitoring and threat detection dashboard",
-    generator: 'v0.dev'
 }
 
 export default function RootLayout({
