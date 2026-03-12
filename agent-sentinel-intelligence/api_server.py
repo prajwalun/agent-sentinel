@@ -9,6 +9,11 @@ FastAPI application that provides:
   - Server-Sent Events stream for live event updates
 """
 
+import warnings
+
+# Suppress requests/urllib3 version mismatch warning (cosmetic only)
+warnings.filterwarnings("ignore", message=".*doesn't match a supported version.*")
+
 import hashlib
 import json
 import logging
