@@ -406,9 +406,8 @@ export function SettingsView() {
         </CardHeader>
         <CardContent>
           <p className="text-gray-400 text-sm mb-3">
-            In a new terminal, install the Agent Sentinel SDK and set your API key. If pip install
-            fails (e.g. externally-managed-environment on macOS), use a venv:{" "}
-            <code className="text-gray-500">python3 -m venv venv && source venv/bin/activate</code>
+            In a new terminal, install the Agent Sentinel SDK and set your API key to start
+            monitoring your AI agents for security threats.
           </p>
           <pre className="bg-gray-900 border border-gray-700 rounded p-4 text-sm text-gray-300 overflow-x-auto">
 {`# Install the SDK
