@@ -1,257 +1,52 @@
 # Agent Sentinel
 
-**Enterprise security monitoring for AI agents. One decorator. Real-time threat detection. Full-stack visibility.**
-
-Agent Sentinel secures AI agents of any kind: single-agent functions, multi-agent pipelines, MCP tool servers, or entire agent classes. Add a decorator to your existing code and the SDK automatically validates inputs and outputs, detects security threats (prompt injection, SQL injection, XSS, command injection, data exfiltration, and more), records events in a thread-safe registry, and optionally streams them to a live dashboard backed by AI-powered analysis.
-
-No changes to your agent code. No subclassing. No framework lock-in.
-
----
-
-## Why I Built This
-
-The rise of AI agents brought a wave of "vibe-coded" projects - agents built rapidly with AI assistance, published to GitHub, and deployed without any security review. The AI-generated code itself often introduced vulnerabilities (unsanitized inputs, hardcoded credentials, unsafe tool calls), and the agents themselves became a new attack surface that traditional security tools were never designed to handle. WAFs and SAST scanners do not understand prompt injection. Firewalls do not catch an agent being tricked into exfiltrating data through its own tool calls.
-
-I saw two problems happening at the same time: agents were being deployed faster than teams could review them, and the tooling to secure them simply did not exist. The security tools that did start appearing required significant integration effort - SDKs that demanded you restructure your agent around their framework, or platforms that only worked with specific agent libraries.
-
-I wanted to build something that a developer could adopt in 30 seconds. That is why Agent Sentinel uses decorators: you add one line to your existing agent and it is immediately monitored. No refactoring, no framework migration, no configuration files. The goal is to make the secure path the easy path.
-
----
-
-## What It Monitors
-
-Agent Sentinel is designed to work across the full spectrum of AI agent architectures:
-
-| Agent Pattern | Decorator | How It Works |
-|--------------|-----------|-------------|
-| **Single agent function** | `@monitor` | Wraps any function or method. Validates inputs/outputs on every call. |
-| **Agent class** (multi-method) | `@sentinel` | Wraps an entire class. Instruments all public methods with a single decorator. |
-| **Multi-agent pipeline** | `@monitor` on each | Each agent in the pipeline gets its own decorator. Events from all agents aggregate into one global registry for unified reporting. |
-| **MCP tool server** | `@monitor_mcp` | Wraps MCP tool functions. Validates tool inputs/outputs and monitors tool invocation patterns. |
-| **Any combination** | Mix all three | Use `@sentinel` on your orchestrator class, `@monitor` on helper functions, and `@monitor_mcp` on tool endpoints. All events flow to the same registry. |
-
-### Quick Start
+Security monitoring for AI agents. Add a decorator, get threat detection.
 
 ```bash
 pip install agent-sentinel
 ```
 
 ```python
-from agent_sentinel import monitor, sentinel, monitor_mcp, AgentSentinel
+from agent_sentinel import monitor
 
-# Single agent function
 @monitor
-def research_agent(query: str) -> str:
+def my_agent(query: str) -> str:
     return llm.invoke(query)
-
-# Entire agent class - wraps all public methods automatically
-@sentinel
-class AnalysisAgent:
-    def analyze(self, data: str) -> str:
-        return self.llm.analyze(data)
-
-    def summarize(self, report: str) -> str:
-        return self.llm.summarize(report)
-
-# MCP tool server
-@monitor_mcp(agent_id="search_tools")
-def web_search(query: str) -> str:
-    return search_api.search(query)
-
-# Multi-agent pipeline - each agent monitored independently
-@monitor(agent_id="planner")
-def planner(task: str) -> str:
-    return llm.plan(task)
-
-@monitor(agent_id="executor")
-def executor(plan: str) -> str:
-    return llm.execute(plan)
-
-def run_pipeline(task):
-    plan = planner(task)       # monitored
-    result = executor(plan)    # monitored
-    return result
-
-# All events from all agents are in one registry
-sentinel_instance = AgentSentinel()
-sentinel_instance.generate_unified_report()  # single report across all agents
 ```
 
----
+That's it. Every call to `my_agent` is now validated against 60+ compiled regex patterns for SQL injection, XSS, prompt injection, command injection, path traversal, and data exfiltration. Threats produce a `SecurityEvent` with type, severity, and confidence score. No changes to your agent code.
 
-## Project Structure
-
-```
-agent-sentinel-sdk/            Python SDK: decorators, threat detection, event registry
-agent-sentinel-intelligence/   FastAPI backend: auth, SQLite storage, LangGraph AI analysis
-agent-sentinel-dashboard/      Next.js frontend: real-time dashboard, reports, settings
-tests/                         E2E test suites with synthetic and real agent integrations
-```
-
-## Architecture
-
-```
-+------------------------------------------------------------------+
-|  Your Agent Code                                                  |
-|  @monitor / @sentinel / @monitor_mcp                              |
-+-------------------------------+----------------------------------+
-                                | events
-                                v
-+------------------------------------------------------------------+
-|  Agent Sentinel SDK                                               |
-|  AgentWrapper / MCPWrapper / InputValidator                       |
-|  GlobalEventRegistry (singleton, thread-safe)                     |
-|                                                                   |
-|  Outputs:                                                         |
-|    - Local JSON reports and log files                             |
-|    - BackendEventSink -> POST /api/events (auto-push to backend)  |
-+-------------------------------+----------------------------------+
-                                | HTTP (API key auth)
-                                v
-+------------------------------------------------------------------+
-|  Intelligence API  (FastAPI + SQLite + LangGraph)                 |
-|  - 20+ REST endpoints (auth, agents, events, analysis, keys)     |
-|  - SSE live event stream                                          |
-|  - Async AI analysis: Analyzer > Supervisor > Researcher >        |
-|    Reporter > Validator (iterative, max 3 refinement loops)       |
-+-------------------------------+----------------------------------+
-                                | REST + SSE
-                                v
-+------------------------------------------------------------------+
-|  Dashboard  (Next.js + Tailwind + shadcn/ui)                      |
-|  Pages: Dashboard, Agents, Reports, Settings                      |
-|  Auth: JWT (email/password), client-side routing                  |
-+------------------------------------------------------------------+
-```
-
-For the full architecture, data flows, API reference, and database schema, see [SYSTEM_DESIGN.md](./SYSTEM_DESIGN.md).
-
----
-
-## Threat Detection
-
-### Detection Pipeline
-
-Every decorated call passes through a multi-stage validation pipeline before and (optionally) after execution:
-
-```
-Agent Input
-  │
-  ├─► InputValidator
-  │     ├─ SQLInjectionValidator    (12 compiled regex patterns)
-  │     ├─ XSSValidator             (11 compiled regex patterns)
-  │     ├─ CommandInjectionValidator (10 compiled regex patterns)
-  │     └─ PromptInjectionValidator (19 compiled regex patterns)
-  │
-  ├─► PathTraversalDetector          (8 compiled regex patterns)
-  ├─► DataExfiltrationDetector       (sensitive token counting, URL analysis)
-  │
-  ▼
-Execute Agent Function
-  │
-  ├─► OutputValidator (when validate_outputs=True)
-  │     └─ Same pattern checks on agent response
-  │
-  ▼
-SecurityEvent(threat_type, severity, confidence, context)
-  └─► GlobalEventRegistry (thread-safe singleton)
-```
-
-### 60+ Compiled Regex Patterns Across 6 Threat Categories
-
-All patterns are compiled at import time (`re.compile`) for zero-allocation matching at runtime.
-
-| Threat | Patterns | Severity | What It Catches |
-|--------|----------|----------|----------------|
-| **SQL injection** | 12 | CRITICAL | `UNION SELECT`, `DROP TABLE`, `INSERT INTO`, `DELETE FROM`, tautologies (`' OR '1'='1'`), comment injection (`--`, `/* */`) |
-| **XSS** | 11 | HIGH | `<script>`, `<iframe>`, `<embed>`, `<object>`, `javascript:`, `vbscript:`, `data:base64`, event handlers (`onerror=`, `onload=`) |
-| **Prompt injection** | 19 | HIGH | `ignore previous instructions`, `forget all rules`, `pretend to be`, `system prompt`, `override instructions`, `jailbreak`, `reset conversation`, role manipulation |
-| **Command injection** | 10 | CRITICAL | Shell metacharacters (`;`, `|`, `` ` ``), `$(...)` subshells, `rm -rf`, `wget`/`curl` to external hosts, `sudo`, `chmod`, `nc` |
-| **Path traversal** | 8 | HIGH | `../`, `..\`, URL-encoded variants (`%2e%2e%2f`), `/etc/passwd`, `/windows/system32` |
-| **Data exfiltration** | Token analysis | CRITICAL | API key patterns, base64-encoded credentials, high density of sensitive tokens, suspicious outbound URLs |
-
-### 21 Threat Type Classifications
-
-Beyond the 6 regex-detected categories, the SDK defines 21 total threat types used for risk scoring, report enrichment, and the enterprise detection engine:
-
-`sql_injection` · `xss_attack` · `command_injection` · `path_traversal` · `prompt_injection` · `data_exfiltration` · `rate_limit_violation` · `resource_exhaustion` · `malicious_payload` · `unauthorized_access` · `behavioral_anomaly` · `communication_tampering` · `privilege_escalation` · `suspicious_tool_usage` · `unusual_data_access` · `timing_attack` · `frequency_attack` · `sequence_attack` · `parameter_manipulation` · `resource_abuse` · `cross_agent_attack`
-
-### SecurityEvent Output
-
-Each detection produces a `SecurityEvent` containing:
-- `threat_type` — which of the 21 categories was triggered
-- `severity` — rated LOW, MEDIUM, HIGH, or CRITICAL
-- `confidence` — score from 0.0 to 1.0, based on pattern match strength
-- `context` — the triggering input, matched pattern, and detection method
-- `timestamp` — UTC time of detection
+Works with single functions (`@monitor`), entire classes (`@sentinel`), and MCP tool servers (`@monitor_mcp`). All events flow into a thread-safe global registry for unified reporting across multi-agent pipelines.
 
 ---
 
 ## Getting Started
 
-### Prerequisites
+You need **Python 3.9+**, **Node.js 18+**, and an **OpenAI API key** (for AI analysis).
 
-| Requirement | Version | Notes |
-|-------------|---------|-------|
-| **Python** | 3.9+ | Backend and SDK |
-| **Node.js** | 18+ | Dashboard (Next.js 14) |
-| **npm** | 9+ | Comes with Node.js |
-| **OpenAI API key** | — | Required for AI-powered analysis (GPT-4o) |
-| **Docker** (optional) | 20+ | For one-command full-stack startup |
-
-### Option A: Docker (Recommended — One Command)
-
-The fastest way to get everything running:
+### Docker (fastest)
 
 ```bash
-# 1. Clone the repo
 git clone https://github.com/prajwalun/agent-sentinel.git
 cd agent-sentinel
-
-# 2. Create your .env file
-cp .env.example .env
-# Edit .env and add your OPENAI_API_KEY (required)
-# Optionally set JWT_SECRET and ADMIN_SECRET to custom values
-
-# 3. Start everything
+cp .env.example .env   # add your OPENAI_API_KEY
 docker-compose up --build
 ```
 
-This starts:
-- **Backend** at `http://localhost:8001` (FastAPI + SQLite + LangGraph)
-- **Dashboard** at `http://localhost:3000` (Next.js)
-- A persistent Docker volume for the SQLite database
+Backend runs at `http://localhost:8001`, dashboard at `http://localhost:3000`.
 
-Open `http://localhost:3000`, create an account, and you are ready to go.
+### Manual setup
 
-### Option B: Manual Setup
-
-**Step 1 — Backend (Intelligence API)**
+**Backend:**
 
 ```bash
 cd agent-sentinel-intelligence
 pip install -r requirements.txt
-```
-
-Create a `.env` file in the project root (or copy from `.env.example`):
-
-```bash
-cp ../.env.example ../.env
-# Edit ../.env and set at minimum:
-#   OPENAI_API_KEY=sk-...
-#   JWT_SECRET=any-random-string
-#   ADMIN_SECRET=any-random-string
-```
-
-Start the server:
-
-```bash
+cp ../.env.example ../.env   # add your OPENAI_API_KEY, JWT_SECRET, ADMIN_SECRET
 python -m uvicorn api_server:app --host 0.0.0.0 --port 8001
 ```
 
-Verify it is running: `curl http://localhost:8001/health`
-
-**Step 2 — Dashboard**
+**Dashboard:**
 
 ```bash
 cd agent-sentinel-dashboard
@@ -260,122 +55,121 @@ echo 'NEXT_PUBLIC_API_URL=http://localhost:8001' > .env.local
 npm run dev
 ```
 
-Open `http://localhost:3000`. Create an account (email + password), then go to **Settings** to generate an API key — you will need this to connect the SDK.
+Open `http://localhost:3000`, create an account, grab an API key from Settings.
 
-**Step 3 — Install the SDK**
-
-```bash
-pip install agent-sentinel
-```
-
-**Step 4 — Connect the SDK to the Backend**
-
-Set two environment variables so the SDK automatically streams events to the running backend:
+**Connect the SDK:**
 
 ```bash
 export SENTINEL_API_URL=http://localhost:8001
-export SENTINEL_API_KEY=<your API key from the dashboard Settings page>
+export SENTINEL_API_KEY=<key from dashboard>
 ```
 
-Then use the SDK in your Python code:
+Now any `@monitor`-decorated function streams events to the backend in real time. Open the dashboard to watch them come in.
 
-```python
-from agent_sentinel import monitor
-
-@monitor
-def my_agent(query):
-    return process(query)
-
-my_agent("Hello, world!")
-# Events are now sent to the backend in real time.
-# Open the dashboard to see them on the Agents page
-# and in the live event stream.
-```
-
-**Step 5 — (Optional) Use the SDK Standalone**
-
-The SDK works without a backend. Threat detection, event recording, and report generation all work locally:
-
-```python
-from agent_sentinel import monitor, AgentSentinel
-
-@monitor
-def my_agent(query):
-    return process(query)
-
-my_agent("test input")
-
-sentinel = AgentSentinel()
-sentinel.generate_unified_report()  # writes a JSON report to disk
-```
+The SDK also works standalone — no backend needed for local threat detection and report generation.
 
 ---
 
-## Environment Variables
+## What it does
 
-| Variable | Required | Used By | Purpose |
-|----------|----------|---------|---------|
-| `OPENAI_API_KEY` | Yes | Backend | Powers the LangGraph AI analysis workflow (GPT-4o) |
-| `JWT_SECRET` | Recommended | Backend | Secret for signing JWT tokens (auto-generated if unset) |
-| `ADMIN_SECRET` | Recommended | Backend | Secret for admin-level API key generation |
-| `EXA_API_KEY` | No | Backend | External threat intelligence research via Exa.ai |
-| `SENTINEL_API_URL` | No | SDK | Backend URL for automatic event streaming |
-| `SENTINEL_API_KEY` | No | SDK | API key for SDK-to-backend authentication |
-| `NEXT_PUBLIC_API_URL` | No | Dashboard | Backend URL the dashboard connects to (default: `http://localhost:8001`) |
+Three decorators cover every agent pattern:
+
+```python
+from agent_sentinel import monitor, sentinel, monitor_mcp
+
+@monitor                          # single function
+def research(query): ...
+
+@sentinel                         # entire class — wraps all public methods
+class Pipeline:
+    def plan(self, task): ...
+    def execute(self, plan): ...
+
+@monitor_mcp(agent_id="tools")   # MCP tool server
+def search(query): ...
+```
+
+On every call, the SDK:
+1. Validates inputs against compiled regex patterns (SQL injection, XSS, prompt injection, command injection, path traversal, data exfiltration)
+2. Executes the function normally
+3. Optionally validates outputs (`validate_outputs=True`)
+4. Records a `SecurityEvent` if a threat is found (type, severity, confidence, context)
+5. Pushes the event to the backend via `BackendEventSink` (if connected)
+
+The backend stores events in SQLite, streams them to the dashboard via SSE, and runs AI-powered analysis using a LangGraph workflow with 5 agents (Analyzer, Supervisor, Researcher, Reporter, Validator) that can iteratively refine reports up to 3 times.
 
 ---
 
-## Testing
+## Project layout
 
-The project has 97+ automated tests across four suites:
+```
+agent-sentinel-sdk/            Python SDK — decorators, validators, event registry
+agent-sentinel-intelligence/   FastAPI backend — auth, database, LangGraph analysis
+agent-sentinel-dashboard/      Next.js dashboard — real-time events, reports, settings
+tests/                         E2E tests with synthetic and real agents
+```
+
+For architecture details, data flows, API reference, and database schema, see [SYSTEM_DESIGN.md](./SYSTEM_DESIGN.md).
+
+---
+
+## Tests
+
+97+ tests across four suites:
 
 ```bash
-# Backend API tests (39 tests)
-cd agent-sentinel-intelligence && python -m pytest tests/ -v
-
-# SDK unit tests (52 tests)
-cd agent-sentinel-sdk && python -m pytest tests/ -v
-
-# E2E with synthetic agents (6 scenarios: single/multi/MCP, safe/malicious)
-python tests/test_agents_e2e.py
-
-# E2E with real agents (8 scenarios: A2A protocol agents, Agno + OpenAI)
-python tests/test_real_agents_e2e.py
+cd agent-sentinel-sdk && python -m pytest tests/ -v            # 52 SDK tests
+cd agent-sentinel-intelligence && python -m pytest tests/ -v   # 39 API tests
+python tests/test_agents_e2e.py                                # 6 synthetic E2E
+python tests/test_real_agents_e2e.py                           # 8 real agent E2E
 ```
 
-The E2E tests verify that:
-- Safe agents produce zero threat events
-- Malicious agents (SQL injection, prompt injection, data exfiltration) are detected
-- Multi-agent pipelines with a compromised agent in the chain are caught
-- MCP tool servers with malicious tool I/O trigger security events
-- Real-world agent frameworks (A2A protocol, Agno/OpenAI) work with the SDK decorators
+The E2E tests run safe and malicious agents (single, multi-agent, MCP) and verify that threats are detected while clean agents produce zero false positives. Real agent tests use the A2A protocol and Agno/OpenAI frameworks.
+
+CI runs three jobs on every push via GitHub Actions.
 
 ---
 
-## Key Design Decisions
+## Environment variables
 
-- **Decorator-based instrumentation.** The SDK uses Python decorators (`@monitor`, `@sentinel`, `@monitor_mcp`) so that securing an agent requires zero changes to the agent's own code. This works with any Python agent framework.
-- **Thread-safe global event registry.** All decorators write to a singleton `GlobalEventRegistry` protected by `threading.Lock`. This allows multi-agent pipelines to aggregate events from independent agents into a single unified report.
-- **Dual-mode operation.** The SDK works standalone (local reports and log files) or connected (auto-pushes events to the backend via `BackendEventSink`). No backend required for basic threat detection.
-- **Async AI analysis.** The Intelligence API runs LangGraph workflows in background threads and returns a `run_id` for polling. The dashboard polls every 3 seconds and renders results when complete.
-- **Iterative refinement.** The LangGraph workflow includes a Validator agent that can reject a report and send it back to the Supervisor for re-analysis, up to 3 times. This produces higher-quality threat intelligence.
-- **SQLite with WAL mode.** The backend uses SQLite for zero-configuration deployment while supporting concurrent reads during long-running analysis. Foreign keys, indexes on hot columns, and SHA-256 hashed API keys are enforced at the schema level.
+| Variable | Required | Used by | Purpose |
+|----------|----------|---------|---------|
+| `OPENAI_API_KEY` | Yes | Backend | LangGraph AI analysis (GPT-4o) |
+| `JWT_SECRET` | Recommended | Backend | JWT signing secret |
+| `ADMIN_SECRET` | Recommended | Backend | Admin API key generation |
+| `EXA_API_KEY` | No | Backend | External threat intelligence (Exa.ai) |
+| `SENTINEL_API_URL` | No | SDK | Backend URL for event streaming |
+| `SENTINEL_API_KEY` | No | SDK | API key for SDK-to-backend auth |
+| `NEXT_PUBLIC_API_URL` | No | Dashboard | Backend URL (default `http://localhost:8001`) |
 
 ---
 
-## Future Roadmap
+## Design decisions
 
-Agent Sentinel currently operates in **detection mode** - it identifies and reports threats but does not block them. The next evolution is making it preventive:
+- **Decorators for zero-friction adoption.** `@monitor`, `@sentinel`, `@monitor_mcp` — you don't change your agent code, you wrap it.
+- **Thread-safe global registry.** All events from all decorated agents go into one `GlobalEventRegistry` (singleton, `threading.Lock`). Multi-agent pipelines get unified reporting for free.
+- **Standalone or connected.** The SDK generates local JSON reports without a backend. Connect it to the Intelligence API and events stream automatically.
+- **Iterative AI analysis.** LangGraph workflow with a Validator that can reject and retry up to 3 times. Better output than a single LLM call.
+- **SQLite + WAL.** Zero-config deployment with concurrent read support. Foreign keys, indexes, and SHA-256 hashed API keys at the schema level.
 
-- **Blocking mode.** Give the decorator a policy (log-only, warn, or block). In block mode, a function call that triggers a HIGH or CRITICAL threat is stopped before it reaches the agent, and the caller gets a safe error instead of a compromised response.
-- **Agent sandbox.** A dashboard feature where you upload an agent and run it against a suite of known attack vectors (prompt injection, tool manipulation, data exfiltration attempts) in an isolated environment. You see a security scorecard before deploying the agent to production.
-- **Remediation suggestions.** When a threat is detected, suggest a concrete fix: input sanitization for SQL injection, prompt hardening for prompt injection, URL allowlisting for exfiltration attempts.
-- **Policy engine.** Configurable per-agent rules: "block all SQL patterns for this agent", "allow external URLs only from these domains", "flag any output longer than 10,000 characters."
-- **Alerting integrations.** Push notifications to Slack, PagerDuty, or email when a critical threat is detected, so security teams can respond in real time.
-- **PostgreSQL and Redis.** Replace SQLite for horizontal scaling across multiple backend instances, and add Redis for shared rate limiting and event buffering.
+---
+
+## Why I built this
+
+AI agents were being vibe-coded — built fast with AI assistance and shipped without security review. Traditional security tools don't understand agent-level threats. The tools that did appear required restructuring your agent around their framework.
+
+I wanted to prove that developers will actually adopt a security tool if the cost is low enough: one decorator, zero code changes, you're monitored. The detection engine uses compiled regex patterns today — fast, deterministic, zero cost per call. The architecture is designed for pluggable detectors so ML classifiers or LLM-as-a-judge evaluators can be layered on top without touching the decorator code.
+
+---
+
+## Future roadmap
+
+- **Blocking mode** — a `policy` parameter on the decorator (`log`, `warn`, `block`) to stop dangerous calls before they reach the agent
+- **Agent sandbox** — run an agent against known attack vectors in isolation, get a security scorecard before deploying
+- **Plugin architecture** — slot in ML classifiers, embedding-based detectors, or LLM-as-a-judge evaluators alongside regex patterns
 
 ---
 
 ## License
 
-MIT. See [LICENSE](./LICENSE).
+MIT
