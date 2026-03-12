@@ -63,10 +63,11 @@ Open `http://localhost:3000`, sign up, copy the API key, and add `SENTINEL_API_K
 **4. Use the SDK in your agent**
 
 ```bash
+python3 -m venv venv && source venv/bin/activate   # Windows: venv\Scripts\activate
 pip install agent-sentinel
 ```
 
-Set `SENTINEL_API_URL` and `SENTINEL_API_KEY`, then:
+Set `SENTINEL_API_URL` and `SENTINEL_API_KEY` (from `.env` or `export`), then:
 
 ```python
 from agent_sentinel import monitor
@@ -117,10 +118,11 @@ Open `http://localhost:3000`, sign up, copy the API key, and add it to `.env` as
 **4. Use the SDK in your agent**
 
 ```bash
+python3 -m venv venv && source venv/bin/activate   # Windows: venv\Scripts\activate
 pip install agent-sentinel
 ```
 
-Ensure `SENTINEL_API_URL` and `SENTINEL_API_KEY` are set. Add `@monitor` (or `@sentinel`, `@monitor_mcp`) to your code — events stream to the dashboard. See [What it does](#what-it-does).
+Set `SENTINEL_API_URL` and `SENTINEL_API_KEY` (from `.env` or `export`), then add `@monitor` (or `@sentinel`, `@monitor_mcp`) to your code. Events stream to the dashboard. See [What it does](#what-it-does).
 
 The SDK also works standalone: no backend needed for local threat detection and report generation. See [agent-sentinel-sdk/README.md](agent-sentinel-sdk/README.md#standalone-usage) for how to use it without the backend and generate local reports.
 
