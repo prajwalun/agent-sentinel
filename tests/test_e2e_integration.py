@@ -27,9 +27,6 @@ from pathlib import Path
 
 ROOT = Path(__file__).parent.parent
 
-# Standalone mode: no backend, quiet console
-os.environ.pop("SENTINEL_API_URL", None)
-os.environ.pop("SENTINEL_API_KEY", None)
 os.environ["AGENT_SENTINEL_CONSOLE"] = "false"
 
 # SDK

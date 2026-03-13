@@ -106,7 +106,12 @@ pip install agent-sentinel
 
 Set `SENTINEL_API_URL` and `SENTINEL_API_KEY` (from `.env` or `export`), then add `@monitor` to your code. Events stream to the dashboard. See [What it does](#what-it-does) for `@sentinel` and `@monitor_mcp`.
 
-**Quick verify:** `python scripts/verify_stack.py` (from project root, with `.env` loaded) sends test queries; check the dashboard for events.
+**See events in the dashboard:**
+1. Start stack: `docker-compose up --build`
+2. Sign up at http://localhost:3000, copy API key to `.env` as `SENTINEL_API_KEY`
+3. Run: `./scripts/demo_with_dashboard.sh` (macOS/Linux) or `python scripts/demo_dashboard.py` (Windows)
+
+Or run E2E tests with `.env` loaded for more events: `source .env && python tests/test_e2e_synthetic.py`
 
 **Reset database:** `./scripts/reset_stack.sh` stops containers and removes volumes (fresh DB). Use `./scripts/reset_stack.sh --start` to reset and start again.
 

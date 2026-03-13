@@ -23,8 +23,6 @@ import os
 import sys
 from pathlib import Path
 
-os.environ.pop("SENTINEL_API_URL", None)
-os.environ.pop("SENTINEL_API_KEY", None)
 os.environ["AGENT_SENTINEL_CONSOLE"] = "false"
 sys.path.insert(0, str(Path(__file__).parent.parent / "agent-sentinel-sdk" / "src"))
 
