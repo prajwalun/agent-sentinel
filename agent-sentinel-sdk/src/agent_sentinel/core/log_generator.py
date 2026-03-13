@@ -115,7 +115,6 @@ class LogGenerator:
             wrapper_class=structlog.stdlib.BoundLogger,
             cache_logger_on_first_use=True,
         )
-        
         return structlog.get_logger(f"agent_sentinel.{self.agent_id}")
     
     def log_method_call(
@@ -253,15 +252,15 @@ class LogGenerator:
                 text_line = self._to_text(log_data)
                 f.write(text_line + '\n')
         
-        # Also log to structured logger (avoid conflicts with reserved fields)
-        safe_log_data = {k: v for k, v in log_data.items() if k not in ['method_name', 'event_type']}
-        
-        if entry.level == "ERROR":
-            self.logger.error(entry.message, **safe_log_data)
-        elif entry.level == "WARNING":
-            self.logger.warning(entry.message, **safe_log_data)
-        else:
-            self.logger.info(entry.message, **safe_log_data)
+        # Also log to structured logger when console is enabled (avoid conflicts with reserved fields)
+        if __import__("os").getenv("AGENT_SENTINEL_CONSOLE", "true").lower() not in ("false", "0", "no"):
+            safe_log_data = {k: v for k, v in log_data.items() if k not in ['method_name', 'event_type']}
+            if entry.level == "ERROR":
+                self.logger.error(entry.message, **safe_log_data)
+            elif entry.level == "WARNING":
+                self.logger.warning(entry.message, **safe_log_data)
+            else:
+                self.logger.info(entry.message, **safe_log_data)
     
     def _to_csv(self, log_data: Dict[str, Any]) -> str:
         """Convert log data to CSV format"""

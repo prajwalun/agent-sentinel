@@ -14,6 +14,10 @@ Usage:
     python tests/test_e2e_synthetic.py
 """
 
+import warnings
+
+warnings.filterwarnings("ignore", module="pydantic._internal._generate_schema")
+
 import json
 import os
 import sys
@@ -21,6 +25,7 @@ from pathlib import Path
 
 os.environ.pop("SENTINEL_API_URL", None)
 os.environ.pop("SENTINEL_API_KEY", None)
+os.environ["AGENT_SENTINEL_CONSOLE"] = "false"
 sys.path.insert(0, str(Path(__file__).parent.parent / "agent-sentinel-sdk" / "src"))
 
 from agent_sentinel import AgentSentinel, monitor, monitor_mcp, get_all_events

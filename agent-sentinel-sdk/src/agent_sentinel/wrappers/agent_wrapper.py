@@ -125,12 +125,12 @@ class AgentWrapper:
             raise ValueError(f"Invalid configuration: {config_validation.issues}")
         
         log_file = f"logs/agent_sentinel_{agent_id}.log"
-        
+
         self.logger = logger or SecurityLogger(
             name=f"agent_wrapper_{agent_id}",
             agent_id=agent_id,
             json_format=True,
-            log_file=log_file
+            log_file=log_file,
         )
         
         self.enable_separate_logs = enable_separate_logs

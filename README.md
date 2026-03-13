@@ -108,6 +108,8 @@ Set `SENTINEL_API_URL` and `SENTINEL_API_KEY` (from `.env` or `export`), then ad
 
 **Quick verify:** `python scripts/verify_stack.py` (from project root, with `.env` loaded) sends test queries; check the dashboard for events.
 
+**Reset database:** `./scripts/reset_stack.sh` stops containers and removes volumes (fresh DB). Use `./scripts/reset_stack.sh --start` to reset and start again.
+
 ### Manual setup (without Docker)
 
 **1. Create `.env`**
@@ -234,6 +236,7 @@ All config is through environment variables. Copy `.env.example` to `.env` and f
 | `ADMIN_SECRET` | No (has default) | Admin-level API key generation |
 | `SENTINEL_API_URL` | No | Tell the SDK where the backend is |
 | `SENTINEL_API_KEY` | No | SDK-to-backend authentication |
+| `AGENT_SENTINEL_CONSOLE` | No | Log threats to terminal (default: true). Set to false for file-only |
 | `NEXT_PUBLIC_API_URL` | No | Dashboard's backend URL (defaults to `http://localhost:8001`) |
 
 ---

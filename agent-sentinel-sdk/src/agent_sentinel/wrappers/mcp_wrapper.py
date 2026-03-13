@@ -91,10 +91,12 @@ class MCPWrapper:
             strict_validation: Use strict validation mode
         """
         self.agent_id = agent_id
+        log_file = f"logs/agent_sentinel_{agent_id}.log"
         self.logger = logger or SecurityLogger(
             name=f"mcp_wrapper_{agent_id}",
             agent_id=agent_id,
-            json_format=True
+            json_format=True,
+            log_file=log_file,
         )
         
         # Configuration

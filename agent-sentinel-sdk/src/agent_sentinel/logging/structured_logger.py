@@ -7,6 +7,7 @@ and threat detection integration.
 
 import json
 import logging
+import os
 import threading
 import time
 from datetime import datetime, timezone
@@ -87,7 +88,7 @@ class StructuredLogger:
         log_level: str = "INFO",
         log_file: Optional[str] = None,
         json_format: bool = True,
-        enable_console: bool = True,
+        enable_console: Optional[bool] = None,
         enable_audit_trail: bool = True,
         max_message_length: int = 10000,
         sensitive_fields: Optional[List[str]] = None
@@ -101,7 +102,7 @@ class StructuredLogger:
             log_level: Logging level
             log_file: Optional log file path
             json_format: Whether to use JSON formatting
-            enable_console: Whether to enable console output
+            enable_console: Whether to enable console output (None = read AGENT_SENTINEL_CONSOLE env)
             enable_audit_trail: Whether to maintain audit trail
             max_message_length: Maximum message length for security
             sensitive_fields: List of sensitive field names to sanitize
@@ -109,6 +110,9 @@ class StructuredLogger:
         self.name = name
         self.agent_id = agent_id
         self.json_format = json_format
+        if enable_console is None:
+            _console = os.getenv("AGENT_SENTINEL_CONSOLE", "true").lower()
+            enable_console = _console not in ("false", "0", "no")
         self.enable_audit_trail = enable_audit_trail
         self.max_message_length = max_message_length
         self.sensitive_fields = sensitive_fields or [
@@ -119,7 +123,7 @@ class StructuredLogger:
         # Initialize Python logger
         self.logger = logging.getLogger(name)
         self.logger.setLevel(getattr(logging, log_level.upper()))
-        
+        self.logger.propagate = False  # Control output via our handlers only
         # Clear any existing handlers
         self.logger.handlers.clear()
         

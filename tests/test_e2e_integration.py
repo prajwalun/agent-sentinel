@@ -16,12 +16,21 @@ Usage:
     python tests/test_e2e_integration.py
 """
 
+import warnings
+
+warnings.filterwarnings("ignore", module="pydantic._internal._generate_schema")
+
 import json
 import os
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).parent.parent
+
+# Standalone mode: no backend, quiet console
+os.environ.pop("SENTINEL_API_URL", None)
+os.environ.pop("SENTINEL_API_KEY", None)
+os.environ["AGENT_SENTINEL_CONSOLE"] = "false"
 
 # SDK
 sys.path.insert(0, str(ROOT / "agent-sentinel-sdk" / "src"))
