@@ -127,6 +127,9 @@ export SENTINEL_API_KEY="${apiKey}"
                 )}
               </Button>
             </div>
+            <p className="text-xs text-gray-500">
+              This runs the demo. To integrate into your own agent, see the README.
+            </p>
           </div>
 
           <Button

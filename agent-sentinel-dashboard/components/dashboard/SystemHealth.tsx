@@ -43,7 +43,7 @@ export function SystemHealth() {
           ok={reachable === true ? health?.workflow_ready ?? false : reachable}
           detail={
             health && !health.workflow_ready
-              ? "LLM keys required"
+              ? "OpenAI API key required (add to .env, restart backend)"
               : undefined
           }
         />
