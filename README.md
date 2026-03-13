@@ -80,7 +80,7 @@ docker-compose up --build
 
 Backend health: http://localhost:8001/health · Dashboard: http://localhost:3000
 
-Open **http://localhost:3000**, sign up, and copy the API key. Add it to `.env` as `SENTINEL_API_KEY=as_...`. (More keys later: **Settings**.)
+Open **http://localhost:3000**, sign up, and copy the API key. Add it to `.env` as `SENTINEL_API_KEY=as_...`. For AI report analysis, add `OPENAI_API_KEY` to `.env` and restart the backend. (More keys: **Settings**.)
 
 ### Option B: Manual (no Docker)
 
@@ -89,6 +89,8 @@ Open **http://localhost:3000**, sign up, and copy the API key. Add it to `.env` 
 ```bash
 cp .env.example .env
 ```
+
+Edit `.env`: add `OPENAI_API_KEY` for AI report analysis (optional). Add `SENTINEL_API_KEY` after signup.
 
 **2. Start backend**
 
