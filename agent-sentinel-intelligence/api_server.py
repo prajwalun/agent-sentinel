@@ -965,16 +965,16 @@ def _generate_fallback_insights(
 
     enhanced_lines = [
         f"## Analysis Overview",
-        f"The analysis identified **{total} security event{'s' if total != 1 else ''}** "
-        f"with an overall risk score of **{risk_score:.2f}**.",
+        f"The analysis identified {total} security event{'s' if total != 1 else ''} "
+        f"with an overall risk score of {risk_score:.2f}.",
         "",
     ]
     if high_sev:
         enhanced_lines.append(
-            f"- **{high_sev}** event{'s' if high_sev != 1 else ''} rated HIGH or CRITICAL severity, requiring immediate attention."
+            f"- {high_sev} event{'s' if high_sev != 1 else ''} rated HIGH or CRITICAL severity, requiring immediate attention."
         )
     enhanced_lines.append(
-        f"- Most prevalent threat: **{top_threat.replace('_', ' ').title()}** ({top_count} occurrence{'s' if top_count != 1 else ''})."
+        f"- Most prevalent threat: {top_threat.replace('_', ' ').title()} ({top_count} occurrence{'s' if top_count != 1 else ''})."
     )
 
     breakdown_items = sorted(threat_breakdown.items(), key=lambda x: x[1], reverse=True)
@@ -982,7 +982,7 @@ def _generate_fallback_insights(
         enhanced_lines.append("")
         enhanced_lines.append("## Threat Breakdown")
         for ttype, count in breakdown_items:
-            enhanced_lines.append(f"- **{ttype.replace('_', ' ').title()}**: {count} event{'s' if count != 1 else ''}")
+            enhanced_lines.append(f"- {ttype.replace('_', ' ').title()}: {count} event{'s' if count != 1 else ''}")
 
     sev_parts = []
     for sev in ("CRITICAL", "HIGH", "MEDIUM", "LOW"):
@@ -990,17 +990,17 @@ def _generate_fallback_insights(
             sev_parts.append(f"{severity_dist[sev]} {sev}")
     if sev_parts:
         enhanced_lines.append("")
-        enhanced_lines.append(f"## Severity Distribution")
+        enhanced_lines.append("## Severity Distribution")
         enhanced_lines.append(f"- {', '.join(sev_parts)}")
 
     threat_intel_lines = [
         f"### Threat Landscape",
-        f"The detected threats span **{len(threat_breakdown)} distinct categor{'ies' if len(threat_breakdown) != 1 else 'y'}**.",
+        f"The detected threats span {len(threat_breakdown)} distinct categor{'ies' if len(threat_breakdown) != 1 else 'y'}.",
         "",
     ]
     for ttype, count in breakdown_items[:3]:
         readable = ttype.replace("_", " ").title()
-        threat_intel_lines.append(f"- **{readable}** — {count} occurrence{'s' if count != 1 else ''}. "
+        threat_intel_lines.append(f"- {readable} — {count} occurrence{'s' if count != 1 else ''}. "
                                   "Review agent inputs/outputs for exploitation patterns.")
 
     if high_sev:
