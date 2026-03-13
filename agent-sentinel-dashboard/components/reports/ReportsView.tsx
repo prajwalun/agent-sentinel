@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import { ReportUpload } from "./ReportUpload"
 import { AnalysisHistory } from "./AnalysisHistory"
 import { ReportVisualization } from "./ReportVisualization"
@@ -9,7 +10,14 @@ import type { EnhancedIntelligenceReport } from "@/lib/api"
 type Tab = "upload" | "history"
 
 export function ReportsView() {
+  const searchParams = useSearchParams()
   const [activeTab, setActiveTab] = useState<Tab>("upload")
+
+  useEffect(() => {
+    if (searchParams.get("tab") === "history") {
+      setActiveTab("history")
+    }
+  }, [searchParams])
   const [selectedReport, setSelectedReport] =
     useState<EnhancedIntelligenceReport | null>(null)
 

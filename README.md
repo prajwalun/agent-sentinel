@@ -119,11 +119,10 @@ After the stack is running and you have an API key in `.env`:
 cd agent-sentinel
 python3 -m venv venv && source venv/bin/activate   # Windows: venv\Scripts\activate
 pip install agent-sentinel
-export SENTINEL_API_URL="http://localhost:8001"
-export SENTINEL_API_KEY="as_your_key_from_dashboard"   # replace with your key, or source .env
+source .env   # loads SENTINEL_API_URL and SENTINEL_API_KEY from .env
 ```
 
-Replace the placeholder with your API key from the dashboard signup, or run `source .env` if you added it there.
+If you prefer not to use `.env`, run `export SENTINEL_API_URL="http://localhost:8001"` and `export SENTINEL_API_KEY="as_your_key"` instead.
 
 **To see events without writing code:** run `./scripts/demo_with_dashboard.sh` (macOS/Linux) or `python scripts/demo_dashboard.py` (Windows).
 

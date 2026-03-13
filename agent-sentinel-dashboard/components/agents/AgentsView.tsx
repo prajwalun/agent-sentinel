@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState, useCallback } from "react"
+import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import {
@@ -71,7 +72,7 @@ function AgentDetail({
     try {
       await apiService.startAnalysis(reportContent, agent.id)
       setAnalyzeMsg(
-        "Analysis started — check the Reports page in a few minutes to view the results."
+        "Analysis started. View results in a few minutes."
       )
     } catch (err) {
       setAnalyzeMsg(
@@ -124,7 +125,19 @@ function AgentDetail({
             ? "bg-blue-900/20 border border-blue-500/30 text-blue-300"
             : "bg-red-900/20 border border-red-500/30 text-red-300"
         }`}>
-          {analyzeMsg}
+          {analyzeMsg.startsWith("Analysis started") ? (
+            <>
+              {analyzeMsg}{" "}
+              <Link
+                href="/reports?tab=history"
+                className="underline hover:text-blue-200 font-medium"
+              >
+                Go to Analysis History
+              </Link>
+            </>
+          ) : (
+            analyzeMsg
+          )}
         </div>
       )}
 
