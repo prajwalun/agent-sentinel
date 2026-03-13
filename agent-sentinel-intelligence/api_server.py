@@ -428,8 +428,8 @@ async def validate_current_key(user_info: Dict[str, Any] = Depends(require_auth)
 
 
 @app.get("/api/dashboard/stats")
-async def dashboard_stats(_: Dict[str, Any] = Depends(require_auth)):
-    return repo.get_dashboard_stats()
+async def dashboard_stats(user_info: Dict[str, Any] = Depends(require_auth)):
+    return repo.get_dashboard_stats(user_id=user_info["user_id"])
 
 
 # ---------------------------------------------------------------------------
@@ -442,10 +442,10 @@ async def list_agents(
     status: Optional[str] = Query(None),
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
-    _: Dict[str, Any] = Depends(require_auth),
+    user_info: Dict[str, Any] = Depends(require_auth),
 ):
-    agents = repo.list_agents(status=status)
-    event_counts = repo.get_event_counts_by_agent()
+    agents = repo.list_agents(status=status, user_id=user_info["user_id"])
+    event_counts = repo.get_event_counts_by_agent(user_id=user_info["user_id"])
     for agent in agents:
         agent["event_count"] = event_counts.get(agent["id"], 0)
     total = len(agents)
@@ -474,7 +474,7 @@ async def list_events(
     since: Optional[str] = Query(None),
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
-    _: Dict[str, Any] = Depends(require_auth),
+    user_info: Dict[str, Any] = Depends(require_auth),
 ):
     events = repo.list_events(
         agent_id=agent_id,
@@ -483,13 +483,18 @@ async def list_events(
         since=since,
         limit=limit,
         offset=offset,
+        user_id=user_info["user_id"],
     )
-    total = repo.get_event_count(agent_id=agent_id, severity=severity, since=since)
+    total = repo.get_event_count(
+        agent_id=agent_id, severity=severity, since=since, user_id=user_info["user_id"]
+    )
     return {"events": events, "total": total, "limit": limit, "offset": offset}
 
 
 @app.post("/api/events", status_code=201)
-async def create_event(body: EventCreateRequest, _: Dict[str, Any] = Depends(require_auth)):
+async def create_event(
+    body: EventCreateRequest, user_info: Dict[str, Any] = Depends(require_auth)
+):
     """
     Ingest a security event — typically called by the SDK when
     it detects a threat during agent monitoring.
@@ -506,6 +511,7 @@ async def create_event(body: EventCreateRequest, _: Dict[str, Any] = Depends(req
         message=body.message,
         context=body.context,
         detection_method=body.detection_method,
+        user_id=user_info["user_id"],
     )
     return event
 
@@ -519,16 +525,19 @@ async def event_stream(request: Request, token: str = Query(...)):
     Requires a valid JWT passed as a query parameter because the
     browser EventSource API does not support custom headers.
     """
-    _decode_jwt(token)  # raises 401 if invalid/expired
+    claims = _decode_jwt(token)  # raises 401 if invalid/expired
+    user_id = claims.get("sub")
 
     async def generate() -> AsyncGenerator[str, None]:
-        last_seen_count = repo.get_event_count()
+        last_seen_count = repo.get_event_count(user_id=user_id)
         while True:
             if await request.is_disconnected():
                 break
-            current_count = repo.get_event_count()
+            current_count = repo.get_event_count(user_id=user_id)
             if current_count > last_seen_count:
-                new_events = repo.list_events(limit=current_count - last_seen_count)
+                new_events = repo.list_events(
+                    limit=current_count - last_seen_count, user_id=user_id
+                )
                 for event in reversed(new_events):
                     yield f"data: {json.dumps(event)}\n\n"
                 last_seen_count = current_count
@@ -551,10 +560,12 @@ async def list_reports(
     agent_id: Optional[str] = Query(None),
     status: Optional[str] = Query(None),
     limit: int = Query(20, ge=1, le=100),
-    _: Dict[str, Any] = Depends(require_auth),
+    user_info: Dict[str, Any] = Depends(require_auth),
 ):
-    runs = repo.list_analysis_runs(agent_id=agent_id, status=status, limit=limit)
-    total = repo.get_analysis_run_count()
+    runs = repo.list_analysis_runs(
+        agent_id=agent_id, status=status, limit=limit, user_id=user_info["user_id"]
+    )
+    total = repo.get_analysis_run_count(user_id=user_info["user_id"])
     return {"reports": runs, "total": total}
 
 
@@ -590,12 +601,13 @@ async def start_analysis(
     if not workflow_instance:
         raise HTTPException(status_code=503, detail="Analysis workflow not available")
 
+    user_id = user_info["user_id"]
     agent_id = body.agent_id or "unknown"
     if not repo.get_agent(agent_id):
         repo.upsert_agent(agent_id, agent_id, "analysis")
 
     input_hash = hashlib.sha256(body.report_content.encode()).hexdigest()[:16]
-    run_id = repo.create_analysis_run(agent_id, input_hash)
+    run_id = repo.create_analysis_run(agent_id, input_hash, user_id=user_id)
 
     _running_analyses[run_id] = {"status": "running", "phase": "initializing"}
 
@@ -623,6 +635,7 @@ async def start_analysis(
                     message=evt["message"],
                     context=evt.get("details"),
                     detection_method="report_analysis",
+                    user_id=user_id,
                 )
 
             risk_level = report["summary"]["status"]
@@ -664,7 +677,7 @@ async def get_analysis_status(
         return resp
 
     # Fallback to database if not in memory (e.g. after restart)
-    row = repo.get_analysis_run(run_id)
+    row = repo.get_analysis_run(run_id, user_id=user_info["user_id"])
     if row:
         result = None
         if row.get("result_json"):
@@ -701,7 +714,9 @@ async def analyze_report(
         repo.upsert_agent(agent_id, agent_id, "analysis")
 
     input_hash = hashlib.sha256(body.report_content.encode()).hexdigest()[:16]
-    run_id = repo.create_analysis_run(agent_id, input_hash)
+    run_id = repo.create_analysis_run(
+        agent_id, input_hash, user_id=user_info["user_id"]
+    )
 
     start = time.monotonic()
     try:
@@ -724,6 +739,7 @@ async def analyze_report(
                 message=evt["message"],
                 context=evt.get("details"),
                 detection_method="report_analysis",
+                user_id=user_info["user_id"],
             )
 
         risk_level = report["summary"]["status"]

@@ -218,10 +218,11 @@ agents (
     last_seen   TEXT                      -- updated on every event
 )
 
--- One row per detected threat
+-- One row per detected threat (user_id for per-user isolation)
 security_events (
     id               TEXT PRIMARY KEY,
     agent_id         TEXT NOT NULL REFERENCES agents(id),
+    user_id          TEXT REFERENCES users(id),  -- owner; from API key at ingest
     threat_type      TEXT NOT NULL,
     severity         TEXT NOT NULL CHECK (severity IN ('LOW','MEDIUM','HIGH','CRITICAL')),
     confidence       REAL NOT NULL CHECK (confidence BETWEEN 0.0 AND 1.0),
@@ -250,10 +251,11 @@ request_log (
     requested_at TEXT NOT NULL
 )
 
--- One row per AI analysis run (async background job)
+-- One row per AI analysis run (async background job; user_id for per-user isolation)
 analysis_runs (
     id           TEXT PRIMARY KEY,
     agent_id     TEXT NOT NULL REFERENCES agents(id),
+    user_id      TEXT REFERENCES users(id),  -- owner; from JWT at analysis start
     input_hash   TEXT NOT NULL,          -- dedup identical reports
     status       TEXT NOT NULL DEFAULT 'pending',  -- pending|running|complete|failed
     risk_level   TEXT,
@@ -264,7 +266,7 @@ analysis_runs (
 )
 ```
 
-Indexes: `idx_events_agent_time`, `idx_events_severity`, `idx_events_threat_type`, `idx_runs_status`, `idx_runs_created_at`, `idx_reqlog_user_time`, `idx_agents_last_seen`, `idx_keys_hash`
+Indexes: `idx_events_agent_time`, `idx_events_severity`, `idx_events_threat_type`, `idx_events_user`, `idx_runs_status`, `idx_runs_created_at`, `idx_runs_user`, `idx_reqlog_user_time`, `idx_agents_last_seen`, `idx_keys_hash`
 
 ### Failure modes
 
@@ -295,6 +297,7 @@ Analyzer → Supervisor → Researcher → Reporter → Validator
 
 ### Security
 
+- Per-user isolation: events and analysis runs are scoped by `user_id`; each user sees only their own data
 - JWT tokens (HS256) for user sessions
 - API keys with SHA-256 hashing, per-user ownership, revocation support
 - Rate limiting (100 req/hr per user via `request_log`)

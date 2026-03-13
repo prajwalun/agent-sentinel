@@ -95,22 +95,66 @@ class Repository:
         row = get_db().execute("SELECT * FROM agents WHERE id = ?", (agent_id,)).fetchone()
         return _row_to_dict(row) if row else None
 
-    def list_agents(self, status: Optional[str] = None) -> List[Dict[str, Any]]:
-        if status:
-            rows = get_db().execute(
-                "SELECT * FROM agents WHERE status = ? ORDER BY last_seen DESC", (status,)
-            ).fetchall()
+    def list_agents(
+        self, status: Optional[str] = None, user_id: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
+        if user_id:
+            if status:
+                rows = get_db().execute(
+                    """
+                    SELECT DISTINCT a.* FROM agents a
+                    INNER JOIN security_events e ON a.id = e.agent_id AND e.user_id = ?
+                    WHERE a.status = ?
+                    ORDER BY a.last_seen DESC
+                    """,
+                    (user_id, status),
+                ).fetchall()
+            else:
+                rows = get_db().execute(
+                    """
+                    SELECT DISTINCT a.* FROM agents a
+                    INNER JOIN security_events e ON a.id = e.agent_id AND e.user_id = ?
+                    ORDER BY a.last_seen DESC
+                    """,
+                    (user_id,),
+                ).fetchall()
         else:
-            rows = get_db().execute("SELECT * FROM agents ORDER BY last_seen DESC").fetchall()
+            if status:
+                rows = get_db().execute(
+                    "SELECT * FROM agents WHERE status = ? ORDER BY last_seen DESC", (status,)
+                ).fetchall()
+            else:
+                rows = get_db().execute("SELECT * FROM agents ORDER BY last_seen DESC").fetchall()
         return [_row_to_dict(r) for r in rows]
 
-    def get_agent_count(self, status: Optional[str] = None) -> int:
-        if status:
-            row = get_db().execute(
-                "SELECT COUNT(*) AS cnt FROM agents WHERE status = ?", (status,)
-            ).fetchone()
+    def get_agent_count(
+        self, status: Optional[str] = None, user_id: Optional[str] = None
+    ) -> int:
+        if user_id:
+            if status:
+                row = get_db().execute(
+                    """
+                    SELECT COUNT(DISTINCT a.id) AS cnt FROM agents a
+                    INNER JOIN security_events e ON a.id = e.agent_id AND e.user_id = ?
+                    WHERE a.status = ?
+                    """,
+                    (user_id, status),
+                ).fetchone()
+            else:
+                row = get_db().execute(
+                    """
+                    SELECT COUNT(DISTINCT a.id) AS cnt FROM agents a
+                    INNER JOIN security_events e ON a.id = e.agent_id AND e.user_id = ?
+                    """,
+                    (user_id,),
+                ).fetchone()
         else:
-            row = get_db().execute("SELECT COUNT(*) AS cnt FROM agents").fetchone()
+            if status:
+                row = get_db().execute(
+                    "SELECT COUNT(*) AS cnt FROM agents WHERE status = ?", (status,)
+                ).fetchone()
+            else:
+                row = get_db().execute("SELECT COUNT(*) AS cnt FROM agents").fetchone()
         return row["cnt"]
 
     # ------------------------------------------------------------------
@@ -126,14 +170,15 @@ class Repository:
         message: str,
         context: Optional[Dict[str, Any]] = None,
         detection_method: str = "pattern_matching",
+        user_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         event_id = f"evt_{uuid.uuid4().hex[:16]}"
         db = get_db()
         db.execute(
             """
             INSERT INTO security_events
-                (id, agent_id, threat_type, severity, confidence, message, context_json, detection_method)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                (id, agent_id, threat_type, severity, confidence, message, context_json, detection_method, user_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 event_id,
@@ -144,6 +189,7 @@ class Repository:
                 message,
                 json.dumps(context) if context else None,
                 detection_method,
+                user_id,
             ),
         )
         db.commit()
@@ -166,10 +212,14 @@ class Repository:
         since: Optional[str] = None,
         limit: int = 50,
         offset: int = 0,
+        user_id: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         clauses: List[str] = []
         params: List[Any] = []
 
+        if user_id:
+            clauses.append("user_id = ?")
+            params.append(user_id)
         if agent_id:
             clauses.append("agent_id = ?")
             params.append(agent_id)
@@ -197,10 +247,14 @@ class Repository:
         agent_id: Optional[str] = None,
         severity: Optional[str] = None,
         since: Optional[str] = None,
+        user_id: Optional[str] = None,
     ) -> int:
         clauses: List[str] = []
         params: List[Any] = []
 
+        if user_id:
+            clauses.append("user_id = ?")
+            params.append(user_id)
         if agent_id:
             clauses.append("agent_id = ?")
             params.append(agent_id)
@@ -217,16 +271,29 @@ class Repository:
         ).fetchone()
         return row["cnt"]
 
-    def get_event_counts_by_agent(self) -> Dict[str, int]:
+    def get_event_counts_by_agent(
+        self, user_id: Optional[str] = None
+    ) -> Dict[str, int]:
         """Return {agent_id: count} for all agents in a single query."""
-        rows = get_db().execute(
-            "SELECT agent_id, COUNT(*) AS cnt FROM security_events GROUP BY agent_id"
-        ).fetchall()
+        if user_id:
+            rows = get_db().execute(
+                "SELECT agent_id, COUNT(*) AS cnt FROM security_events WHERE user_id = ? GROUP BY agent_id",
+                (user_id,),
+            ).fetchall()
+        else:
+            rows = get_db().execute(
+                "SELECT agent_id, COUNT(*) AS cnt FROM security_events GROUP BY agent_id"
+            ).fetchall()
         return {r["agent_id"]: r["cnt"] for r in rows}
 
-    def get_severity_counts(self, since: Optional[str] = None) -> Dict[str, int]:
-        clauses = []
+    def get_severity_counts(
+        self, since: Optional[str] = None, user_id: Optional[str] = None
+    ) -> Dict[str, int]:
+        clauses: List[str] = []
         params: List[Any] = []
+        if user_id:
+            clauses.append("user_id = ?")
+            params.append(user_id)
         if since:
             clauses.append("detected_at >= ?")
             params.append(since)
@@ -345,12 +412,14 @@ class Repository:
     # Analysis runs
     # ------------------------------------------------------------------
 
-    def create_analysis_run(self, agent_id: str, input_hash: str) -> str:
+    def create_analysis_run(
+        self, agent_id: str, input_hash: str, user_id: Optional[str] = None
+    ) -> str:
         run_id = f"run_{uuid.uuid4().hex[:12]}"
         db = get_db()
         db.execute(
-            "INSERT INTO analysis_runs (id, agent_id, input_hash) VALUES (?, ?, ?)",
-            (run_id, agent_id, input_hash),
+            "INSERT INTO analysis_runs (id, agent_id, input_hash, user_id) VALUES (?, ?, ?, ?)",
+            (run_id, agent_id, input_hash, user_id),
         )
         db.commit()
         return run_id
@@ -391,9 +460,13 @@ class Repository:
         agent_id: Optional[str] = None,
         status: Optional[str] = None,
         limit: int = 20,
+        user_id: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         clauses: List[str] = []
         params: List[Any] = []
+        if user_id:
+            clauses.append("user_id = ?")
+            params.append(user_id)
         if agent_id:
             clauses.append("agent_id = ?")
             params.append(agent_id)
@@ -408,34 +481,49 @@ class Repository:
         ).fetchall()
         return [_row_to_dict(r) for r in rows]
 
-    def get_analysis_run(self, run_id: str) -> Optional[Dict[str, Any]]:
-        """Fetch a single analysis run by ID."""
-        row = get_db().execute(
-            "SELECT * FROM analysis_runs WHERE id = ?", (run_id,)
-        ).fetchone()
+    def get_analysis_run(
+        self, run_id: str, user_id: Optional[str] = None
+    ) -> Optional[Dict[str, Any]]:
+        """Fetch a single analysis run by ID. If user_id given, verify ownership."""
+        if user_id:
+            row = get_db().execute(
+                "SELECT * FROM analysis_runs WHERE id = ? AND user_id = ?",
+                (run_id, user_id),
+            ).fetchone()
+        else:
+            row = get_db().execute(
+                "SELECT * FROM analysis_runs WHERE id = ?", (run_id,)
+            ).fetchone()
         return _row_to_dict(row) if row else None
 
-    def get_analysis_run_count(self) -> int:
-        row = get_db().execute("SELECT COUNT(*) AS cnt FROM analysis_runs").fetchone()
+    def get_analysis_run_count(self, user_id: Optional[str] = None) -> int:
+        if user_id:
+            row = get_db().execute(
+                "SELECT COUNT(*) AS cnt FROM analysis_runs WHERE user_id = ?",
+                (user_id,),
+            ).fetchone()
+        else:
+            row = get_db().execute("SELECT COUNT(*) AS cnt FROM analysis_runs").fetchone()
         return row["cnt"]
 
     # ------------------------------------------------------------------
     # Dashboard statistics
     # ------------------------------------------------------------------
 
-    def get_dashboard_stats(self) -> Dict[str, Any]:
+    def get_dashboard_stats(self, user_id: Optional[str] = None) -> Dict[str, Any]:
         """
         Single call that returns everything the dashboard stats panel needs.
+        When user_id is provided, stats are scoped to that user's events and reports.
         """
         today = datetime.now(timezone.utc).strftime("%Y-%m-%dT00:00:00Z")
 
-        total_agents = self.get_agent_count()
-        active_agents = self.get_agent_count(status="active")
-        total_events = self.get_event_count()
-        events_today = self.get_event_count(since=today)
-        severity_counts = self.get_severity_counts()
-        severity_today = self.get_severity_counts(since=today)
-        total_analyses = self.get_analysis_run_count()
+        total_agents = self.get_agent_count(user_id=user_id)
+        active_agents = self.get_agent_count(status="active", user_id=user_id)
+        total_events = self.get_event_count(user_id=user_id)
+        events_today = self.get_event_count(since=today, user_id=user_id)
+        severity_counts = self.get_severity_counts(user_id=user_id)
+        severity_today = self.get_severity_counts(since=today, user_id=user_id)
+        total_analyses = self.get_analysis_run_count(user_id=user_id)
 
         return {
             "total_agents": total_agents,

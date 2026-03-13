@@ -154,6 +154,18 @@ class TestAgents:
             json={"id": "a1", "name": "Agent One"},
             headers=AUTH,
         )
+        # Create an event so the agent appears (agents are listed by events from this user)
+        client.post(
+            "/api/events",
+            json={
+                "agent_id": "a1",
+                "threat_type": "sql_injection",
+                "severity": "LOW",
+                "confidence": 0.5,
+                "message": "Test event",
+            },
+            headers=AUTH,
+        )
         r = client.get("/api/agents", headers=AUTH)
         assert r.json()["total"] >= 1
 
@@ -492,6 +504,18 @@ class TestAgentPagination:
                 json={"id": f"pg_{i}", "name": f"Paginated Agent {i}"},
                 headers=AUTH,
             )
+            # Create event so agent appears in list (filtered by user's events)
+            client.post(
+                "/api/events",
+                json={
+                    "agent_id": f"pg_{i}",
+                    "threat_type": "sql_injection",
+                    "severity": "LOW",
+                    "confidence": 0.5,
+                    "message": "test",
+                },
+                headers=AUTH,
+            )
         r = client.get("/api/agents?limit=2&offset=0", headers=AUTH)
         data = r.json()
         assert len(data["agents"]) == 2
@@ -542,7 +566,7 @@ class TestAnalysisStatusFallback:
             json={"id": "fb_agent", "name": "Fallback Agent"},
             headers=AUTH,
         )
-        run_id = repo.create_analysis_run("fb_agent", "testhash")
+        run_id = repo.create_analysis_run("fb_agent", "testhash", user_id="demo-user")
         r = client.get(f"/api/analysis/{run_id}/status", headers=AUTH)
         assert r.status_code == 200
         assert r.json()["status"] == "pending"
@@ -563,7 +587,7 @@ class TestReportTotal:
             headers=AUTH,
         )
         for i in range(5):
-            repo.create_analysis_run("rpt_agent", f"hash_{i}")
+            repo.create_analysis_run("rpt_agent", f"hash_{i}", user_id="demo-user")
         r = client.get("/api/reports?limit=2", headers=AUTH)
         data = r.json()
         assert len(data["reports"]) == 2

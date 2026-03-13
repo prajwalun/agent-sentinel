@@ -17,7 +17,7 @@ _DB_PATH: Optional[str] = None
 _LOCAL = threading.local()
 _SHARED_CONN: Optional[sqlite3.Connection] = None
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 _SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS schema_version (
@@ -163,4 +163,48 @@ def init_db(db_path: str = "sentinel.db") -> None:
         conn.execute("INSERT INTO schema_version (version) VALUES (?)", (SCHEMA_VERSION,))
 
     conn.commit()
+
+    # Migration: add user_id to security_events and analysis_runs for per-user isolation
+    _run_user_isolation_migration(conn)
+
+    conn.commit()
     logger.info("Database initialised at %s (schema v%d)", _DB_PATH, SCHEMA_VERSION)
+
+
+def _run_user_isolation_migration(conn: sqlite3.Connection) -> None:
+    """Add user_id columns for per-user event/report isolation. Safe to run multiple times."""
+    try:
+        # security_events: add user_id if missing
+        row = conn.execute("PRAGMA table_info(security_events)").fetchall()
+        has_user_id = any(r[1] == "user_id" for r in row)
+        if not has_user_id:
+            conn.execute("ALTER TABLE security_events ADD COLUMN user_id TEXT REFERENCES users(id)")
+            # Backfill existing rows with first user
+            first_user = conn.execute("SELECT id FROM users LIMIT 1").fetchone()
+            if first_user:
+                conn.execute(
+                    "UPDATE security_events SET user_id = ? WHERE user_id IS NULL",
+                    (first_user[0],),
+                )
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_events_user ON security_events(user_id)"
+            )
+            logger.info("Migration: added user_id to security_events")
+
+        # analysis_runs: add user_id if missing
+        row = conn.execute("PRAGMA table_info(analysis_runs)").fetchall()
+        has_user_id = any(r[1] == "user_id" for r in row)
+        if not has_user_id:
+            conn.execute("ALTER TABLE analysis_runs ADD COLUMN user_id TEXT REFERENCES users(id)")
+            first_user = conn.execute("SELECT id FROM users LIMIT 1").fetchone()
+            if first_user:
+                conn.execute(
+                    "UPDATE analysis_runs SET user_id = ? WHERE user_id IS NULL",
+                    (first_user[0],),
+                )
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_runs_user ON analysis_runs(user_id)"
+            )
+            logger.info("Migration: added user_id to analysis_runs")
+    except sqlite3.OperationalError as e:
+        logger.warning("User isolation migration skipped or failed: %s", e)
