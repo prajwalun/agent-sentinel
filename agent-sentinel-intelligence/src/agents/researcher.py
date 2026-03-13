@@ -181,7 +181,7 @@ class WebResearcherAgent:
         try:
             # Validate input state
             if not isinstance(state, dict):
-                logger.error("❌ Invalid state type provided to researcher")
+                logger.error("Invalid state type provided to researcher")
                 return self._fallback_to_supervisor("Invalid state type provided")
             
             # Extract the last message (should be from analyzer)
@@ -205,7 +205,7 @@ class WebResearcherAgent:
             try:
                 research_results = self._perform_research(content)
             except Exception as e:
-                logger.error(f"❌ Research execution failed: {e}")
+                logger.error("Research execution failed: %s", e)
                 research_results = "Research service encountered an error. Proceeding with available analysis."
             
             # Validate research results
@@ -229,7 +229,7 @@ class WebResearcherAgent:
                     """
                 )
             except Exception as e:
-                logger.error(f"❌ Failed to create LLM messages: {e}")
+                logger.error("Failed to create LLM messages: %s", e)
                 return self._fallback_to_supervisor(f"Failed to prepare research synthesis: {e}")
             
             # Get synthesized research from LLM with retry logic
@@ -245,12 +245,12 @@ class WebResearcherAgent:
                         if attempt == max_retries - 1:
                             return self._fallback_to_supervisor("Research synthesis failed after multiple attempts")
                 except Exception as e:
-                    logger.error(f"❌ Research synthesis attempt {attempt + 1} failed: {e}")
+                    logger.error("Research synthesis attempt %d failed: %s", attempt + 1, e)
                     if attempt == max_retries - 1:
                         return self._fallback_to_supervisor(f"Research synthesis failed after {max_retries} attempts: {e}")
             
             if not synthesis:
-                logger.error("❌ No synthesis result obtained")
+                logger.error("No synthesis result obtained")
                 return self._fallback_to_supervisor("Research synthesis failed - no result obtained")
             
             # Validate final synthesis
@@ -282,7 +282,7 @@ class WebResearcherAgent:
             }
             
         except Exception as e:
-            logger.error(f"❌ Web research failed with unexpected error: {e}")
+            logger.error("Web research failed with unexpected error: %s", e)
             return self._fallback_to_supervisor(f"Research failed: {e}")
     
     def _perform_research(self, analysis_content: str) -> str:
@@ -315,7 +315,7 @@ class WebResearcherAgent:
                     logger.warning("⚠️  No threat types identified for research")
                     return "No specific threat types identified for targeted research."
             except Exception as e:
-                logger.error(f"❌ Threat type extraction failed: {e}")
+                logger.error("Threat type extraction failed: %s", e)
                 return "Failed to extract threat types for research."
             
             # Perform research for each threat type (limit to 3 to control costs)
@@ -360,7 +360,7 @@ class WebResearcherAgent:
             return "\n".join(research_findings)
             
         except Exception as e:
-            logger.error(f"❌ Research execution failed: {e}")
+            logger.error("Research execution failed: %s", e)
             return f"Research execution failed: {e}"
     
     def _extract_threat_types(self, analysis_content: str) -> list:
@@ -407,7 +407,7 @@ class WebResearcherAgent:
             return unique_threats[:5]  # Return top 5 threats
             
         except Exception as e:
-            logger.error(f"❌ Threat type extraction failed: {e}")
+            logger.error("Threat type extraction failed: %s", e)
             return []
     
     def _fallback_to_supervisor(self, message: str) -> Dict[str, Any]:

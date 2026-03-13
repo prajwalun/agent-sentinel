@@ -111,27 +111,19 @@ Open **http://localhost:3000**, sign up, copy the API key, and add it to `.env` 
 
 ### Use the SDK
 
-After the stack is running and you have an API key:
+After the stack is running and you have an API key in `.env`:
 
 ```bash
+cd agent-sentinel
 python3 -m venv venv && source venv/bin/activate   # Windows: venv\Scripts\activate
 pip install agent-sentinel
 export SENTINEL_API_URL="http://localhost:8001"
-export SENTINEL_API_KEY="as_your_key_from_dashboard"
+export SENTINEL_API_KEY="as_your_key_from_dashboard"   # or source .env
 ```
 
-Add `@monitor` (or `@sentinel`, `@monitor_mcp`) to your agent code. Events stream to the dashboard. See [What it does](#what-it-does).
+**To see events without writing code:** run `./scripts/demo_with_dashboard.sh` (macOS/Linux) or `python scripts/demo_dashboard.py` (Windows).
 
-### Try it without writing code
-
-Run the demo script to send test events to the dashboard:
-
-```bash
-./scripts/demo_with_dashboard.sh          # macOS/Linux
-python scripts/demo_dashboard.py          # Windows
-```
-
-Or verify the stack: `source .env && python scripts/verify_stack.py`
+**To integrate:** add `@monitor` (or `@sentinel`, `@monitor_mcp`) to your agent code. Events stream to the dashboard. See [What it does](#what-it-does).
 
 ### Reset database (Docker)
 

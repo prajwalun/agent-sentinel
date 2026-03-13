@@ -186,7 +186,7 @@ class SupervisorAgent:
             }
             
         except Exception as e:
-            logger.error(f"❌ Supervisor execution failed: {e}")
+            logger.error("Supervisor execution failed: %s", e)
             return {
                 "messages": [
                     HumanMessage(

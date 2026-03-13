@@ -152,7 +152,7 @@ class ReportGeneratorAgent:
             
             # Validate report quality
             if not report or (isinstance(report, dict) and len(json.dumps(report)) < 100):
-                logger.error("❌ Generated report is too short or empty")
+                logger.error("Generated report is too short or empty")
                 return self._fallback_to_validator("Report generation failed - insufficient content")
             
             # Log report generation
@@ -176,7 +176,7 @@ class ReportGeneratorAgent:
             }
             
         except Exception as e:
-            logger.error(f"❌ Report generation failed: {e}")
+            logger.error("Report generation failed: %s", e)
             return self._fallback_to_validator(f"Report generation failed: {e}")
     
     def _collect_workflow_content(self, messages: list) -> str:

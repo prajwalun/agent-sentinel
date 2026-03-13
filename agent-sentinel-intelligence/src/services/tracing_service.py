@@ -55,13 +55,13 @@ class TracingService:
                     wandb_api_key = os.getenv("WANDB_API_KEY")
                     if wandb_api_key:
                         wandb.login(key=wandb_api_key)
-                        logger.info("✅ W&B login successful")
+                        logger.info("W&B login successful")
                         self.wandb = wandb
                 
                 # Initialize Weave client
                 self.weave_client = weave.init(self.config.project_name)
                 
-                logger.info(f"✅ Tracing initialized with project: {self.config.project_name}")
+                logger.info("Tracing initialized with project: %s", self.config.project_name)
                 
             except Exception as e:
                 logger.warning(f"⚠️  Tracing initialization failed: {e}")

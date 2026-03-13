@@ -83,7 +83,7 @@ def test_safe_math_agent():
 
     threats = _count_threats()
     passed = threats == 0
-    print(f"[1] Math Agent (safe):             threats={threats}  {'✓' if passed else '✗ (expected 0)'}")
+    print(f"[1] Math Agent (safe):             threats={threats}  {'PASS' if passed else 'FAIL (expected 0)'}")
     return passed
 
 
@@ -110,7 +110,7 @@ def test_safe_weather_agent():
 
     threats = _count_threats()
     passed = threats == 0
-    print(f"[2] Weather Agent (safe):          threats={threats}  {'✓' if passed else '✗ (expected 0)'}")
+    print(f"[2] Weather Agent (safe):          threats={threats}  {'PASS' if passed else 'FAIL (expected 0)'}")
     return passed
 
 
@@ -144,7 +144,7 @@ def test_malicious_agent():
 
     threats = _count_threats()
     passed = threats > 0
-    print(f"[3] Malicious Agent (attacks):     threats={threats}  {'✓' if passed else '✗ (expected > 0)'}")
+    print(f"[3] Malicious Agent (attacks):     threats={threats}  {'PASS' if passed else 'FAIL (expected > 0)'}")
     return passed
 
 
@@ -182,7 +182,7 @@ def test_safe_multi_agent_pipeline():
 
     threats = _count_threats()
     passed = threats == 0
-    print(f"[4] Multi-Agent (safe pipe):       threats={threats}  {'✓' if passed else '✗ (expected 0)'}")
+    print(f"[4] Multi-Agent (safe pipe):       threats={threats}  {'PASS' if passed else 'FAIL (expected 0)'}")
     return passed
 
 
@@ -219,7 +219,7 @@ def test_compromised_multi_agent():
 
     threats = _count_threats()
     passed = threats > 0
-    print(f"[5] Multi-Agent (compromised):     threats={threats}  {'✓' if passed else '✗ (expected > 0)'}")
+    print(f"[5] Multi-Agent (compromised):     threats={threats}  {'PASS' if passed else 'FAIL (expected > 0)'}")
     return passed
 
 
@@ -262,7 +262,7 @@ def test_mcp_tool_server():
     total_threats = _count_threats()
     new_threats = total_threats - safe_threats
     passed = new_threats > 0
-    print(f"[6] MCP Tool Server:               threats={total_threats} (safe={safe_threats}, attack={new_threats})  {'✓' if passed else '✗ (expected attack > 0)'}")
+    print(f"[6] MCP Tool Server:               threats={total_threats} (safe={safe_threats}, attack={new_threats})  {'PASS' if passed else 'FAIL (expected attack > 0)'}")
     return passed
 
 
@@ -309,7 +309,7 @@ def test_report_generation():
     )
 
     passed = has_threats
-    print(f"[7] Report Generation:             events={len(security_events)}, threats={has_threats}  {'✓' if passed else '✗ (expected threats)'}")
+    print(f"[7] Report Generation:             events={len(security_events)}, threats={has_threats}  {'PASS' if passed else 'FAIL (expected threats)'}")
 
     try:
         Path(report_path).unlink()

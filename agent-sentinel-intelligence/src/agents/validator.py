@@ -149,7 +149,7 @@ class ValidatorAgent:
                 }
             
         except Exception as e:
-            logger.error(f"❌ Validation failed: {e}")
+            logger.error("Validation failed: %s", e)
             return self._finish_workflow(f"Validation failed: {e}")
     
     def _finish_workflow(self, reason: str) -> Dict[str, Any]:

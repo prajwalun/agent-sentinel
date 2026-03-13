@@ -187,7 +187,7 @@ Examples:
         print("\n🛑 Monitoring stopped by user")
         sys.exit(0)
     except Exception as e:
-        print(f"❌ Error: {e}")
+        print(f"Error: {e}")
         sys.exit(1)
 
 
@@ -214,7 +214,7 @@ def run_monitor(args):
             'daemon_mode': args.daemon
         })
         
-        print(f"✅ Monitoring started with config: {args.config}")
+        print(f"Monitoring started with config: {args.config}")
         if args.agent_id:
             print(f"🎯 Monitoring agent: {args.agent_id}")
         
@@ -237,7 +237,7 @@ def run_monitor(args):
         print("🛑 Monitoring stopped")
         
     except Exception as e:
-        print(f"❌ Failed to start monitoring: {e}")
+        print(f"Failed to start monitoring: {e}")
         sys.exit(1)
 
 
@@ -252,7 +252,7 @@ def run_validate(args):
         # Validate configuration
         config = sentinel.config
         
-        print("✅ Configuration validation passed!")
+        print("Configuration validation passed.")
         print(f"   Agent ID: {config.agent_id}")
         print(f"   Environment: {config.environment}")
         print(f"   Detection enabled: {config.detection.enabled}")
@@ -262,10 +262,10 @@ def run_validate(args):
             print("\n🔒 Running strict validation...")
             # Additional strict validation checks
             validate_strict_config(config)
-            print("✅ Strict validation passed!")
+            print("Strict validation passed.")
         
     except Exception as e:
-        print(f"❌ Configuration validation failed: {e}")
+        print(f"Configuration validation failed: {e}")
         sys.exit(1)
 
 
@@ -314,7 +314,7 @@ def run_stats(args):
             print_stats_table(stats)
         
     except Exception as e:
-        print(f"❌ Failed to load statistics: {e}")
+        print(f"Failed to load statistics: {e}")
         sys.exit(1)
 
 
@@ -356,7 +356,7 @@ def run_security_check(args):
         print("=" * 50)
         
         for check_name, result in security_report.items():
-            status = "✅" if result["passed"] else "❌"
+            status = "PASS" if result["passed"] else "FAIL"
             print(f"{status} {check_name}: {result['description']}")
             
             if not result["passed"]:
@@ -374,10 +374,10 @@ def run_security_check(args):
             print(f"\n⚠️  {len(failed_checks)} security checks failed")
             sys.exit(1)
         else:
-            print("\n✅ All security checks passed!")
+            print("\nAll security checks passed.")
         
     except Exception as e:
-        print(f"❌ Security check failed: {e}")
+        print(f"Security check failed: {e}")
         sys.exit(1)
 
 
@@ -398,7 +398,7 @@ def run_report(args):
             file_path=args.output if hasattr(args, 'output') and args.output else None
         )
         
-        print(f"✅ Unified report generated: {report_path}")
+        print(f"Unified report generated: {report_path}")
         print(f"📄 Report contains:")
         print(f"   - Session logs and monitoring data")
         print(f"   - Security events and threat analysis")
@@ -431,7 +431,7 @@ def run_report(args):
             print(f"⚠️  Could not display report summary: {e}")
         
     except Exception as e:
-        print(f"❌ Failed to generate report: {e}")
+        print(f"Failed to generate report: {e}")
         sys.exit(1)
 
 
@@ -450,7 +450,7 @@ def run_init(args):
         with open(output_path, 'w') as f:
             f.write(config_template)
         
-        print(f"✅ Configuration template created: {args.output}")
+        print(f"Configuration template created: {args.output}")
         print(f"📝 Template type: {args.template}")
         print("\n📋 Next steps:")
         print("1. Review and customize the configuration")
@@ -460,7 +460,7 @@ def run_init(args):
         print("5. Start monitoring: sentinel monitor --config config.yaml")
         
     except Exception as e:
-        print(f"❌ Failed to create configuration: {e}")
+        print(f"Failed to create configuration: {e}")
         sys.exit(1)
 
 

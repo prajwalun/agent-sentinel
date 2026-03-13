@@ -105,7 +105,7 @@ class LLMService:
             test_messages = [SystemMessage(content="Test")]
             llm.invoke(test_messages)
             
-            logger.info(f"✅ Initialized OpenAI LLM with model: {model_name}")
+            logger.info("Initialized OpenAI LLM with model: %s", model_name)
             return llm
             
         except Exception as e:
@@ -180,7 +180,7 @@ class LLMService:
                     if not response or not response.content:
                         raise ValueError("Empty response from fallback LLM")
                     
-                    logger.info("✅ Fallback LLM succeeded")
+                    logger.info("Fallback LLM succeeded")
                     return response.content
                     
                 except Exception as e:
@@ -194,7 +194,7 @@ class LLMService:
                         time.sleep(wait_time)
         
         # All attempts failed
-        logger.error(f"❌ All LLM invocation attempts failed. Last error: {last_error}")
+        logger.error("All LLM invocation attempts failed. Last error: %s", last_error)
         raise Exception(f"LLM invocation failed after all retries: {last_error}")
     
     def invoke_structured(
@@ -268,7 +268,7 @@ class LLMService:
                     if response is None:
                         raise ValueError("Empty structured response from fallback LLM")
                     
-                    logger.info("✅ Fallback LLM structured succeeded")
+                    logger.info("Fallback LLM structured succeeded")
                     return response
                     
                 except Exception as e:
@@ -282,7 +282,7 @@ class LLMService:
                         time.sleep(wait_time)
         
         # All attempts failed
-        logger.error(f"❌ All structured LLM invocation attempts failed. Last error: {last_error}")
+        logger.error("All structured LLM invocation attempts failed. Last error: %s", last_error)
         raise Exception(f"Structured LLM invocation failed after all retries: {last_error}")
     
     def create_system_message(self, content: str) -> SystemMessage:

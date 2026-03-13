@@ -51,7 +51,7 @@ class ResearchService:
                 return
             
             self.exa_client = Exa(api_key=api_key)
-            logger.info("✅ Exa.ai client initialized")
+            logger.info("Exa.ai client initialized")
             
         except ImportError:
             logger.warning("⚠️  Exa.ai not available. Install with: pip install exa-py")
@@ -125,11 +125,11 @@ class ResearchService:
                 timestamp=str(response.search_id) if hasattr(response, 'search_id') else ""
             )
             
-            logger.info(f"✅ Research completed for query: {query}")
+            logger.info("Research completed for query: %s", query)
             return research_result
             
         except Exception as e:
-            logger.error(f"❌ Research failed for query '{query}': {e}")
+            logger.error("Research failed for query '%s': %s", query, e)
             return None
     
     def search_threat_intelligence(self, threat_type: str, technique: str) -> Optional[ResearchResult]:

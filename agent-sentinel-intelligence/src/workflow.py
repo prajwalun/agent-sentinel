@@ -481,7 +481,7 @@ class SecurityAnalysisWorkflow:
                 try:
                     with open(file_path, "r") as f:
                         content = f.read()
-                    logger.info(f"✅ Read security report from: {filename}")
+                    logger.info("Read security report from: %s", filename)
                     return content
                 except Exception as e:
                     logger.warning(f"⚠️  Failed to read {filename}: {e}")
@@ -514,9 +514,9 @@ class SecurityAnalysisWorkflow:
                     f.write(f"Workflow Execution Time: {execution_time:.2f} seconds\n\n")
                     f.write(report_content)
                 saved_files["text"] = str(text_filename)
-                logger.info(f"✅ Text report saved to: {text_filename}")
+                logger.info("Text report saved to: %s", text_filename)
             except Exception as e:
-                logger.error(f"❌ Failed to save text report: {e}")
+                logger.error("Failed to save text report: %s", e)
         
         # Save JSON report
         json_filename = output_dir / f"{filename}.json"
@@ -536,9 +536,9 @@ class SecurityAnalysisWorkflow:
             with open(json_filename, "w", encoding="utf-8") as f:
                 json.dump(report_data, f, indent=2, ensure_ascii=False)
             saved_files["json"] = str(json_filename)
-            logger.info(f"✅ JSON report saved to: {json_filename}")
+            logger.info("JSON report saved to: %s", json_filename)
         except Exception as e:
-            logger.error(f"❌ Failed to save JSON report: {e}")
+            logger.error("Failed to save JSON report: %s", e)
         
         # Save PDF report
         if self.config.output.generate_pdf:
@@ -546,9 +546,9 @@ class SecurityAnalysisWorkflow:
             try:
                 self._generate_pdf(report_content, pdf_filename)
                 saved_files["pdf"] = str(pdf_filename)
-                logger.info(f"✅ PDF report saved to: {pdf_filename}")
+                logger.info("PDF report saved to: %s", pdf_filename)
             except Exception as e:
-                logger.error(f"❌ Failed to save PDF report: {e}")
+                logger.error("Failed to save PDF report: %s", e)
         
         return saved_files
     

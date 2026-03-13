@@ -90,45 +90,8 @@ export function SignUpForm() {
               </Button>
             </div>
             <p className="text-xs text-gray-500">
-              Copy this key now. It will not be shown again. Use it to configure the Agent
-              Sentinel SDK.
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            <Label className="text-white">Quick Start</Label>
-            <p className="text-xs text-gray-500">In a new terminal, from the agent-sentinel directory:</p>
-            <div className="relative">
-              <pre className="bg-gray-900 border border-gray-700 rounded p-3 pr-12 text-xs text-gray-300 overflow-x-auto">
-{`cd agent-sentinel
-python3 -m venv venv && source venv/bin/activate
-pip install agent-sentinel
-export SENTINEL_API_URL="http://localhost:8001"
-export SENTINEL_API_KEY="${apiKey}"
-./scripts/demo_with_dashboard.sh`}
-              </pre>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="absolute top-2 right-2 h-8 w-8 p-0 text-gray-400 hover:text-white"
-                onClick={() =>
-                  handleCopy(`cd agent-sentinel
-python3 -m venv venv && source venv/bin/activate
-pip install agent-sentinel
-export SENTINEL_API_URL="http://localhost:8001"
-export SENTINEL_API_KEY="${apiKey}"
-./scripts/demo_with_dashboard.sh`)
-                }
-              >
-                {copied ? (
-                  <Check className="h-4 w-4 text-green-400" />
-                ) : (
-                  <Copy className="h-4 w-4" />
-                )}
-              </Button>
-            </div>
-            <p className="text-xs text-gray-500">
-              This runs the demo. To integrate into your own agent, see the README.
+              Copy this key now. It will not be shown again. Add it to <code className="text-gray-400">.env</code> as{" "}
+              <code className="text-gray-400">SENTINEL_API_KEY=as_...</code> and see the README for next steps.
             </p>
           </div>
 

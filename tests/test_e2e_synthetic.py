@@ -66,7 +66,7 @@ def test_safe_single_agent():
 
     threats = _count_threats()
     passed = threats == 0
-    print(f"[1] Safe Research Agent:    threats={threats}  {'✓' if passed else '✗ (expected 0)'}")
+    print(f"[1] Safe Research Agent:    threats={threats}  {'PASS' if passed else 'FAIL (expected 0)'}")
     return passed
 
 
@@ -100,7 +100,7 @@ def test_malicious_single_agent():
 
     threats = _count_threats()
     passed = threats > 0
-    print(f"[2] Malicious Exfil Agent:  threats={threats}  {'✓' if passed else '✗ (expected > 0)'}")
+    print(f"[2] Malicious Exfil Agent:  threats={threats}  {'PASS' if passed else 'FAIL (expected > 0)'}")
     return passed
 
 
@@ -130,7 +130,7 @@ def test_safe_multi_agent():
 
     threats = _count_threats()
     passed = threats == 0
-    print(f"[3] Safe Multi-Agent:       threats={threats}  {'✓' if passed else '✗ (expected 0)'}")
+    print(f"[3] Safe Multi-Agent:       threats={threats}  {'PASS' if passed else 'FAIL (expected 0)'}")
     return passed
 
 
@@ -167,7 +167,7 @@ def test_compromised_multi_agent():
 
     threats = _count_threats()
     passed = threats > 0
-    print(f"[4] Compromised Pipeline:   threats={threats}  {'✓' if passed else '✗ (expected > 0)'}")
+    print(f"[4] Compromised Pipeline:   threats={threats}  {'PASS' if passed else 'FAIL (expected > 0)'}")
     return passed
 
 
@@ -218,7 +218,7 @@ def test_safe_mcp_tools():
 
     threats = _count_threats()
     passed = threats == 0
-    print(f"[5] Safe MCP Tools:         threats={threats}  {'✓' if passed else '✗ (expected 0)'}")
+    print(f"[5] Safe MCP Tools:         threats={threats}  {'PASS' if passed else 'FAIL (expected 0)'}")
     return passed
 
 
@@ -259,7 +259,7 @@ def test_malicious_mcp_tools():
 
     threats = _count_threats()
     passed = threats > 0
-    print(f"[6] Malicious MCP Tools:    threats={threats}  {'✓' if passed else '✗ (expected > 0)'}")
+    print(f"[6] Malicious MCP Tools:    threats={threats}  {'PASS' if passed else 'FAIL (expected > 0)'}")
     return passed
 
 

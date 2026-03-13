@@ -108,7 +108,7 @@ def test_configuration_validation():
             enable_performance_monitoring=True,
             strict_validation=False
         )
-        print("✓ Valid configuration accepted")
+        print("Valid configuration accepted")
     except Exception as e:
         assert False, f"Valid configuration failed: {e}"
     
@@ -121,7 +121,7 @@ def test_configuration_validation():
         )
         assert False, "Invalid configuration should have failed"
     except Exception as e:
-        print(f"✓ Invalid configuration properly rejected: {type(e).__name__}")
+        print(f"Invalid configuration properly rejected: {type(e).__name__}")
 
 def test_thread_safety():
     """Test thread safety improvements"""
@@ -157,7 +157,7 @@ def test_thread_safety():
         thread.start()
     for thread in threads:
         thread.join()
-    print(f"✓ Thread safety test completed. Final counter: {agent.counter}")
+    print(f"Thread safety test completed. Final counter: {agent.counter}")
 
 def test_error_handling():
     """Test enhanced error handling"""
@@ -178,14 +178,14 @@ def test_error_handling():
     
     try:
         result = wrapped_error_task(should_fail=False)
-        print(f"✓ Successful execution: {result}")
+        print(f"Successful execution: {result}")
     except Exception as e:
         assert False, f"Successful execution failed: {e}"
     try:
         result = wrapped_error_task(should_fail=True)
         assert False, "Error should have been raised"
     except Exception as e:
-        print(f"✓ Error properly handled: {type(e).__name__}")
+        print(f"Error properly handled: {type(e).__name__}")
 
 def test_memory_management():
     """Test memory management improvements"""
@@ -207,14 +207,14 @@ def test_memory_management():
     
     try:
         result = wrapped_memory_task(10)
-        print(f"✓ Memory task within limit: {result[:50]}...")
+        print(f"Memory task within limit: {result[:50]}...")
     except Exception as e:
         assert False, f"Memory task within limit failed: {e}"
     try:
         result = wrapped_memory_task(100)
-        print(f"✓ Memory task exceeded limit but handled gracefully: {result[:50]}...")
+        print(f"Memory task exceeded limit but handled gracefully: {result[:50]}...")
     except Exception as e:
-        print(f"✓ Memory limit exceeded and properly handled: {type(e).__name__}")
+        print(f"Memory limit exceeded and properly handled: {type(e).__name__}")
 
 def test_class_monitoring():
     """Test class monitoring capabilities (method-level only)"""
@@ -245,7 +245,7 @@ def test_class_monitoring():
         result1 = wrapped_simple_task("test_data")
         result2 = wrapped_complex_task({"key": "value"})
         result3 = wrapped_error_task(should_fail=False)
-        print(f"✓ Class monitoring successful:")
+        print("Class monitoring successful:")
         print(f"  - Simple task: {result1}")
         print(f"  - Complex task: {result2}")
         print(f"  - Error task: {result3}")
@@ -274,14 +274,14 @@ def test_mcp_monitoring():
         return mcp_agent.call_resource(resource, method, params)
     try:
         resources = wrapped_list_resources()
-        print(f"✓ MCP resources: {resources}")
+        print(f"MCP resources: {resources}")
         result = wrapped_call_resource("file_system", "read_file", {"path": "/test/file.txt"})
-        print(f"✓ MCP resource call: {result}")
+        print(f"MCP resource call: {result}")
         try:
             wrapped_call_resource("invalid_resource", "method", {})
             assert False, "Invalid resource should have failed"
         except Exception as e:
-            print(f"✓ Invalid resource properly handled: {type(e).__name__}")
+            print(f"Invalid resource properly handled: {type(e).__name__}")
     except Exception as e:
         assert False, f"MCP monitoring failed: {e}"
 
@@ -314,7 +314,7 @@ async def test_concurrent_sessions():
     results = await asyncio.gather(*tasks)
     
     for i, _ in enumerate(results):
-        print(f"✓ Session {i} completed")
+        print(f"Session {i} completed")
 
 def test_serialization_safety():
     """Test serialization safety improvements"""
@@ -341,7 +341,7 @@ def test_serialization_safety():
     }
     try:
         result = wrapped_complex(complex_data)
-        print(f"✓ Complex data serialization successful: {result}")
+        print(f"Complex data serialization successful: {result}")
     except Exception as e:
         assert False, f"Complex data serialization failed: {e}"
     class UnserializableObject:
@@ -353,9 +353,9 @@ def test_serialization_safety():
     }
     try:
         result = wrapped_complex(unserializable_data)
-        print(f"✓ Unserializable data handled gracefully: {result}")
+        print(f"Unserializable data handled gracefully: {result}")
     except Exception as e:
-        print(f"✓ Unserializable data properly handled: {type(e).__name__}")
+        print(f"Unserializable data properly handled: {type(e).__name__}")
     return True
 
 def test_metrics_collection():
@@ -382,7 +382,7 @@ def test_metrics_collection():
     # Get current stats from the wrapper
     current_stats = wrapper.get_agent_stats()
     
-    print(f"✓ Metrics collected:")
+    print("Metrics collected:")
     print(f"  - Total method calls: {current_stats.get('total_method_calls', 0)}")
     print(f"  - Total sessions: {current_stats.get('total_sessions', 0)}")
     print(f"  - Security events: {current_stats.get('security_events', 0)}")
@@ -411,21 +411,21 @@ def main():
         try:
             test_func()
             passed += 1
-            print(f"✅ {test_name}: PASSED")
+            print(f"{test_name}: PASSED")
         except AssertionError as e:
-            print(f"❌ {test_name}: FAILED - {e}")
+            print(f"{test_name}: FAILED - {e}")
         except Exception as e:
-            print(f"❌ {test_name}: ERROR - {e}")
+            print(f"{test_name}: ERROR - {e}")
     
     # Test async functionality
     try:
         asyncio.run(test_concurrent_sessions())
         passed += 1
-        print("✅ Concurrent Sessions: PASSED")
+        print("Concurrent Sessions: PASSED")
     except AssertionError as e:
-        print(f"❌ Concurrent Sessions: FAILED - {e}")
+        print(f"Concurrent Sessions: FAILED - {e}")
     except Exception as e:
-        print(f"❌ Concurrent Sessions: ERROR - {e}")
+        print(f"Concurrent Sessions: ERROR - {e}")
     
     total += 1
     

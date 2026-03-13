@@ -29,10 +29,10 @@ def read_security_report(file_path: Optional[str] = None) -> str:
             try:
                 with open(path, "r") as f:
                     content = f.read()
-                logger.info(f"✅ Read security report from: {file_path}")
+                logger.info("Read security report from: %s", file_path)
                 return content
             except Exception as e:
-                logger.error(f"❌ Failed to read {file_path}: {e}")
+                logger.error("Failed to read %s: %s", file_path, e)
                 raise
     
     # Look for common security report files
@@ -50,7 +50,7 @@ def read_security_report(file_path: Optional[str] = None) -> str:
             try:
                 with open(path, "r") as f:
                     content = f.read()
-                logger.info(f"✅ Read security report from: {filename}")
+                logger.info("Read security report from: %s", filename)
                 return content
             except Exception as e:
                 logger.warning(f"⚠️  Failed to read {filename}: {e}")
@@ -97,9 +97,9 @@ def save_report(
                 f.write("=" * 60 + "\n\n")
                 f.write(content)
             saved_files["txt"] = str(txt_path)
-            logger.info(f"✅ Text report saved to: {txt_path}")
+            logger.info("Text report saved to: %s", txt_path)
         except Exception as e:
-            logger.error(f"❌ Failed to save text report: {e}")
+            logger.error("Failed to save text report: %s", e)
     
     # Save JSON file
     if "json" in formats:
@@ -116,9 +116,9 @@ def save_report(
             with open(json_path, "w") as f:
                 json.dump(report_data, f, indent=2)
             saved_files["json"] = str(json_path)
-            logger.info(f"✅ JSON report saved to: {json_path}")
+            logger.info("JSON report saved to: %s", json_path)
         except Exception as e:
-            logger.error(f"❌ Failed to save JSON report: {e}")
+            logger.error("Failed to save JSON report: %s", e)
     
     return saved_files
 
@@ -144,11 +144,11 @@ def read_json_report(file_path: str) -> Dict[str, Any]:
     try:
         with open(path, "r") as f:
             data = json.load(f)
-        logger.info(f"✅ Read JSON report from: {file_path}")
+        logger.info("Read JSON report from: %s", file_path)
         return data
     except json.JSONDecodeError as e:
-        logger.error(f"❌ Invalid JSON in {file_path}: {e}")
+        logger.error("Invalid JSON in %s: %s", file_path, e)
         raise
     except Exception as e:
-        logger.error(f"❌ Failed to read {file_path}: {e}")
+        logger.error("Failed to read %s: %s", file_path, e)
         raise 

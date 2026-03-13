@@ -174,7 +174,7 @@ class SecurityAnalyzerAgent:
         try:
             # Validate input state
             if not isinstance(state, dict):
-                logger.error("❌ Invalid state type provided to analyzer")
+                logger.error("Invalid state type provided to analyzer")
                 return self._fallback_to_supervisor("Invalid state type provided")
             
             # Extract input content
@@ -192,7 +192,7 @@ class SecurityAnalyzerAgent:
             try:
                 analysis_result = self._perform_threat_analysis(input_content)
             except Exception as e:
-                logger.error(f"❌ Comprehensive analysis failed: {e}")
+                logger.error("Comprehensive analysis failed: %s", e)
                 # Continue with basic analysis
                 analysis_result = ThreatAnalysis()
             
@@ -210,7 +210,7 @@ class SecurityAnalyzerAgent:
                     """
                 )
             except Exception as e:
-                logger.error(f"❌ Failed to create LLM messages: {e}")
+                logger.error(f" Failed to create LLM messages: {e}")
                 return self._fallback_to_supervisor(f"Failed to prepare analysis request: {e}")
             
             # Get analysis from LLM with retry logic
@@ -226,12 +226,12 @@ class SecurityAnalyzerAgent:
                         if attempt == max_retries - 1:
                             return self._fallback_to_supervisor("Analysis failed after multiple attempts")
                 except Exception as e:
-                    logger.error(f"❌ Analysis attempt {attempt + 1} failed: {e}")
+                    logger.error("Analysis attempt %d failed: %s", attempt + 1, e)
                     if attempt == max_retries - 1:
                         return self._fallback_to_supervisor(f"Analysis failed after {max_retries} attempts: {e}")
             
             if not analysis:
-                logger.error("❌ No analysis result obtained")
+                logger.error("No analysis result obtained")
                 return self._fallback_to_supervisor("Analysis failed - no result obtained")
             
             # Enhance with structured analysis
@@ -243,7 +243,7 @@ class SecurityAnalyzerAgent:
             
             # Validate final analysis
             if not enhanced_analysis or len(enhanced_analysis.strip()) < 100:
-                logger.error("❌ Final analysis is too short or empty")
+                logger.error("Final analysis is too short or empty")
                 return self._fallback_to_supervisor("Analysis failed - insufficient content generated")
             
             # Log analysis completion
@@ -270,7 +270,7 @@ class SecurityAnalyzerAgent:
             }
             
         except Exception as e:
-            logger.error(f"❌ Security analysis failed with unexpected error: {e}")
+            logger.error("Security analysis failed with unexpected error: %s", e)
             return self._fallback_to_supervisor(f"Security analysis failed: {e}")
     
     def _extract_input_content(self, state: AgentState) -> str:
@@ -305,7 +305,7 @@ class SecurityAnalyzerAgent:
             return ""
             
         except Exception as e:
-            logger.error(f"❌ Failed to extract input content: {e}")
+            logger.error("Failed to extract input content: %s", e)
             return ""
     
     def _perform_threat_analysis(self, content: str) -> ThreatAnalysis:
@@ -363,7 +363,7 @@ class SecurityAnalyzerAgent:
             return analysis
             
         except Exception as e:
-            logger.error(f"❌ Comprehensive analysis failed: {e}")
+            logger.error("Comprehensive analysis failed: %s", e)
             return ThreatAnalysis()  # Return empty analysis
     
     def _extract_threats(self, content: str) -> List[Dict[str, Any]]:
