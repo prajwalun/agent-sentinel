@@ -75,12 +75,17 @@ See [agent-sentinel-sdk/README.md](agent-sentinel-sdk/README.md#sample-output) f
 git clone https://github.com/prajwalun/agent-sentinel.git
 cd agent-sentinel
 cp .env.example .env
+```
+
+Edit `.env`: add `OPENAI_API_KEY` now if you want AI report analysis (avoids restarting later). Then:
+
+```bash
 docker-compose up --build
 ```
 
 Backend health: http://localhost:8001/health · Dashboard: http://localhost:3000
 
-Open **http://localhost:3000**, sign up, and copy the API key. Add it to `.env` as `SENTINEL_API_KEY=as_...`. For AI report analysis, add `OPENAI_API_KEY` to `.env` and restart the backend. (More keys: **Settings**.)
+Open **http://localhost:3000**, sign up, and copy the API key. Add it to `.env` as `SENTINEL_API_KEY=as_...`. (More keys: **Settings**.)
 
 ### Option B: Manual (no Docker)
 
