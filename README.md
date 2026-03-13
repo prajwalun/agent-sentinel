@@ -78,6 +78,8 @@ cp .env.example .env
 docker-compose up --build
 ```
 
+Backend health: http://localhost:8001/health · Dashboard: http://localhost:3000
+
 Open **http://localhost:3000**, sign up, and copy the API key. Add it to `.env` as `SENTINEL_API_KEY=as_...`. (More keys later: **Settings**.)
 
 ### Option B: Manual (no Docker)
