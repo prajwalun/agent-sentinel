@@ -13,17 +13,17 @@ Agent Sentinel is a security monitoring platform for AI agents. It consists of t
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│                         User's Agent Code                          │
-│   @monitor / @sentinel / @monitor_mcp                              │
+│                         User's Agent Code                           │
+│   @monitor / @sentinel / @monitor_mcp                               │
 └──────────────────────────┬──────────────────────────────────────────┘
                            │ events
                            ▼
 ┌──────────────────────────────────────────────────────────────────────┐
 │  Agent Sentinel SDK                                                  │
-│  ┌──────────────┐  ┌──────────────┐  ┌───────────────────────────┐  │
-│  │ AgentWrapper  │  │ MCPWrapper   │  │ GlobalEventRegistry       │  │
-│  │ InputValidator│  │              │  │ (singleton, thread-safe)  │  │
-│  └──────┬───────┘  └──────┬───────┘  └───────────┬───────────────┘  │
+│  ┌──────────────┐  ┌──────────────┐  ┌───────────────────────────┐   │
+│  │ AgentWrapper │  │ MCPWrapper   │  │ GlobalEventRegistry       │   │
+│  │InputValidator│  │              │  │ (singleton, thread-safe)  │   │
+│  └──────┬───────┘  └──────┬───────┘  └───────────┬───────────────┘   │
 │         └─────────────────┴──────────────────────┘                   │
 │                           │                                          │
 │         ┌─────────────────┼──────────────────┐                       │
@@ -34,9 +34,9 @@ Agent Sentinel is a security monitoring platform for AI agents. It consists of t
                            ▼
 ┌──────────────────────────────────────────────────────────────────────┐
 │  Intelligence API  (FastAPI + SQLite + LangGraph)                    │
-│  ┌────────┐ ┌──────────┐ ┌────────────┐ ┌────────────┐ ┌────────┐  │
-│  │Analyzer│→│Supervisor│→│ Researcher │→│  Reporter  │→│Validator│  │
-│  └────────┘ └──────────┘ └────────────┘ └────────────┘ └────────┘  │
+│  ┌────────┐ ┌──────────┐ ┌────────────┐ ┌────────────┐ ┌──────────┐  │
+│  │Analyzer│→│Supervisor│→│ Researcher │→│  Reporter  │→│ Validator│  │
+│  └────────┘ └──────────┘ └────────────┘ └────────────┘ └──────────┘  │
 │                                                                      │
 │  Auth: JWT + API keys    SSE: /api/events/stream                     │
 └──────────────────────────┬───────────────────────────────────────────┘
