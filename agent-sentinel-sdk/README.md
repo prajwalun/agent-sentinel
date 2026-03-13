@@ -7,14 +7,13 @@ Security monitoring for AI agents via decorators. Validates inputs against SQL i
 ## Install
 
 ```bash
+python3 -m venv venv && source venv/bin/activate   # Windows: venv\Scripts\activate
 pip install agent-sentinel
 ```
 
-Use a virtual environment to avoid externally-managed-environment issues: `python3 -m venv venv && source venv/bin/activate` before installing.
-
 ## Usage (with backend)
 
-Set `SENTINEL_API_URL` and `SENTINEL_API_KEY` — events stream to the dashboard.
+Set `SENTINEL_API_URL` and `SENTINEL_API_KEY`. Events stream to the dashboard.
 
 ```python
 from agent_sentinel import monitor, sentinel, monitor_mcp
@@ -34,7 +33,7 @@ def search(query): ...
 
 ## Standalone (no backend)
 
-No `SENTINEL_API_URL` or `SENTINEL_API_KEY` needed. Use for local threat detection and reports.
+No `SENTINEL_API_URL` or `SENTINEL_API_KEY` needed. Local threat detection and reports only.
 
 ```python
 from agent_sentinel import monitor, default_sentinel
@@ -45,38 +44,20 @@ def my_agent(query: str) -> str:
 
 my_agent("user input")
 
-# Reports to logs/
-default_sentinel.generate_unified_report()       # JSON
+default_sentinel.generate_unified_report()       # JSON to logs/
 default_sentinel.generate_security_report(file_path="report.md")  # Markdown
-
-# Or get events in code
 events = default_sentinel.get_events(include_all_agents=True)
 ```
 
 **Outputs:** `logs/` in the current directory. Logs: `agent_sentinel_{agent_id}.log`. Reports: `{agent_id}_unified_report_{timestamp}.json`, `{agent_id}_security_report_{timestamp}.md`.
 
-**Event structure:** When you call `get_events()`, each detected threat returns a `SecurityEvent`. Full structure for the main README examples:
-
-**Research agent** (prompt injection, SQL injection):
+**Event structure:** Each `SecurityEvent` includes `threat_type`, `severity`, `message`, `confidence`, `agent_id`, `timestamp`, `context`. Example:
 
 ```json
-[
-  {"threat_type": "prompt_injection", "severity": "HIGH", "message": "Malicious input detected in method research_agent", "confidence": 0.8, "agent_id": "..."},
-  {"threat_type": "sql_injection", "severity": "HIGH", "message": "Malicious input detected in method research_agent", "confidence": 0.9, "agent_id": "..."}
-]
+{"threat_type": "prompt_injection", "severity": "HIGH", "confidence": 0.8, "agent_id": "..."}
 ```
-
-**Search handler** (XSS):
-
-```json
-{"threat_type": "xss_attack", "severity": "HIGH", "message": "Malicious input detected in method search_handler", "confidence": 0.9, "agent_id": "search_tool"}
-```
-
-Each event includes `threat_type`, `severity`, `message`, `confidence`, `agent_id`, `timestamp`, `context`, and more. Events stream to the dashboard when connected, or stay local for reports in standalone mode.
 
 ## Tests
-
-From the SDK directory, install in editable mode with test deps and run:
 
 ```bash
 pip install -e ".[test]"

@@ -65,68 +65,30 @@ See [agent-sentinel-sdk/README.md](agent-sentinel-sdk/README.md#sample-output) f
 
 ## Getting started
 
-**Prefer a video to get started?** [Setup](https://youtu.be/kvcIjTgPjTM)
+**Prefer a video?** [Setup](https://youtu.be/kvcIjTgPjTM)
 
-### Prerequisites
+**Prerequisites:** [Docker](https://docs.docker.com/get-docker/) (recommended) or [Python 3.9+](https://www.python.org/downloads/) + [Node.js 18+](https://nodejs.org/) for manual setup.
 
-- [Docker](https://docs.docker.com/get-docker/) (recommended for quick start)
-- [Python 3.9+](https://www.python.org/downloads/) (for the SDK and manual setup)
-- [Node.js 18+](https://nodejs.org/) (for manual dashboard setup only)
-
-### Quick start with Docker
-
-**1. Clone and create `.env`**
+### Option A: Docker (recommended)
 
 ```bash
 git clone https://github.com/prajwalun/agent-sentinel.git
 cd agent-sentinel
 cp .env.example .env
-```
-
-Edit `.env` and add `SENTINEL_API_KEY` after signup (step 3). See [Configuration](#configuration) for other variables.
-
-**2. Start the stack**
-
-```bash
 docker-compose up --build
 ```
 
-Backend: `http://localhost:8001` · Dashboard: `http://localhost:3000`
+Open **http://localhost:3000**, sign up, and copy the API key. Add it to `.env` as `SENTINEL_API_KEY=as_...`. (More keys later: **Settings**.)
 
-**3. Sign up and add API key to `.env`**
+### Option B: Manual (no Docker)
 
-Open `http://localhost:3000`, sign up, copy the API key, and add `SENTINEL_API_KEY=as_...` to `.env`. More keys: **Settings**.
-
-**4. Use the SDK in your agent**
-
-```bash
-python3 -m venv venv && source venv/bin/activate   # Windows: venv\Scripts\activate
-pip install agent-sentinel
-```
-
-Set `SENTINEL_API_URL` and `SENTINEL_API_KEY` (from `.env` or `export`), then add `@monitor` to your code. Events stream to the dashboard. See [What it does](#what-it-does) for `@sentinel` and `@monitor_mcp`.
-
-**See events in the dashboard:**
-1. Start stack: `docker-compose up --build`
-2. Sign up at http://localhost:3000, copy API key to `.env` as `SENTINEL_API_KEY`
-3. Run: `./scripts/demo_with_dashboard.sh` (macOS/Linux) or `python scripts/demo_dashboard.py` (Windows)
-
-Or run E2E tests with `.env` loaded for more events: `source .env && python tests/test_e2e_synthetic.py`
-
-**Reset database:** `./scripts/reset_stack.sh` stops containers and removes volumes (fresh DB). Use `./scripts/reset_stack.sh --start` to reset and start again.
-
-### Manual setup (without Docker)
-
-**1. Create `.env`**
+**1. Create `.env` at project root**
 
 ```bash
 cp .env.example .env
-# Edit .env: OPENAI_API_KEY (AI analysis), SENTINEL_API_KEY (after signup), etc.
 ```
 
-Place `.env` at the project root (parent of `agent-sentinel-intelligence`). The backend loads it automatically.
-
-**2. Start the backend**
+**2. Start backend**
 
 ```bash
 cd agent-sentinel-intelligence
@@ -134,9 +96,7 @@ pip install -r requirements.txt
 python -m uvicorn api_server:app --host 0.0.0.0 --port 8001
 ```
 
-Check it's running: `curl http://localhost:8001/health`
-
-**3. Start the dashboard**
+**3. Start dashboard** (new terminal)
 
 ```bash
 cd agent-sentinel-dashboard
@@ -145,22 +105,40 @@ echo 'NEXT_PUBLIC_API_URL=http://localhost:8001' > .env.local
 npm run dev
 ```
 
-If `npm install` fails with peer dependency conflicts, use `npm install --legacy-peer-deps`.
+Open **http://localhost:3000**, sign up, copy the API key, and add it to `.env` as `SENTINEL_API_KEY=as_...`. If `npm install` fails, try `npm install --legacy-peer-deps`.
 
-Open `http://localhost:3000`, sign up, copy the API key, and add it to `.env` as `SENTINEL_API_KEY=as_your_key_here`. To create more keys later: **Settings**.
+### Use the SDK
 
-**4. Use the SDK in your agent**
+After the stack is running and you have an API key:
 
 ```bash
 python3 -m venv venv && source venv/bin/activate   # Windows: venv\Scripts\activate
 pip install agent-sentinel
+export SENTINEL_API_URL="http://localhost:8001"
+export SENTINEL_API_KEY="as_your_key_from_dashboard"
 ```
 
-Set `SENTINEL_API_URL` and `SENTINEL_API_KEY`, then add `@monitor` (or `@sentinel`, `@monitor_mcp`) to your code. Events stream to the dashboard. See [What it does](#what-it-does).
+Add `@monitor` (or `@sentinel`, `@monitor_mcp`) to your agent code. Events stream to the dashboard. See [What it does](#what-it-does).
 
-**Quick verify:** `python scripts/verify_stack.py` (with `.env` loaded).
+### Try it without writing code
 
-The SDK also works standalone: no backend needed for local threat detection and report generation. See [agent-sentinel-sdk/README.md](agent-sentinel-sdk/README.md#standalone-usage) for how to use it without the backend and generate local reports.
+Run the demo script to send test events to the dashboard:
+
+```bash
+./scripts/demo_with_dashboard.sh          # macOS/Linux
+python scripts/demo_dashboard.py          # Windows
+```
+
+Or verify the stack: `source .env && python scripts/verify_stack.py`
+
+### Reset database (Docker)
+
+```bash
+./scripts/reset_stack.sh                  # Stop and wipe DB
+./scripts/reset_stack.sh --start          # Reset and start again
+```
+
+**Standalone mode:** The SDK works without a backend for local threat detection and reports. See [agent-sentinel-sdk/README.md](agent-sentinel-sdk/README.md#standalone-usage).
 
 ---
 
@@ -230,19 +208,20 @@ CI runs SDK, backend, synthetic E2E, and dashboard tests on every push via GitHu
 
 ## Configuration
 
-All config is through environment variables. Copy `.env.example` to `.env` and fill in what you need:
+Copy `.env.example` to `.env` and set what you need:
 
-| Variable | Required | What it does |
-|----------|----------|--------------|
-| `OPENAI_API_KEY` | For AI analysis | Powers the LangGraph report analysis (GPT-4o) |
-| `EXA_API_KEY` | No | External threat intelligence via Exa.ai |
-| `WANDB_API_KEY` | No | Weights & Biases tracing for observability |
-| `JWT_SECRET` | No (auto-generated) | Signs JWT tokens for dashboard auth |
-| `ADMIN_SECRET` | No (has default) | Admin-level API key generation |
-| `SENTINEL_API_URL` | No | Tell the SDK where the backend is |
-| `SENTINEL_API_KEY` | No | SDK-to-backend authentication |
-| `AGENT_SENTINEL_CONSOLE` | No | Log threats to terminal (default: true). Set to false for file-only |
-| `NEXT_PUBLIC_API_URL` | No | Dashboard's backend URL (defaults to `http://localhost:8001`) |
+| Variable | Required | Purpose |
+|----------|----------|---------|
+| `OPENAI_API_KEY` | For AI analysis | Powers LangGraph report analysis |
+| `JWT_SECRET` | No | Signs JWT tokens (auto-generated if missing) |
+| `JWT_EXPIRY_HOURS` | No | Session duration in hours (default 24). Dashboard logs out on 401 when expired. |
+| `ADMIN_SECRET` | No | Admin-level API key generation |
+| `EXA_API_KEY` | No | External threat intelligence (Exa.ai) |
+| `WANDB_API_KEY` | No | Weights & Biases tracing |
+| `SENTINEL_API_URL` | No | Backend URL for the SDK (default `http://localhost:8001`) |
+| `SENTINEL_API_KEY` | No | API key from dashboard signup |
+| `NEXT_PUBLIC_API_URL` | No | Dashboard backend URL (default `http://localhost:8001`) |
+| `AGENT_SENTINEL_CONSOLE` | No | Log threats to terminal (default true). Set false for file-only |
 
 ---
 

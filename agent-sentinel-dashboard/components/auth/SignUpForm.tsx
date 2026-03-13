@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Copy, Check } from "lucide-react"
@@ -20,8 +20,14 @@ export function SignUpForm() {
   })
   const [apiKey, setApiKey] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
-  const { signup, clearError, loading, error } = useAuth()
+  const { user, signup, clearError, loading, error } = useAuth()
   const router = useRouter()
+
+  useEffect(() => {
+    if (!loading && user && !apiKey) {
+      router.replace("/dashboard")
+    }
+  }, [loading, user, apiKey, router])
 
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text)
@@ -120,7 +126,7 @@ export SENTINEL_API_KEY="${apiKey}"`)
           </div>
 
           <Button
-            onClick={() => router.push("/dashboard")}
+            onClick={() => router.replace("/dashboard")}
             className="w-full btn-primary"
           >
             Go to Dashboard
