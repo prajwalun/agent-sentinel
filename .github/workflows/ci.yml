@@ -56,3 +56,4 @@ jobs:
           python-version: "3.12"
       - run: pip install -e "./agent-sentinel-sdk"
       - run: python tests/test_e2e_synthetic.py
+      - run: python tests/test_e2e_integration.py

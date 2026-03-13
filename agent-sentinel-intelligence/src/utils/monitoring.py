@@ -6,7 +6,7 @@ import time
 import psutil
 import logging
 from typing import Dict, Any, List, Optional, Callable
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from dataclasses import dataclass, field
 from enum import Enum
 import threading
@@ -75,7 +75,7 @@ class MetricsCollector:
             metric = Metric(
                 name=name,
                 value=value,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(timezone.utc),
                 tags=tags or {},
                 unit=unit
             )
@@ -229,7 +229,7 @@ class HealthChecker:
             if not check.enabled:
                 continue
             
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
             
             # Check if it's time to run this health check
             if check.last_run and (now - check.last_run).total_seconds() < check.interval_seconds:
@@ -277,7 +277,7 @@ class HealthChecker:
                 return {
                     'healthy': False,
                     'message': f"Health check timeout ({duration:.2f}s > {check.timeout_seconds}s)",
-                    'timestamp': datetime.utcnow().isoformat()
+                    'timestamp': datetime.now(timezone.utc).isoformat()
                 }
             
             # Ensure result has required fields
@@ -287,7 +287,7 @@ class HealthChecker:
             if 'healthy' not in result:
                 result['healthy'] = True
             
-            result['timestamp'] = datetime.utcnow().isoformat()
+            result['timestamp'] = datetime.now(timezone.utc).isoformat()
             result['duration'] = duration
             
             return result
@@ -296,7 +296,7 @@ class HealthChecker:
             return {
                 'healthy': False,
                 'message': f"Health check error: {e}",
-                'timestamp': datetime.utcnow().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }
     
     def get_health_status(self) -> Dict[str, Any]:
@@ -324,7 +324,7 @@ class HealthChecker:
         
         return {
             'status': overall_status.value,
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'checks': {name: check.last_result for name, check in self.health_checks.items() if check.enabled},
             'failed_checks': failed_checks,
             'degraded_checks': degraded_checks
@@ -356,7 +356,7 @@ class AlertManager:
             
             # Check cooldown
             if alert.last_triggered:
-                time_since_last = (datetime.utcnow() - alert.last_triggered).total_seconds()
+                time_since_last = (datetime.now(timezone.utc) - alert.last_triggered).total_seconds()
                 if time_since_last < alert.cooldown_seconds:
                     continue
             
@@ -368,7 +368,7 @@ class AlertManager:
     
     def _trigger_alert(self, alert: Alert, context: Dict[str, Any]):
         """Trigger an alert."""
-        alert.last_triggered = datetime.utcnow()
+        alert.last_triggered = datetime.now(timezone.utc)
         
         logger.warning(f"Alert triggered: {alert.name} - {alert.message}")
         
@@ -526,7 +526,7 @@ class MonitoringSystem:
     def get_status(self) -> Dict[str, Any]:
         """Get comprehensive system status."""
         return {
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'health': self.health_checker.get_health_status(),
             'metrics_count': len(self.metrics_collector.metrics),
             'alerts': {name: alert.last_triggered.isoformat() if alert.last_triggered else None 

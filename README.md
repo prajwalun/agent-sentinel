@@ -209,12 +209,13 @@ For architecture diagrams, data flows, API reference, and database schema, see [
 cd agent-sentinel-sdk && python -m pytest tests/ -v
 cd agent-sentinel-intelligence && python -m pytest tests/ -v
 python tests/test_e2e_synthetic.py
+python tests/test_e2e_integration.py
 cd agent-sentinel-dashboard && npm test
 ```
 
 SDK and backend tests cover core logic, decorators, validators, auth, CRUD, and analysis. Synthetic E2E tests define agents inline to exercise detection in isolation. Dashboard tests cover the API service layer and auth context.
 
-Integration E2E tests (`python tests/test_e2e_integration.py`) run the SDK against A2A and Agno framework agents; they require optional setup and are not included in CI.
+Integration E2E tests (`python tests/test_e2e_integration.py`) run the SDK against synthetic agents in standalone mode. Fully offline.
 
 CI runs SDK, backend, synthetic E2E, and dashboard tests on every push via GitHub Actions.
 

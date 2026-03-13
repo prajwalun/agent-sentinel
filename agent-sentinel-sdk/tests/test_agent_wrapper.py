@@ -110,8 +110,7 @@ def test_configuration_validation():
         )
         print("✓ Valid configuration accepted")
     except Exception as e:
-        print(f"✗ Valid configuration failed: {e}")
-        return False
+        assert False, f"Valid configuration failed: {e}"
     
     # Test with invalid configuration
     try:
@@ -120,12 +119,9 @@ def test_configuration_validation():
             max_session_duration=0,  # Invalid zero value
             memory_threshold_mb=-1   # Invalid negative value
         )
-        print("✗ Invalid configuration should have failed")
-        return False
+        assert False, "Invalid configuration should have failed"
     except Exception as e:
         print(f"✓ Invalid configuration properly rejected: {type(e).__name__}")
-    
-    return True
 
 def test_thread_safety():
     """Test thread safety improvements"""
@@ -162,7 +158,6 @@ def test_thread_safety():
     for thread in threads:
         thread.join()
     print(f"✓ Thread safety test completed. Final counter: {agent.counter}")
-    return True
 
 def test_error_handling():
     """Test enhanced error handling"""
@@ -185,15 +180,12 @@ def test_error_handling():
         result = wrapped_error_task(should_fail=False)
         print(f"✓ Successful execution: {result}")
     except Exception as e:
-        print(f"✗ Successful execution failed: {e}")
-        return False
+        assert False, f"Successful execution failed: {e}"
     try:
         result = wrapped_error_task(should_fail=True)
-        print("✗ Error should have been raised")
-        return False
+        assert False, "Error should have been raised"
     except Exception as e:
         print(f"✓ Error properly handled: {type(e).__name__}")
-    return True
 
 def test_memory_management():
     """Test memory management improvements"""
@@ -217,14 +209,12 @@ def test_memory_management():
         result = wrapped_memory_task(10)
         print(f"✓ Memory task within limit: {result[:50]}...")
     except Exception as e:
-        print(f"✗ Memory task within limit failed: {e}")
-        return False
+        assert False, f"Memory task within limit failed: {e}"
     try:
         result = wrapped_memory_task(100)
         print(f"✓ Memory task exceeded limit but handled gracefully: {result[:50]}...")
     except Exception as e:
         print(f"✓ Memory limit exceeded and properly handled: {type(e).__name__}")
-    return True
 
 def test_class_monitoring():
     """Test class monitoring capabilities (method-level only)"""
@@ -262,9 +252,7 @@ def test_class_monitoring():
         shutdown_result = wrapped_shutdown()
         print(f"  - Shutdown: {shutdown_result}")
     except Exception as e:
-        print(f"✗ Class monitoring failed: {e}")
-        return False
-    return True
+        assert False, f"Class monitoring failed: {e}"
 
 def test_mcp_monitoring():
     """Test MCP agent monitoring (method-level only)"""
@@ -291,14 +279,11 @@ def test_mcp_monitoring():
         print(f"✓ MCP resource call: {result}")
         try:
             wrapped_call_resource("invalid_resource", "method", {})
-            print("✗ Invalid resource should have failed")
-            return False
+            assert False, "Invalid resource should have failed"
         except Exception as e:
             print(f"✓ Invalid resource properly handled: {type(e).__name__}")
     except Exception as e:
-        print(f"✗ MCP monitoring failed: {e}")
-        return False
-    return True
+        assert False, f"MCP monitoring failed: {e}"
 
 @pytest.mark.asyncio
 async def test_concurrent_sessions():
@@ -323,17 +308,13 @@ async def test_concurrent_sessions():
         for i in range(3):
             result = wrapped_simple_task(f"session_{session_id}_data_{i}")
             await asyncio.sleep(0.1)
-        
-        return f"Session {session_id} completed"
     
     # Run multiple concurrent sessions
     tasks = [async_worker(i) for i in range(5)]
     results = await asyncio.gather(*tasks)
     
-    for result in results:
-        print(f"✓ {result}")
-    
-    return True
+    for i, _ in enumerate(results):
+        print(f"✓ Session {i} completed")
 
 def test_serialization_safety():
     """Test serialization safety improvements"""
@@ -362,8 +343,7 @@ def test_serialization_safety():
         result = wrapped_complex(complex_data)
         print(f"✓ Complex data serialization successful: {result}")
     except Exception as e:
-        print(f"✗ Complex data serialization failed: {e}")
-        return False
+        assert False, f"Complex data serialization failed: {e}"
     class UnserializableObject:
         def __init__(self):
             self.data = "test"
@@ -407,8 +387,6 @@ def test_metrics_collection():
     print(f"  - Total sessions: {current_stats.get('total_sessions', 0)}")
     print(f"  - Security events: {current_stats.get('security_events', 0)}")
     print(f"  - Errors handled: {current_stats.get('errors_handled', 0)}")
-    
-    return True
 
 def main():
     """Run all tests"""
@@ -431,11 +409,11 @@ def main():
     
     for test_name, test_func in tests:
         try:
-            if test_func():
-                passed += 1
-                print(f"✅ {test_name}: PASSED")
-            else:
-                print(f"❌ {test_name}: FAILED")
+            test_func()
+            passed += 1
+            print(f"✅ {test_name}: PASSED")
+        except AssertionError as e:
+            print(f"❌ {test_name}: FAILED - {e}")
         except Exception as e:
             print(f"❌ {test_name}: ERROR - {e}")
     
@@ -444,6 +422,8 @@ def main():
         asyncio.run(test_concurrent_sessions())
         passed += 1
         print("✅ Concurrent Sessions: PASSED")
+    except AssertionError as e:
+        print(f"❌ Concurrent Sessions: FAILED - {e}")
     except Exception as e:
         print(f"❌ Concurrent Sessions: ERROR - {e}")
     

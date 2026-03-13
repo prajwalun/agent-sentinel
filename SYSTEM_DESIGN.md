@@ -409,7 +409,7 @@ Agent call → @monitor detects threat → SecurityEvent
 | SDK unit | `agent-sentinel-sdk/tests/` | Core SDK, decorators, validators, wrappers |
 | Dashboard | `agent-sentinel-dashboard/__tests__/` | API service layer, auth context, localStorage handling |
 | E2E synthetic | `tests/test_e2e_synthetic.py` | Inline agents: single/multi/MCP, safe and malicious |
-| E2E integration | `tests/test_e2e_integration.py` | A2A protocol agents, Agno/OpenAI (optional setup) |
+| E2E integration | `tests/test_e2e_integration.py` | Synthetic agents, standalone mode |
 
 ### Running Tests
 
@@ -426,7 +426,7 @@ cd agent-sentinel-dashboard && npm test
 # E2E synthetic tests (from repo root)
 python tests/test_e2e_synthetic.py
 
-# E2E integration tests (optional; requires A2A/Agno agents)
+# E2E integration tests (standalone, offline)
 python tests/test_e2e_integration.py
 ```
 
