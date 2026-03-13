@@ -65,7 +65,7 @@ See [agent-sentinel-sdk/README.md](agent-sentinel-sdk/README.md#sample-output) f
 
 ## Getting started
 
-**Prefer a video?** [Setup](https://youtu.be/kvcIjTgPjTM)
+**Prefer a video?** [Setup](https://youtu.be/NILu5UYD3j0)
 
 **Prerequisites:** [Docker](https://docs.docker.com/get-docker/) (recommended) or [Python 3.9+](https://www.python.org/downloads/) + [Node.js 18+](https://nodejs.org/) for manual setup.
 
